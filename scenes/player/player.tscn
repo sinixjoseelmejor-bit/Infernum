@@ -1,0 +1,85 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="Script" path="res://scripts/combat/targeting_system.gd" id="4_targeting"]
+[ext_resource type="Script" path="res://scripts/combat/weapon.gd" id="5_weapon"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/hell_bolt.tscn" id="6_bolt"]
+[ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="7_camera"]
+[ext_resource type="Script" path="res://scripts/components/waddle.gd" id="8_waddle"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="9_anim"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/cain/cain_idle.png" id="10_idle"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/cain/cain_walk.png" id="11_walk"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 17.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_range"]
+radius = 340.0
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+collision_layer = 2
+collision_mask = 5
+motion_mode = 1
+script = ExtResource("1_player")
+move_speed = 235.0
+max_health = 100.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+unique_name_in_owner = true
+texture_filter = 1
+texture = ExtResource("10_idle")
+scale = Vector2(3, 3)
+offset = Vector2(0, 3.5)
+hframes = 6
+
+[node name="Waddle" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("8_waddle")
+
+[node name="Animator" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("9_anim")
+idle_texture = ExtResource("10_idle")
+walk_texture = ExtResource("11_walk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("3_health")
+max_health = 100.0
+invulnerability_time = 0.4
+
+[node name="Targeting" type="Area2D" parent="."]
+unique_name_in_owner = true
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("4_targeting")
+range_radius = 340.0
+target_priority = 1
+aim_tolerance_deg = 110.0
+aim_weight = 0.35
+sticky_bonus = 0.18
+
+[node name="RangeShape" type="CollisionShape2D" parent="Targeting"]
+shape = SubResource("CircleShape2D_range")
+
+[node name="Weapons" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Weapon" type="Node2D" parent="Weapons"]
+script = ExtResource("5_weapon")
+projectile_scene = ExtResource("6_bolt")
+damage = 12.0
+fire_rate = 4.0
+projectile_speed = 720.0
+projectile_count = 1
+spread_deg = 8.0
+projectile_homing_deg = 90.0
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+script = ExtResource("7_camera")

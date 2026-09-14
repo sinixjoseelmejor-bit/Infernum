@@ -1,0 +1,9 @@
+# Godot ecrit du LF. Sans cette regle, git convertit tout en CRLF sur Windows et
+# le moindre enregistrement de l'editeur produit un diff de fichier entier.
+* text=auto eol=lf
+
+*.png -text
+*.ico -text
+*.jpg -text
+*.wav -text
+*.ogg -text

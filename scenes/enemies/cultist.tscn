@@ -1,0 +1,73 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/ranged_enemy.gd" id="1_ranged"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/cultist/cultist_idle.png" id="2_sprite"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="Script" path="res://scripts/combat/targeting_system.gd" id="4_targeting"]
+[ext_resource type="Script" path="res://scripts/combat/weapon.gd" id="5_weapon"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/cursed_bolt.tscn" id="6_bolt"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/cultist/cultist_walk.png" id="90_walk"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cultist"]
+radius = 15.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_range"]
+radius = 420.0
+
+[node name="Cultist" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 7
+motion_mode = 1
+script = ExtResource("1_ranged")
+move_speed = 80.0
+contact_damage = 5.0
+max_health = 34.0
+soul_value = 5
+preferred_distance = 320.0
+distance_tolerance = 45.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+texture_filter = 1
+scale = Vector2(2.0, 2.0)
+offset = Vector2(0, 4.5)
+hframes = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_cultist")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 34.0
+
+[node name="Targeting" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_targeting")
+range_radius = 420.0
+target_priority = 0
+target_group = &"player"
+
+[node name="RangeShape" type="CollisionShape2D" parent="Targeting"]
+shape = SubResource("CircleShape2D_range")
+
+[node name="Weapons" type="Node2D" parent="."]
+
+[node name="Weapon" type="Node2D" parent="Weapons"]
+script = ExtResource("5_weapon")
+projectile_scene = ExtResource("6_bolt")
+damage = 7.0
+fire_rate = 0.7
+projectile_speed = 330.0
+projectile_count = 1
+spread_deg = 0.0
+crit_chance = 0.0
+muzzle_offset = 24.0
+lead_target = false
+projectile_homing_deg = 0.0
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("91_anim")
+idle_texture = ExtResource("2_sprite")
+walk_texture = ExtResource("90_walk")

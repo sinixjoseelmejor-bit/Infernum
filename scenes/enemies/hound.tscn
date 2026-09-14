@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/dasher_enemy.gd" id="1_dasher"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/hound/hound_idle.png" id="2_sprite"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/hound/hound_walk.png" id="90_walk"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hound"]
+radius = 14.0
+
+[node name="Hound" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 7
+motion_mode = 1
+script = ExtResource("1_dasher")
+move_speed = 150.0
+acceleration = 1300.0
+contact_damage = 6.0
+contact_cooldown = 0.6
+max_health = 22.0
+soul_value = 3
+dash_trigger_distance = 260.0
+windup_duration = 0.45
+dash_speed = 620.0
+dash_duration = 0.32
+recover_duration = 0.6
+dash_damage_multiplier = 1.5
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+texture_filter = 1
+scale = Vector2(2.5, 2.5)
+offset = Vector2(0, 2.0)
+hframes = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_hound")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 22.0
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("91_anim")
+idle_texture = ExtResource("2_sprite")
+walk_texture = ExtResource("90_walk")

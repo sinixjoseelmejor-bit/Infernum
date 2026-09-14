@@ -1,0 +1,34 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+
+# Exports
+/build/
+/exports/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Assets tiers - NON versionnes.
+#
+# Les trois licences interdisent de redistribuer ou de re-televerser ces assets,
+# modifies ou non. Un depot public etant un televersement, ni les packs ni les
+# planches qu'on en tire n'y ont leur place.
+#
+# Le jeu les utilise, lui : ils sont sur le disque, simplement pas dans git.
+# Pour les regenerer apres un clone :  python tools/extract_assets.py
+# (voir l'entete du script : il faut d'abord deposer les trois packs)
+
+# Les packs d'origine
+/assets/sprites/PixelUIKit/
+/assets/sprites/Tiny RPG Character Asset Pack*/
+
+# Ce qui en est extrait
+*_idle.png*
+*_walk.png*
+/assets/sprites/ui/
+/icon.png
+/icon.png.import
+/icon.ico

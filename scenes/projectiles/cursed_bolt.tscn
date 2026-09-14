@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/projectile.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/projectiles/cursed_bolt/cursed_bolt.svg" id="2_sprite"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cursed"]
+radius = 7.0
+
+[node name="CursedBolt" type="Area2D"]
+collision_layer = 16
+collision_mask = 3
+script = ExtResource("1_script")
+speed = 330.0
+lifetime = 3.0
+homing_speed_deg = 0.0
+knockback = 60.0
+face_direction = false
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_cursed")

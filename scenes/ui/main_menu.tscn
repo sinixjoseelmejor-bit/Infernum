@@ -1,0 +1,123 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ui/character_select.tscn" id="2_charsel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/profiles.tscn" id="3_profiles"]
+[ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="4_options"]
+[ext_resource type="PackedScene" path="res://scenes/ui/forge.tscn" id="5_forge"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.09, 0.035, 0.045, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 48
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 48
+theme_override_constants/margin_bottom = 28
+
+[node name="Layout" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TopSpacer" type="Control" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.2, 1)
+theme_override_font_sizes/font_size = 72
+text = "INFERNUM"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.66, 0.64, 1)
+theme_override_font_sizes/font_size = 17
+text = "Roguelite d'action — descendez aussi loin que vous tiendrez."
+horizontal_alignment = 1
+
+[node name="MidSpacer" type="Control" parent="Margin/Layout"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+
+[node name="ButtonsCenter" type="CenterContainer" parent="Margin/Layout"]
+layout_mode = 2
+
+[node name="Buttons" type="VBoxContainer" parent="Margin/Layout/ButtonsCenter"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PlayButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "JOUER"
+
+[node name="ProfilesButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "PROFILS"
+
+[node name="OptionsButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "OPTIONS"
+
+[node name="QuitButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "QUITTER"
+
+[node name="BottomSpacer" type="Control" parent="Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MetaLabel" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.58, 0.57, 1)
+theme_override_font_sizes/font_size = 14
+text = "Profil 1"
+horizontal_alignment = 1
+
+[node name="CharacterSelect" parent="." instance=ExtResource("2_charsel")]
+unique_name_in_owner = true
+
+[node name="Profiles" parent="." instance=ExtResource("3_profiles")]
+unique_name_in_owner = true
+
+[node name="Options" parent="." instance=ExtResource("4_options")]
+unique_name_in_owner = true
+
+[node name="Forge" parent="." instance=ExtResource("5_forge")]
+unique_name_in_owner = true

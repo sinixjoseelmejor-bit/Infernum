@@ -1,0 +1,99 @@
+[gd_scene format=3 uid="uid://tgokdgch2gx2"]
+
+[ext_resource type="Script" uid="uid://bc86s38iod8l0" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://cgs1lxla4y2xq" path="res://scripts/systems/wave_manager.gd" id="3_waves"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/imp.tscn" id="4_imp"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hound.tscn" id="5_hound"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cultist.tscn" id="6_cultist"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/brute.tscn" id="7_brute"]
+[ext_resource type="Script" uid="uid://c144mxv4yonf3" path="res://scripts/systems/item_effects.gd" id="8_effects"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/shop.tscn" id="10_shop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_over.tscn" id="11_gameover"]
+[ext_resource type="PackedScene" path="res://scenes/ui/curse_select.tscn" id="12_curse"]
+[ext_resource type="PackedScene" path="res://scenes/ui/forge.tscn" id="13_forge"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/golgota.tscn" id="14_golgota"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/lilith.tscn" id="15_lilith"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/baal.tscn" id="16_baal"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/asmodee.tscn" id="17_asmodee"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/lucifer.tscn" id="18_lucifer"]
+[ext_resource type="Script" path="res://scripts/systems/character_effects.gd" id="19_charfx"]
+[ext_resource type="Texture2D" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
+[ext_resource type="Script" path="res://scripts/components/floor_tiler.gd" id="21_tiler"]
+
+[sub_resource type="Animation" id="Animation_necax"]
+resource_name = "new_animation"
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_r4lks"]
+_data = {
+&"new_animation": SubResource("Animation_necax")
+}
+
+[node name="Main" type="Node2D" unique_id=1601695417]
+script = ExtResource("1_main")
+
+[node name="Background" type="CanvasLayer" parent="." unique_id=303104740]
+layer = -10
+
+[node name="Backdrop" type="ColorRect" parent="Background" unique_id=1395687942]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.17, 0.16, 0.15, 1)
+
+[node name="Floor" type="Sprite2D" parent="." unique_id=1395687943]
+modulate = Color(0.66, 0.52, 0.5, 1)
+texture_filter = 2
+texture_repeat = 2
+z_index = -100
+texture = ExtResource("20_floor")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 6144, 6144)
+offset = Vector2(-3072, -3072)
+script = ExtResource("21_tiler")
+
+[node name="Entities" type="Node2D" parent="." unique_id=543909541]
+y_sort_enabled = true
+
+[node name="Enemies" type="Node2D" parent="Entities" unique_id=915153143 groups=["enemy_container"]]
+unique_name_in_owner = true
+
+[node name="Player" parent="Entities" unique_id=1445463700 instance=ExtResource("2_player")]
+unique_name_in_owner = true
+
+[node name="Projectiles" type="Node2D" parent="." unique_id=1809350504 groups=["projectile_container"]]
+unique_name_in_owner = true
+
+[node name="WaveManager" type="Node2D" parent="." unique_id=663288704]
+unique_name_in_owner = true
+script = ExtResource("3_waves")
+boss_scenes = Array[PackedScene]([ExtResource("14_golgota"), ExtResource("15_lilith"), ExtResource("16_baal"), ExtResource("17_asmodee"), ExtResource("18_lucifer")])
+enemy_scenes = Array[PackedScene]([ExtResource("4_imp"), ExtResource("5_hound"), ExtResource("6_cultist"), ExtResource("7_brute")])
+
+[node name="ItemEffects" type="Node" parent="." unique_id=718003909]
+script = ExtResource("8_effects")
+
+[node name="CharacterEffects" type="Node" parent="." unique_id=1631676050]
+script = ExtResource("19_charfx")
+
+[node name="HUD" parent="." unique_id=674713998 instance=ExtResource("9_hud")]
+unique_name_in_owner = true
+
+[node name="Shop" parent="." unique_id=1549976411 instance=ExtResource("10_shop")]
+unique_name_in_owner = true
+
+[node name="GameOver" parent="." unique_id=1768665651 instance=ExtResource("11_gameover")]
+unique_name_in_owner = true
+
+[node name="CurseSelect" parent="." unique_id=62151591 instance=ExtResource("12_curse")]
+unique_name_in_owner = true
+
+[node name="Forge" parent="." unique_id=2138385495 instance=ExtResource("13_forge")]
+unique_name_in_owner = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=276187787]
+libraries/ = SubResource("AnimationLibrary_r4lks")

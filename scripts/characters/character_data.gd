@@ -1,0 +1,57 @@
+class_name CharacterData
+extends Resource
+## Définition d'un personnage jouable.
+##
+## Un personnage change les VALEURS DE BASE (PV, vitesse, portée, arme), pas les
+## règles. Ses éventuels modificateurs de départ tombent dans les mêmes pools
+## plafonnés que les objets : un personnage ne peut donc pas dépasser les
+## plafonds d'équilibrage, il choisit seulement d'où l'on part.
+
+@export var id: StringName = &""
+@export var display_name: String = ""
+## Épithète affichée sous le nom.
+@export var title: String = ""
+## Étiquette d'archétype : « Dégâts », « Survie », « Mobilité ».
+@export var archetype: String = ""
+@export var description: String = ""
+@export var color: Color = Color.WHITE
+## Planches d'animation : bandes d'images carrées (repos et marche).
+@export var sprite_idle: Texture2D
+@export var sprite_walk: Texture2D
+## Première image de la planche de repos, pour les vignettes d'interface : une
+## fiche de personnage ne doit pas afficher la bande entière.
+@export var portrait: Texture2D
+## Recalage du sprite. Les planches dessinent le personnage POSÉ SUR UNE LIGNE DE
+## SOL, pas centré dans son image : sans ce décalage il est rendu au-dessus de son
+## propre cercle de collision. Mesurer la boîte opaque sur toutes les images de la
+## planche et indiquer l'écart entre son centre et celui de l'image.
+@export var sprite_offset: Vector2 = Vector2.ZERO
+## Les planches font 100 px alors que le joueur a un rayon de 17 : sans mise à
+## l'échelle le personnage serait minuscule.
+@export var sprite_scale: float = 1.0
+
+@export_group("Base")
+@export var max_health: float = 100.0
+@export var move_speed: float = 235.0
+@export var targeting_range: float = 340.0
+
+@export_group("Arme de départ")
+@export var weapon_damage: float = 12.0
+@export var weapon_fire_rate: float = 4.0
+@export var weapon_projectile_speed: float = 720.0
+@export var weapon_crit_chance: float = 0.05
+@export var weapon_crit_multiplier: float = 2.0
+
+@export_group("Départ et passif")
+## Modificateurs injectés dans PlayerStats au début de la run (mêmes plafonds).
+@export var starting_mods: Dictionary = {}
+@export var passive_name: String = ""
+@export var passive_description: String = ""
+## Identifiant lu par `character_effects.gd`. Vide = pas de passif scripté.
+@export var special: StringName = &""
+
+
+## DPS théorique de départ, pour l'affichage comparatif du menu.
+func get_base_dps() -> float:
+	var crit := 1.0 + weapon_crit_chance * (weapon_crit_multiplier - 1.0)
+	return weapon_damage * weapon_fire_rate * crit
