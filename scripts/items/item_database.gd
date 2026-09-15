@@ -132,7 +132,7 @@ const ITEMS: Array[Dictionary] = [
 	},
 	{
 		"id": &"longinus_lance", "name": "Lance de Longin", "rarity": 2,
-		"desc": "Le fer qui a percé le flanc. Les traits ne s'arrêtent plus au premier corps.",
+		"desc": "Le fer qui a percé le flanc. Les traits ne s'arrêtent plus au premier corps : ils cherchent le suivant.",
 		"mods": {"pierce": 1, "fire_rate_pct": -0.08},
 		"max_stacks": 2,
 	},

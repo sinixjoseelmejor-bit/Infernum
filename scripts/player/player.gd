@@ -151,6 +151,12 @@ func apply_stats(stats: PlayerStats) -> void:
 
 
 ## Point d'entrée unique des dégâts (projectiles et contact).
+## Soin externe (butin, fin de vague). Le plafonnement aux PV max et le cas
+## « déjà mort » sont gérés par `Health` : rien à vérifier ici.
+func heal(amount: float) -> void:
+	health.heal(amount)
+
+
 func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2.ZERO) -> void:
 	var reduced := amount * (1.0 - RunState.stats.get_damage_reduction())
 	if not health.take_damage(reduced, source):

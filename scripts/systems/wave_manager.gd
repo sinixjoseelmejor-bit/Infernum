@@ -8,7 +8,7 @@ extends Node2D
 ## du joueur monte elle aussi de façon plafonnée : les deux courbes restent
 ## comparables au lieu de diverger.
 
-enum State { IDLE, RUNNING, INTERMISSION }
+enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 
 @export_group("Rythme des vagues")
 @export var wave_base_duration: float = 20.0
@@ -16,6 +16,22 @@ enum State { IDLE, RUNNING, INTERMISSION }
 @export var wave_max_duration: float = 45.0
 ## Pause après une vague survécue (la boutique s'ouvre pendant ce temps).
 @export var intermission_duration: float = 2.0
+## Garde-fou de la phase d'aspiration. Au-delà, ce qui reste est encaissé
+## d'office : la boutique ne doit JAMAIS rester fermée à cause d'une âme
+## injoignable, un blocage vaudrait bien pire qu'une âme perdue.
+@export var collect_timeout: float = 3.0
+## PV rendus à chaque vague franchie.
+##
+## Sans cela, la moindre erreur se payait jusqu'à la fin de la run : les seules
+## sources de soin étaient des objets qu'il fallait choisir au détriment des
+## dégâts. Une run pouvait être condamnée dès la vague 6 sans l'être vraiment,
+## le joueur traînant vingt vagues avec 12 PV. C'est un plancher de confort,
+## pas une régénération : 5 PV ne rattrapent pas une vague mal jouée.
+@export var wave_clear_heal: float = 5.0
+## Soin supplémentaire à la mort d'un boss, en fraction des PV max. Un boss se
+## gagne rarement intact : sans cela, le survivre laissait entamer la vague
+## suivante avec les restes, et la punition dépassait de loin la récompense.
+@export_range(0.0, 1.0, 0.05) var boss_clear_heal_ratio: float = 0.25
 @export var first_wave_delay: float = 1.5
 
 @export_group("Densité")
@@ -75,6 +91,7 @@ var target: Node2D
 var container: Node
 
 var state: State = State.IDLE
+var _collect_time: float = 0.0
 var wave: int = 0
 var time_left: float = 0.0
 
@@ -107,6 +124,8 @@ func _process(delta: float) -> void:
 	match state:
 		State.RUNNING:
 			_process_wave(delta)
+		State.COLLECTING:
+			_process_collect(delta)
 		State.INTERMISSION:
 			time_left = maxf(0.0, time_left - delta)
 			if time_left <= 0.0:
@@ -153,6 +172,7 @@ func _begin_wave() -> void:
 	time_left = 0.0 if is_boss_wave() else get_wave_duration()
 	_spawn_accumulator = 0.0
 	_boss = null
+	DropSystem.reset_wave_budget()
 	GameEvents.wave_started.emit(wave)
 	if is_boss_wave():
 		_spawn_boss()
@@ -179,23 +199,85 @@ func _spawn_boss() -> void:
 	_boss = boss
 
 
+## La vague tombe : on nettoie, on verse la clé, puis on ASPIRE le butin. La
+## boutique n'ouvrira qu'une fois la carte vide — voir `_process_collect`.
 func _end_wave() -> void:
-	state = State.INTERMISSION
-	time_left = intermission_duration
-	_clear_remaining_enemies()
-	GameEvents.wave_cleared.emit(wave)
+	state = State.COLLECTING
+	_collect_time = 0.0
+	_clear_leftovers()
+	if is_instance_valid(target) and target.has_method(&"heal"):
+		var amount := wave_clear_heal
+		if is_boss_wave() and boss_clear_heal_ratio > 0.0:
+			var hp := target.get(&"health") as Health
+			if hp != null:
+				amount += hp.max_health * boss_clear_heal_ratio
+		if amount > 0.0:
+			target.call(&"heal", amount)
 	# Une clé garantie toutes les 5 vagues : le joueur régulier progresse même
 	# sans dépendre du drop aléatoire des élites.
 	if wave % 5 == 0:
 		RunState.add_keys(1)
 
 
+## TOUT LE BUTIN REJOINT LE JOUEUR AVANT LA BOUTIQUE.
+##
+## Les âmes au sol n'étaient PAS perdues — vérifié : elles survivent au nettoyage
+## de fin de vague et à la vague suivante, sans durée de vie. Le problème était
+## autre : elles n'étaient pas DÉPENSABLES à la boutique qui venait de s'ouvrir.
+## Elles attendaient que le joueur repasse dessus pendant la vague suivante, et
+## ne comptaient qu'à la boutique d'après. Le joueur devait donc arbitrer entre
+## finir sa tournée de ramassage et se battre, ce qui punissait surtout les fins
+## de vague chargées — celles où il y a le plus à ramasser.
+##
+## L'appel est répété à chaque image plutôt que fait une fois : du butin peut
+## encore apparaître après l'appel initial, un ennemi mourant au même instant
+## déposant ses âmes en différé.
+func _process_collect(delta: float) -> void:
+	_collect_time += delta
+	var pickups := get_tree().get_nodes_in_group(Groups.PICKUPS)
+	if pickups.is_empty():
+		_start_intermission()
+		return
+
+	var expired := _collect_time >= collect_timeout
+	for pickup in pickups:
+		if not (pickup is Pickup):
+			continue
+		if expired:
+			(pickup as Pickup).collect()
+		else:
+			(pickup as Pickup).rush()
+	if expired:
+		_start_intermission()
+
+
+func _start_intermission() -> void:
+	state = State.INTERMISSION
+	time_left = intermission_duration
+	GameEvents.wave_cleared.emit(wave)
+
+
 ## Les survivants de la vague sont dissipés — sans récompense, pour ne pas
 ## transformer la fin de vague en distributeur d'âmes gratuit.
-func _clear_remaining_enemies() -> void:
+##
+## LES TIRS ET LES ZONES AUSSI, et c'est le point important. La boutique met
+## l'arbre en pause : un trait de cultiste ou une zone de boss encore en l'air
+## quand la vague tombe y reste figé, puis repart à la fermeture de la
+## boutique — sur un joueur qui regardait l'interface et n'a aucun moyen de
+## l'anticiper. La durée de vie des projectiles ne le sauve pas : son minuteur
+## est gelé lui aussi, donc ils attendent aussi longtemps que la boutique reste
+## ouverte. Mesuré avant correction : six traits en vol, 3 s de boutique, et le
+## joueur encaissait à la réouverture sans avoir rien fait.
+##
+## Le conteneur ne porte QUE des projectiles et des télégraphes ; les âmes non
+## ramassées sont enfants du conteneur d'ennemis et survivent, comme il se doit.
+func _clear_leftovers() -> void:
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
 		if enemy is Node2D:
 			(enemy as Node2D).queue_free()
+	for container in get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER):
+		for child in container.get_children():
+			child.queue_free()
 
 
 # --- Courbes de difficulté (toutes additives) ---

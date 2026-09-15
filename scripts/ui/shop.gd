@@ -7,8 +7,19 @@ extends CanvasLayer
 ## simultanée de tous les stats multiplicatifs.
 
 const OFFER_SIZE := 4
-const REROLL_BASE_COST := 12
-const REROLL_COST_GROWTH := 12
+## Coût d'une relance, remis à zéro à chaque ouverture de boutique.
+##
+## Les deux premières sont presque offertes : elles servent à ne pas rester
+## bloqué sur une offre entièrement hors sujet, ce qui est du gâchis de tour,
+## pas un choix. La troisième change de registre — au-delà, relancer se paie.
+##
+## Ce n'est PAS un robinet à puissance : une relance ne donne pas d'âme, donc
+## pas d'objet en plus. Le nombre d'achats par vague reste tenu par le prix des
+## objets (`COST_PER_OWNED_ITEM`), que ceci ne touche pas. Ce qu'on achète ici,
+## c'est de la précision de build.
+const REROLL_COSTS: Array[int] = [1, 2, 10, 20]
+## Au-delà de la table, doublement — dans la continuité du 10 -> 20.
+const REROLL_COST_GROWTH := 2.0
 ## Les prix suivent DEUX courbes, parce que le revenu en âmes croît beaucoup plus
 ## vite que la difficulté : le nombre d'ennemis par vague est multiplié par ~14
 ## entre les vagues 1 et 20, et la valeur unitaire monte encore avec les élites.
@@ -95,7 +106,10 @@ func get_item_cost(item: ItemData) -> int:
 
 
 func get_reroll_cost() -> int:
-	return REROLL_BASE_COST + REROLL_COST_GROWTH * _rerolls
+	if _rerolls < REROLL_COSTS.size():
+		return REROLL_COSTS[_rerolls]
+	var beyond := _rerolls - REROLL_COSTS.size() + 1
+	return roundi(REROLL_COSTS[-1] * pow(REROLL_COST_GROWTH, beyond))
 
 
 func _roll_offer() -> void:

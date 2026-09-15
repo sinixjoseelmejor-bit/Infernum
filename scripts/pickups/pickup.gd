@@ -30,7 +30,7 @@ extends Area2D
 ## fallait aller marcher dessus un par un — 75 % de ramassage sur 90 s de jeu.
 ## À 180 px : 89 %.
 
-enum Kind { SOULS, KEYS }
+enum Kind { SOULS, KEYS, HEAL }
 
 @export var kind: Kind = Kind.SOULS
 @export var value: int = 1
@@ -54,6 +54,14 @@ enum Kind { SOULS, KEYS }
 ## Délai avant que le butin puisse être attiré (petit effet d'éjection).
 @export var settle_time: float = 0.15
 @export var spawn_impulse: float = 90.0
+
+@export_group("Soin")
+## Fraction des PV MAX rendue, plutôt qu'un montant fixe : les objets de vie font
+## monter le maximum jusqu'à le doubler, un soin plat deviendrait dérisoire en
+## fin de run — exactement là où il sert.
+@export_range(0.0, 1.0, 0.01) var heal_ratio: float = 0.10
+## Plancher, pour que le soin reste lisible sur un personnage fragile.
+@export var heal_minimum: float = 8.0
 
 var _velocity: Vector2 = Vector2.ZERO
 var _timer: float = 0.0
@@ -110,6 +118,20 @@ func _physics_process(delta: float) -> void:
 	global_position += _velocity * delta
 
 
+## ASPIRATION DE FIN DE VAGUE. L'accroche est forcée quelle que soit la distance,
+## et la poursuite démarre déjà lancée : le rayon d'accroche n'a plus de sens ici,
+## on ne cherche pas à récompenser la proximité mais à ne rien laisser au sol.
+## Appelée à chaque image tant que la collecte dure — d'où les `maxf`, qui la
+## rendent idempotente et n'annulent jamais l'élan déjà pris.
+func rush(speed: float = 1400.0) -> void:
+	if _collected:
+		return
+	_latched = true
+	_timer = maxf(_timer, settle_time)
+	max_magnet_speed = maxf(max_magnet_speed, speed)
+	_chase_speed = maxf(_chase_speed, min_magnet_speed * 2.0)
+
+
 func get_magnet_radius() -> float:
 	return base_magnet_radius * (1.0 + RunState.stats.get_pickup_radius_pct())
 
@@ -131,6 +153,11 @@ func collect() -> void:
 			RunState.add_souls(gain)
 		Kind.KEYS:
 			RunState.add_keys(value)
+		Kind.HEAL:
+			var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
+			if player != null and not player.health.is_dead:
+				player.health.heal(maxf(heal_minimum,
+					player.health.max_health * heal_ratio))
 	set_physics_process(false)
 	set_deferred(&"monitoring", false)
 	queue_free()

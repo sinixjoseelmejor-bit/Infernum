@@ -13,6 +13,11 @@ extends Area2D
 ## (1 - taxe), le troisième (1 - taxe)², etc. Un projectile perforant ne doit pas
 ## valoir autant de dégâts par ennemi que deux tirs séparés.
 @export_range(0.0, 0.9, 0.05) var pierce_falloff: float = 0.0
+## Après avoir traversé un corps, le trait se braque sur le suivant.
+@export var redirect_on_pierce: bool = true
+## Portée de cette recherche. Sans borne, un trait pouvait faire demi-tour et
+## retraverser tout l'écran à l'envers pour aller chercher un retardataire.
+@export var pierce_seek_radius: float = 520.0
 ## Correction de trajectoire vers la cible, en degrés/seconde (aide à la visée).
 @export var homing_speed_deg: float = 0.0
 @export var knockback: float = 140.0
@@ -84,8 +89,39 @@ func _resolve_hit(node: Node2D) -> void:
 
 	if _remaining_pierce > 0:
 		_remaining_pierce -= 1
+		# On ne se rebraque QUE sur ce qu'on vient de traverser : un projectile
+		# ennemi perforant irait sinon chasser les ennemis.
+		if redirect_on_pierce and node.is_in_group(Groups.ENEMIES):
+			_seek_next()
 	else:
 		_despawn()
+
+
+## Cible la plus proche PARMI CELLES PAS ENCORE TOUCHÉES. L'exclusion n'est pas
+## un détail : `_hit` empêche déjà de blesser deux fois le même corps, mais sans
+## elle le trait se rebraquait sur celui qu'il venait de traverser et restait
+## collé dedans — il dépensait ses perforations sans toucher personne d'autre.
+func _seek_next() -> void:
+	var best: Node2D = null
+	var best_distance := pierce_seek_radius
+	for candidate in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		if not (candidate is Node2D):
+			continue
+		var enemy := candidate as Node2D
+		if enemy.is_queued_for_deletion() or _hit.has(enemy.get_instance_id()):
+			continue
+		var distance := global_position.distance_to(enemy.global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = enemy
+	if best == null:
+		return
+	# Braquage SEC, pas une correction progressive : à 720 px/s le trait a déjà
+	# quitté la mêlée avant qu'un virage doux ne l'ait réorienté.
+	target = best
+	direction = (best.global_position - global_position).normalized()
+	if face_direction:
+		rotation = direction.angle()
 
 
 func _despawn() -> void:

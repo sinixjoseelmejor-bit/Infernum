@@ -23,6 +23,7 @@ extends CharacterBody2D
 @export var soul_value: int = 3
 ## Chance de lâcher une clé. Réservé aux élites : 0 sur les ennemis normaux.
 @export_range(0.0, 1.0, 0.01) var key_chance: float = 0.0
+@export_range(0.0, 1.0, 0.01) var heal_chance: float = 0.0
 
 @export_group("Élite")
 @export var elite_health_multiplier: float = 4.0
@@ -32,6 +33,9 @@ extends CharacterBody2D
 ## 6 % par élite faisaient tomber ~40 clés sur une run allant à la vague 20,
 ## alors que la Forge entière en coûte 42 : l'arbre se terminait en deux runs.
 @export var elite_key_chance: float = 0.02
+## Chance qu'une élite laisse un soin. Seules les élites en laissent : un
+## ennemi de base est trop nombreux pour porter une ressource de survie.
+@export_range(0.0, 1.0, 0.01) var elite_heal_chance: float = 0.08
 @export var elite_tint: Color = Color(1.35, 0.75, 1.3)
 
 @onready var health: Health = $Health
@@ -70,6 +74,7 @@ func make_elite() -> void:
 	contact_damage *= elite_damage_multiplier
 	soul_value *= elite_soul_multiplier
 	key_chance = maxf(key_chance, elite_key_chance)
+	heal_chance = maxf(heal_chance, elite_heal_chance)
 	scale *= elite_scale
 
 
@@ -134,6 +139,6 @@ func _flash() -> void:
 
 
 func _on_died(_source: Node) -> void:
-	DropSystem.spawn_drops(get_parent(), global_position, soul_value, key_chance)
+	DropSystem.spawn_drops(get_parent(), global_position, soul_value, key_chance, heal_chance)
 	GameEvents.enemy_died.emit(self, global_position)
 	queue_free()

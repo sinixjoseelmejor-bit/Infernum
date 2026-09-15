@@ -58,7 +58,7 @@ Le HUD affiche en permanence : vie, **numéro de vague**, **minuteur de la vague
 | PV ennemis | `× (1 + 0.14 × (vague-1))` | **additif**, pas composé |
 | Dégâts ennemis | `× (1 + 0.11 × (vague-1))` | la seule courbe qui rend la fin de run dangereuse |
 | Vitesse ennemis | `× (1 + 0.015 × (vague-1))`, max ×1.35 | |
-| Élites | à partir de la vague 4, jusqu'à 18 % (31,5 % avec options) | PV ×4, âmes ×2, 2 % de clé |
+| Élites | à partir de la vague 4, jusqu'à 18 % (31,5 % avec options) | PV ×4, âmes ×2, 2 % de clé, 8 % de soin |
 | Boss | PV `× (1 + 0.09 × (vague − 5))` | sinon ils tombaient en 4 s en fin de run |
 
 Les i-frames du joueur (0,4 s) bornent les dégâts entrants à **2,5 coups par
@@ -73,6 +73,99 @@ pas ×13.7 comme le donnerait un `×1.14` composé par vague. La puissance du jo
 
 Les ennemis survivants sont dissipés en fin de vague, sans récompense — sinon la fin
 de vague devient un distributeur d'âmes gratuit.
+
+**Les tirs et les zones en cours sont dissipés aussi**, et c'est moins évident. La
+boutique met l'arbre en pause : un trait de cultiste ou une zone de boss encore
+en l'air quand la vague tombe y reste figé, puis repart à la fermeture de la
+boutique — sur un joueur qui regardait l'interface et n'a aucun moyen de
+l'anticiper. La durée de vie des projectiles ne l'en sauve pas : son minuteur est
+gelé lui aussi, donc ils attendent aussi longtemps que la boutique reste ouverte.
+
+Mesuré avant correction : six traits en vol, 3 s de boutique, **10 dégâts
+encaissés à la réouverture sans que le joueur ait rien fait**. Après : zéro.
+Le conteneur ne porte que des projectiles et des télégraphes ; les âmes non
+ramassées sont enfants du conteneur d'ennemis et survivent, comme il se doit.
+
+### Le soin
+
+Deux sources, aucune autre. Il n'y avait rien auparavant : la moindre erreur se
+payait jusqu'à la fin de la run, et une partie pouvait être condamnée dès la
+vague 6 sans l'être vraiment — le joueur traînait quinze vagues avec 12 PV.
+
+- **5 PV par vague franchie.** Un plancher de confort, pas une régénération :
+  5 PV ne rattrapent pas une vague mal jouée.
+- **25 % des PV max en plus à la mort d'un boss.** Un boss se gagne rarement
+  intact ; sans cela, le survivre revenait à entamer la suite avec les restes, et
+  la punition dépassait de loin la récompense. Vérifié : 20 → 46 PV sur 85 max,
+  soit les 5 PV de vague plus 21 du boss.
+- **Les élites laissent un soin dans 8 % des cas**, rendant 10 % des PV **max**
+  (plancher à 8 PV). En pourcentage et non en plat, parce que les objets de vie
+  peuvent doubler le maximum : un soin fixe deviendrait dérisoire là où il sert.
+
+#### Le plafond est la pièce importante
+
+Le nombre d'élites par vague passe de 2 à la vague 5 à **86 à la vague 25** : une
+simple probabilité par élite ferait du soin une ressource quarante fois plus
+abondante en fin de partie qu'au début, précisément là où le jeu doit mordre.
+D'où un plafond de **2 soins par vague**. Mesuré :
+
+| Vague | Élites | Soins/vague | PV rendus | + régen | Total |
+|---|---|---|---|---|---|
+| 2 | 0 | 0 | 0 % | 5 | **5 %** |
+| 5 | 1,9 | 0,16 | 1,6 % | 5 | **6,6 %** |
+| 10 | 14,8 | 1,08 | 10,8 % | 5 | **15,8 %** |
+| 15 | 41,9 | 1,84 | 18,4 % | 5 | **23,4 %** |
+| 25 | 86,2 | 1,99 | 19,9 % | 5 | **24,9 %** |
+
+Sans le plafond, la même courbe donnait **56 % des PV max par vague à la
+vague 20** et 69 % à la vague 25 — le joueur se serait soigné plus vite qu'il ne
+pouvait être touché.
+
+Avec le plafond, la courbe monte puis se stabilise à un quart des PV max par
+vague. À la vague 20 un brute frappe pour 49 : un quart des PV max, c'est **une
+demi-touche de brute par vague**. De quoi absorber une erreur, pas une mauvaise
+passe.
+
+#### Ce qui n'a délibérément pas été branché
+
+Le soin n'est **pas** multiplié par les malédictions ni par les pactes,
+contrairement aux clés. Ces systèmes sont déjà les canaux de puissance du jeu ;
+y brancher la survie en ouvrirait un cinquième, et celui-là annulerait
+directement la difficulté qu'ils sont censés ajouter.
+
+Le surplus est perdu : ramasser un soin à pleins PV ne met rien en réserve.
+C'est ce qui empêche de thésauriser les soins au sol pour les prendre au moment
+idéal — ils sont d'ailleurs aspirés en fin de vague comme le reste du butin.
+
+### L'aspiration de fin de vague
+
+La boutique n'ouvre pas à la seconde où la vague tombe. Entre les deux, un état
+`COLLECTING` : **tout le butin encore au sol fonce vers le joueur**, et la
+boutique attend la carte vide.
+
+Les âmes au sol n'étaient pas perdues pour autant — vérifié, elles survivent au
+nettoyage de fin de vague et à la vague suivante, elles n'ont aucune durée de
+vie. Le problème était qu'elles n'étaient pas **dépensables** à la boutique qui
+venait de s'ouvrir : elles attendaient que le joueur repasse dessus pendant la
+vague suivante et ne comptaient qu'à la boutique d'après. Il fallait donc
+arbitrer entre finir sa tournée de ramassage et se battre — ce qui punissait
+surtout les fins de vague chargées, celles où il y a le plus à ramasser.
+
+L'aspiration force l'accroche quel que soit le rayon et pousse la poursuite à
+1 400 px/s. Mesuré, joueur immobile, trente âmes semées de 80 à 1 500 px :
+**30 sur 30 récupérées, boutique ouverte 1,37 s après la fin de vague**.
+
+Deux détails qui comptent :
+
+- L'ordre de nettoyage. Ennemis et projectiles sont dissipés **avant** la
+  collecte, pas après : le joueur traverse cette seconde et demie sans pouvoir
+  être touché.
+- Un garde-fou de 3 s. Au-delà, ce qui reste est encaissé d'office. Une boutique
+  qui ne s'ouvre jamais à cause d'une âme injoignable serait bien pire qu'une âme
+  ramassée à distance.
+
+L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
+instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
 ### Ennemis — 4 comportements
 
@@ -257,6 +350,27 @@ vague 10 contre ×0.73 pour la run de référence, c'est-à-dire que le mode « 
 difficile » était le seul à tenir la cadence. Le revenu montait ×6 pendant que la
 difficulté montait ×1.6. Elle reste la plus puissante — c'est sa raison d'être —
 mais elle ne dispense plus d'esquiver.
+
+### Relancer la boutique
+
+Le coût repart de zéro à chaque ouverture, et monte vite :
+
+| Relance | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Coût | 1 | 2 | 10 | 20 | 40 | 80 | 160 | 320 |
+| Cumul | 1 | 3 | 13 | 33 | 73 | 153 | 313 | 633 |
+
+Les deux premières sont presque offertes : elles servent à ne pas rester bloqué
+sur une offre entièrement hors sujet, ce qui est du gâchis de tour et non un
+choix. La troisième change de registre, et au-delà le doublement rend le
+défilement du catalogue hors de prix.
+
+**Ce n'est pas un robinet à puissance.** Une relance ne rapporte aucune âme,
+donc aucun objet supplémentaire : le nombre d'achats par vague reste tenu par le
+prix des objets ci-dessus, que ceci ne touche pas. Ce qu'on achète ici, c'est de
+la précision de build — et ça se mesure : sur 2 000 runs simulées, un objet
+épique donné apparaît pour la première fois **vague 9,5 sans relance, vague 4,4
+avec deux relances par boutique**.
 
 ### Durée de run visée
 
@@ -581,6 +695,41 @@ Avec son malus de −8 % de cadence par pile, l'objet vaut ~+23 % net à une pil
 visiblement moins que la première, ce qui est exactement le comportement
 recherché.
 
+#### Le trait cherche le corps suivant
+
+Un trait perforant continuait tout droit. Sur des ennemis **dispersés**, il ne
+rencontrait donc presque jamais de deuxième corps : mesuré, huit ennemis semés au
+hasard, le trait en touchait **0,63 par tir quel que soit le niveau de
+perforation** — l'objet ne faisait littéralement rien tant que la mêlée ne
+s'alignait pas d'elle-même.
+
+Après chaque corps traversé, le trait se braque donc sur l'ennemi le plus proche
+dans un rayon de 520 px. Même semis des deux côtés :
+
+| Perforation | Sans braquage | Avec braquage |
+|---|---|---|
+| 1 | 0,63 | **1,08** (+73 %) |
+| 2 | 0,63 | **1,67** (+167 %) |
+| 3 | 0,63 | **2,17** (+247 %) |
+
+Ces chiffres sont le **pire cas** : les ennemis y sont éparpillés exprès. Dans
+une horde dense, les corps s'alignent d'eux-mêmes et l'écart se réduit — c'est
+pourquoi la mesure en combat réel plus haut donne +34 à +50 % de dégâts et non
++250 %. La décote de 35 % par corps s'applique toujours : le braquage fait
+atteindre les cibles, il n'augmente pas ce que chacune encaisse.
+
+Deux détails qui décident du fonctionnement :
+
+- **Les corps déjà traversés sont exclus de la recherche.** `_hit` empêche déjà
+  de blesser deux fois le même ennemi, mais sans cette exclusion le trait se
+  rebraquait sur celui qu'il venait de traverser et restait collé dedans : il
+  dépensait ses perforations sans toucher personne d'autre.
+- **Le braquage est sec, pas progressif.** À 720 px/s, un virage doux laisse le
+  trait quitter la mêlée avant d'avoir tourné.
+
+Le braquage ne s'applique qu'après avoir traversé un **ennemi** : sans cette
+condition, un projectile ennemi perforant partirait chasser les ennemis.
+
 ## Boss — un palier toutes les 5 vagues
 
 Cinq boss, dans l'ordre. Une vague de boss **ne se termine pas au chronomètre** :
@@ -883,7 +1032,7 @@ scenes/
   player/player.tscn          joueur + Targeting + Weapons + Camera
   enemies/                    imp · hound · cultist · brute
   projectiles/                hell_bolt (joueur) · cursed_bolt (ennemi)
-  pickups/                    soul · key
+  pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
   combat/                     telegraph
   ui/                         main_menu · character_select · options · profiles
