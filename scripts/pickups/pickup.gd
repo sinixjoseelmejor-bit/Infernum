@@ -56,11 +56,11 @@ enum Kind { SOULS, KEYS, HEAL }
 @export var spawn_impulse: float = 90.0
 
 @export_group("Soin")
-## Fraction des PV MAX rendue, plutôt qu'un montant fixe : les objets de vie font
-## monter le maximum jusqu'à le doubler, un soin plat deviendrait dérisoire en
-## fin de run — exactement là où il sert.
-@export_range(0.0, 1.0, 0.01) var heal_ratio: float = 0.10
-## Plancher, pour que le soin reste lisible sur un personnage fragile.
+## Soin exprimé en COUPS ENCAISSABLES à la vague courante — voir la note du
+## `WaveManager`. Un soin libellé en PV, ou même en fraction des PV max, ne suit
+## pas les dégâts ennemis et perd toute valeur en fin de partie.
+@export var heal_hits: float = 0.35
+## Plancher, pour que le soin reste lisible dans les premières vagues.
 @export var heal_minimum: float = 8.0
 
 var _velocity: Vector2 = Vector2.ZERO
@@ -132,6 +132,15 @@ func rush(speed: float = 1400.0) -> void:
 	_chase_speed = maxf(_chase_speed, min_magnet_speed * 2.0)
 
 
+## L'unité de soin vient du gestionnaire de vagues ; s'il est absent (banc,
+## scène de test), on retombe sur une valeur de première vague.
+func _hit_damage() -> float:
+	for node in get_tree().get_nodes_in_group(Groups.WAVE_MANAGER):
+		if node.has_method(&"get_hit_damage"):
+			return node.call(&"get_hit_damage")
+	return 11.0
+
+
 func get_magnet_radius() -> float:
 	return base_magnet_radius * (1.0 + RunState.stats.get_pickup_radius_pct())
 
@@ -156,8 +165,7 @@ func collect() -> void:
 		Kind.HEAL:
 			var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 			if player != null and not player.health.is_dead:
-				player.health.heal(maxf(heal_minimum,
-					player.health.max_health * heal_ratio))
+				player.health.heal(maxf(heal_minimum, heal_hits * _hit_damage()))
 	set_physics_process(false)
 	set_deferred(&"monitoring", false)
 	queue_free()

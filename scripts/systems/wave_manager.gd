@@ -20,34 +20,58 @@ enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 ## d'office : la boutique ne doit JAMAIS rester fermée à cause d'une âme
 ## injoignable, un blocage vaudrait bien pire qu'une âme perdue.
 @export var collect_timeout: float = 3.0
-## PV rendus à chaque vague franchie.
+## Soin de fin de vague, exprimé en COUPS ENCAISSABLES et non en points de vie.
+##
+## POURQUOI PAS EN PV. Mesuré sur l'ancienne valeur fixe de 5 PV : elle valait
+## 6,2 coups à la vague 3 et 0,7 à la vague 20. Les dégâts ennemis montent de
+## 11 % par vague, les PV du joueur non — un soin libellé en PV va donc
+## mécaniquement à contresens de la difficulté, généreux quand le jeu est facile
+## et dérisoire quand il mord. Libellé en coups, il garde la même valeur.
 ##
 ## Sans cela, la moindre erreur se payait jusqu'à la fin de la run : les seules
 ## sources de soin étaient des objets qu'il fallait choisir au détriment des
 ## dégâts. Une run pouvait être condamnée dès la vague 6 sans l'être vraiment,
 ## le joueur traînant vingt vagues avec 12 PV. C'est un plancher de confort,
 ## pas une régénération : 5 PV ne rattrapent pas une vague mal jouée.
-@export var wave_clear_heal: float = 5.0
-## Soin supplémentaire à la mort d'un boss, en fraction des PV max. Un boss se
-## gagne rarement intact : sans cela, le survivre laissait entamer la vague
-## suivante avec les restes, et la punition dépassait de loin la récompense.
-@export_range(0.0, 1.0, 0.05) var boss_clear_heal_ratio: float = 0.25
+@export var wave_clear_heal_hits: float = 0.5
+## Dégâts de référence d'un coup ennemi, avant multiplicateur de vague : entre
+## le chien (6) et le brute (16). Sert d'unité au soin.
+@export var reference_hit_damage: float = 11.0
+## Un boss se gagne rarement intact : sans ce supplément, le survivre revenait à
+## entamer la suite avec les restes, et la punition dépassait la récompense.
+## Soin supplémentaire à la mort d'un boss, en coups lui aussi.
+@export var boss_clear_heal_hits: float = 1.5
 @export var first_wave_delay: float = 1.5
 
 @export_group("Densité")
 @export var base_spawns_per_second: float = 0.8
-@export var spawns_per_second_growth: float = 0.22
+@export var spawns_per_second_growth: float = 0.19
 @export var max_spawns_per_second: float = 6.0
 @export var max_alive: int = 160
 
 @export_group("Difficulté")
-## Additif : +14 % des PV de base par vague écoulée.
-@export var health_growth: float = 0.14
+## Additif : +12 % des PV de base par vague écoulée.
+##
+## MESURÉ : à 14 %, la marge du joueur (ses dégâts possibles divisés par ceux
+## qu'il faudrait pour tuer tout ce qui apparaît) restait collée à 0,90 de la
+## vague 6 à la vague 21 — quinze vagues de tapis roulant, sans escalade ni
+## récompense, et 10 % de chaque vague qui survit et s'accumule jusqu'à saturer
+## l'arène. La courbe descend donc, et la montée est reportée en fin de partie.
+@export var health_growth: float = 0.10
+## Supplément appliqué à partir de `late_wave` : c'est lui qui fait retomber la
+## marge après la vague 15, pour qu'une run finisse par se conclure au lieu de
+## s'étirer indéfiniment à l'équilibre.
+@export var late_health_growth: float = 0.09
+@export var late_wave: int = 16
 ## Les i-frames du joueur (0,5 s) bornent les dégâts entrants à 2 coups/seconde :
 ## la seule courbe qui rend vraiment la fin de run dangereuse est celle-ci, et
 ## elle était la plus plate du jeu (+7 %/vague contre +14 % de PV et +27 %
 ## d'ennemis). Les PV effectifs devenaient un problème résolu dès la vague 8.
-@export var damage_growth: float = 0.11
+## MESURÉ : à 11 %, un brute élite frappait pour 79 à la vague 20 — soit un
+## joueur mort en une touche et demie, quel que soit son équipement. C'est la
+## courbe qui rend la fin de run dangereuse, elle doit mordre, mais pas
+## supprimer le droit à l'erreur.
+@export var damage_growth: float = 0.095
 @export var speed_growth: float = 0.015
 @export var max_speed_multiplier: float = 1.35
 @export var elite_start_wave: int = 4
@@ -206,13 +230,11 @@ func _end_wave() -> void:
 	_collect_time = 0.0
 	_clear_leftovers()
 	if is_instance_valid(target) and target.has_method(&"heal"):
-		var amount := wave_clear_heal
-		if is_boss_wave() and boss_clear_heal_ratio > 0.0:
-			var hp := target.get(&"health") as Health
-			if hp != null:
-				amount += hp.max_health * boss_clear_heal_ratio
-		if amount > 0.0:
-			target.call(&"heal", amount)
+		var hits := wave_clear_heal_hits
+		if is_boss_wave():
+			hits += boss_clear_heal_hits
+		if hits > 0.0:
+			target.call(&"heal", hits * get_hit_damage())
 	# Une clé garantie toutes les 5 vagues : le joueur régulier progresse même
 	# sans dépendre du drop aléatoire des élites.
 	if wave % 5 == 0:
@@ -297,6 +319,8 @@ func get_spawn_rate() -> float:
 
 func get_health_multiplier() -> float:
 	var base := 1.0 + health_growth * (wave - 1)
+	if wave >= late_wave:
+		base += late_health_growth * (wave - late_wave + 1)
 	return base * Curses.get_enemy_health_mult() * WaveMods.get_enemy_health_mult()
 
 
@@ -308,6 +332,12 @@ func get_damage_multiplier() -> float:
 func get_speed_multiplier() -> float:
 	var base := minf(1.0 + speed_growth * (wave - 1), max_speed_multiplier)
 	return base * Curses.get_enemy_speed_mult() * WaveMods.get_enemy_speed_mult()
+
+
+## Ce que coûte un coup ennemi moyen à la vague courante. C'est l'unité dans
+## laquelle le soin est libellé, et la seule qui suive la difficulté.
+func get_hit_damage() -> float:
+	return reference_hit_damage * get_damage_multiplier()
 
 
 func get_elite_chance() -> float:

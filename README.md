@@ -54,11 +54,11 @@ Le HUD affiche en permanence : vie, **numéro de vague**, **minuteur de la vague
 | Courbe | Formule | Note |
 |---|---|---|
 | Durée | `20 s + 2 s × (vague-1)`, max 45 s | |
-| Densité | `0.8 + 0.22 × (vague-1)` spawn/s, max 6 | |
-| PV ennemis | `× (1 + 0.14 × (vague-1))` | **additif**, pas composé |
-| Dégâts ennemis | `× (1 + 0.11 × (vague-1))` | la seule courbe qui rend la fin de run dangereuse |
+| Densité | `0.8 + 0.19 × (vague-1)` spawn/s, max 6 | |
+| PV ennemis | `× (1 + 0.10 × (vague-1))`, **+0.16/vague à partir de la 16** | additif ; la seconde pente fait retomber la marge en fin de run |
+| Dégâts ennemis | `× (1 + 0.095 × (vague-1))` | la seule courbe qui rend la fin de run dangereuse |
 | Vitesse ennemis | `× (1 + 0.015 × (vague-1))`, max ×1.35 | |
-| Élites | à partir de la vague 4, jusqu'à 18 % (31,5 % avec options) | PV ×4, âmes ×2, 2 % de clé, 8 % de soin |
+| Élites | à partir de la vague 4, jusqu'à 18 % (31,5 % avec options) | PV ×4, **dégâts ×1,35**, âmes ×2, 2 % de clé, 8 % de soin |
 | Boss | PV `× (1 + 0.09 × (vague − 5))` | sinon ils tombaient en 4 s en fin de run |
 
 Les i-frames du joueur (0,4 s) bornent les dégâts entrants à **2,5 coups par
@@ -92,15 +92,40 @@ Deux sources, aucune autre. Il n'y avait rien auparavant : la moindre erreur se
 payait jusqu'à la fin de la run, et une partie pouvait être condamnée dès la
 vague 6 sans l'être vraiment — le joueur traînait quinze vagues avec 12 PV.
 
-- **5 PV par vague franchie.** Un plancher de confort, pas une régénération :
-  5 PV ne rattrapent pas une vague mal jouée.
-- **25 % des PV max en plus à la mort d'un boss.** Un boss se gagne rarement
-  intact ; sans cela, le survivre revenait à entamer la suite avec les restes, et
-  la punition dépassait de loin la récompense. Vérifié : 20 → 46 PV sur 85 max,
-  soit les 5 PV de vague plus 21 du boss.
-- **Les élites laissent un soin dans 8 % des cas**, rendant 10 % des PV **max**
-  (plancher à 8 PV). En pourcentage et non en plat, parce que les objets de vie
-  peuvent doubler le maximum : un soin fixe deviendrait dérisoire là où il sert.
+Tout le soin est libellé en **coups encaissables**, jamais en points de vie —
+voir « Le soin ne se compte pas en PV » plus bas, c'est la décision structurante.
+
+- **0,5 coup par vague franchie.**
+- **1,5 coup en plus à la mort d'un boss.** Un boss se gagne rarement intact ;
+  sans cela, le survivre revenait à entamer la suite avec les restes.
+- **Les élites laissent un soin dans 8 % des cas**, valant 0,35 coup, plafonné à
+  deux par vague.
+
+#### Le soin ne se compte pas en PV
+
+C'est la décision structurante, et elle vient d'une mesure. L'ancienne valeur —
+5 PV fixes par vague, plus 10 % des PV max par soin d'élite — **valait 6,2 coups
+encaissables à la vague 3 et 0,7 à la vague 20**. Neuf fois moins, précisément là
+où le joueur en a besoin.
+
+La cause est structurelle : les dégâts ennemis montent de 9,5 % par vague, les PV
+du joueur non. Un soin libellé en points de vie, ou même en fraction des PV max,
+va donc mécaniquement à contresens de la difficulté — généreux quand le jeu est
+facile, dérisoire quand il mord.
+
+Tout le soin est donc exprimé en **coups encaissables** : `coups × dégâts de
+référence × multiplicateur de vague`. Résultat mesuré, joueur équipé comme il le
+serait à cette vague :
+
+| Vague | Coups rendus, avant | Coups rendus, après |
+|---|---|---|
+| 3 | 6,2 | 3,1 |
+| 10 | 1,0 | 1,7 |
+| 15 | 0,8 | 1,4 |
+| 20 | 0,7 | 1,4 |
+
+L'écart entre le début et la fin passe de ×9 à ×2,4. Le soin garde sa valeur là
+où il compte.
 
 #### Le plafond est la pièce importante
 
@@ -269,6 +294,52 @@ explosions ne s'enchaînent pas**, et son explosion suit les dégâts d'UN proje
 (donc taxée par le multishot, et indifférente à la cadence) : elle ne scale pas
 seule.
 
+### La passe d'équilibrage de la 0.5.0
+
+Une simulation de run sur les vraies classes — vrais ennemis, vraies courbes,
+vrais prix de boutique — a mesuré la **marge** du joueur : les dégâts qu'il peut
+produire divisés par ceux qu'il faudrait pour tuer tout ce qui apparaît. Au-dessus
+de 1 il nettoie, en dessous les ennemis s'accumulent.
+
+**Une run ne suffit pas.** Deux exécutions de la même configuration ont donné 1,22
+puis 0,42 à la vague 15 : le tirage d'objets domine tout le reste. Tout ce qui
+suit est moyenné sur **huit runs**.
+
+| Vague | 3 | 5 | 8 | 10 | 13 | 16 | 19 | 22 |
+|---|---|---|---|---|---|---|---|---|
+| Avant | 1,86 | 1,06 | 0,83 | 0,82 | 0,97 | 0,91 | 0,98 | — |
+| **Après** | 2,24 | 1,44 | 1,04 | 0,94 | 1,18 | 1,10 | 0,87 | 1,00 |
+
+Le problème n'était pas que le jeu soit dur, c'est qu'il était **plat** : de la
+vague 6 à la 21, la marge restait collée à 0,90, sans escalade ni récompense —
+quinze vagues de tapis roulant — pendant que 10 % de chaque vague survivait et
+s'accumulait jusqu'à saturer l'arène. La courbe a maintenant une forme : large au
+début, serrée au milieu, et une seconde pente de PV à partir de la vague 16 pour
+qu'une run finisse par se conclure.
+
+#### Ce que le joueur encaisse
+
+| Vague | PV max | Coup moyen / pire | Morts en (moy / pire) |
+|---|---|---|---|
+| 5 | 85 | 11 / 22 | 8,1 / 3,8 |
+| 10 | 135 | 16 / 40 | 8,6 / 3,4 |
+| 15 | 147 | 21 / 50 | 6,8 / 2,9 |
+| 22 | 177 | 30 / 65 | 5,9 / 2,7 |
+
+Le « pire » est un brute élite. Avant la passe il frappait pour **79 à la
+vague 20** — une mort en une touche et demie quel que soit l'équipement. Les
+élites doivent être une menace, pas une sentence : leur multiplicateur de dégâts
+descend de ×1,6 à ×1,35, et la courbe générale de 11 % à 9,5 % par vague.
+
+#### Ce qui reste ouvert
+
+La boutique finit encore une run de 22 vagues avec 56 piles pour 23 objets
+distincts : **tout le catalogue, au maximum d'empilement**. Le renchérissement a
+été relevé (`0.06 → 0.062` linéaire, `0.0035 → 0.0045` quadratique) mais pas assez
+pour rendre les dernières vagues décisionnelles. Le monter davantage coûtait plus
+de puissance que la baisse de PV n'en rendait — les deux courbes se combattent, et
+c'est la marge qui perdait. À reprendre séparément.
+
 ### Dispersion mesurée du pool
 
 Efficacité par âme dépensée, objets purement statistiques :
@@ -325,8 +396,8 @@ mais ne tue plus assez pour financer la suite.
 
 Le revenu en âmes croît beaucoup plus vite que la difficulté, et surtout il
 **s'auto-alimente** : plus de puissance = plus de kills = plus d'âmes. Le prix
-des objets suit donc trois termes : `base × (1 + 0.15 × vague) × (1 + 0.06 n +
-0.0035 n²)`, où `n` est le nombre d'objets déjà possédés.
+des objets suit donc trois termes : `base × (1 + 0.15 × vague) × (1 + 0.062 n +
+0.0045 n²)`, où `n` est le nombre d'objets déjà possédés.
 
 Le terme **quadratique** est le frein de la boucle. Une courbe linéaire ne la
 rattrape jamais : une run qui cumulait Forge complète, six malédictions et un

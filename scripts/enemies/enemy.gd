@@ -27,7 +27,9 @@ extends CharacterBody2D
 
 @export_group("Élite")
 @export var elite_health_multiplier: float = 4.0
-@export var elite_damage_multiplier: float = 1.6
+## Combiné à la courbe de dégâts, 1.6 faisait de l'élite un ennemi qui tue en
+## une touche en fin de partie : elle doit être une menace, pas une sentence.
+@export var elite_damage_multiplier: float = 1.35
 @export var elite_scale: float = 1.35
 @export var elite_soul_multiplier: int = 2
 ## 6 % par élite faisaient tomber ~40 clés sur une run allant à la vague 20,

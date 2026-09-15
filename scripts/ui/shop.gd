@@ -32,8 +32,12 @@ const COST_WAVE_GROWTH := 0.15
 ## puissance = plus de kills = plus d'âmes = plus de puissance. Une courbe
 ## linéaire ne rattrape jamais cette boucle, et une run cumulant malédictions et
 ## pactes de densité finissait avec 3 fois la puissance d'une run normale.
-const COST_PER_OWNED_ITEM := 0.06
-const COST_PER_OWNED_ITEM_SQ := 0.0035
+## MESURÉ : à 0.06 / 0.0035, une run de 21 vagues finissait avec 58 piles pour
+## 24 objets distincts — c'est-à-dire TOUT le catalogue au maximum d'empilement,
+## 20 000 âmes gagnées et 150 non dépensées. À partir de la vague 17 la boutique
+## cessait d'être un système de décision pour devenir un distributeur.
+const COST_PER_OWNED_ITEM := 0.062
+const COST_PER_OWNED_ITEM_SQ := 0.0045
 
 @onready var offer_row: HFlowContainer = %OfferRow
 @onready var pact_row: HFlowContainer = %PactRow

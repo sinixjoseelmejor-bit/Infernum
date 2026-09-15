@@ -70,7 +70,7 @@ unique_name_in_owner = true
 [node name="Projectiles" type="Node2D" parent="." unique_id=1809350504 groups=["projectile_container"]]
 unique_name_in_owner = true
 
-[node name="WaveManager" type="Node2D" parent="." unique_id=663288704]
+[node name="WaveManager" type="Node2D" parent="." unique_id=663288704 groups=["wave_manager"]]
 unique_name_in_owner = true
 script = ExtResource("3_waves")
 boss_scenes = Array[PackedScene]([ExtResource("14_golgota"), ExtResource("15_lilith"), ExtResource("16_baal"), ExtResource("17_asmodee"), ExtResource("18_lucifer")])
