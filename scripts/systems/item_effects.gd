@@ -9,6 +9,12 @@ extends Node
 ##   - le vol de vie est plafonné en soin par seconde, sinon cadence élevée
 ##     + multishot rendent le joueur intuable.
 
+const EXPLOSION_VFX := preload("res://scenes/vfx/explosion.tscn")
+## Largeur utile de la planche d'explosion, en pixels — mesurée sur la boîte
+## englobante de ses 29 images, pas lue sur le nom du fichier (une cellule fait
+## 120 px mais le dessin n'en occupe que 111).
+const EXPLOSION_VFX_CONTENT := 111.0
+
 @export var explosion_radius: float = 135.0
 @export var explosion_damage_ratio: float = 0.70
 @export var thorns_ratio: float = 0.30
@@ -84,6 +90,7 @@ func _explode(at: Vector2) -> void:
 	var damage := _get_reference_weapon_damage() * explosion_damage_ratio
 	if damage <= 0.0:
 		return
+	_spawn_explosion_vfx(at)
 	GameEvents.damage_dealt.emit(damage, at, false)
 	GameEvents.request_shake(3.0)
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
@@ -94,6 +101,25 @@ func _explode(at: Vector2) -> void:
 			continue
 		if node.has_method(&"apply_damage"):
 			node.call(&"apply_damage", damage, _player, Vector2.ZERO)
+
+
+## L'effet est purement décoratif, mais sa TAILLE ne l'est pas : elle est
+## calculée depuis `explosion_radius`, pour que le joueur voie la portée réelle
+## de l'explosion au lieu de la deviner. Changer le rayon change le dessin.
+##
+## Il vit dans le conteneur des projectiles : c'est le seau des objets de monde
+## éphémères, et la fin de vague le vide — un effet en cours y disparaît, ce qui
+## est exactement le comportement voulu.
+func _spawn_explosion_vfx(at: Vector2) -> void:
+	var containers := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	if containers.is_empty():
+		return
+	var vfx := EXPLOSION_VFX.instantiate() as Node2D
+	if vfx == null:
+		return
+	containers[0].add_child(vfx)
+	vfx.global_position = at
+	vfx.scale = Vector2.ONE * (explosion_radius * 2.0 / EXPLOSION_VFX_CONTENT)
 
 
 ## L'explosion suit l'arme principale : elle profite des objets de dégâts, mais

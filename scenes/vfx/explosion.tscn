@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/vfx/sprite_effect.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/vfx/Effect_pushAndStars/Effect_PuffAndStars_1_120x109.png" id="2_tex"]
+
+[node name="Explosion" type="Sprite2D"]
+z_index = 50
+texture_filter = 1
+texture = ExtResource("2_tex")
+hframes = 7
+vframes = 6
+frame = 1
+script = ExtResource("1_script")
+first_frame = 1
+last_frame = 29
+fps = 60.0

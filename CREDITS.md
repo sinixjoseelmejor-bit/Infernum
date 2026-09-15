@@ -73,6 +73,15 @@ seul lot d'assets tiers **versionné ici**, parce que sa licence l'autorise :
 Deux musiques (menus, arène) et cinq effets : tir, mort d'un ennemi, apparition
 d'un boss, objet obtenu, clic d'interface.
 
+### Effet d'explosion
+
+`assets/vfx/Effect_pushAndStars/` — planche « Puff and Stars » de **@CodeManuPro**.
+`LICENSE.txt` fourni avec l'asset : **domaine public**, usage personnel et
+commercial, aucun crédit exigé. C'est la licence la plus permissive du projet —
+elle n'impose rien, la mention est ici parce que l'auteur la dit appréciée.
+
+Utilisée pour l'explosion de *Braise éternelle*.
+
 ### Sol de l'arène
 
 `assets/sprites/arena/floor/floor.png` — carreau de 420 × 420 découpé dans une

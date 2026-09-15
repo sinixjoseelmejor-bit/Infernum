@@ -1074,11 +1074,42 @@ assets/
               chaque entité porte deux planches : <nom>_idle.png, <nom>_walk.png
               les packs sources portent un .gdignore (non importés)
   audio/      SoundEffects/ 2 musiques + 5 effets (OGG Vorbis)
-  vfx/        à remplir
+  vfx/        Effect_pushAndStars/ planche d'explosion (domaine public)
   fonts/
   README.md   planches, échelles, recalages, procédure d'ajout
 default_bus_layout.tres       bus Master · Musique · Effets
 ```
+
+## Effets visuels
+
+### L'explosion de Braise éternelle
+
+Une planche de 840 × 654, sept colonnes sur six lignes de 120 × 109. Le nom du
+fichier donne la taille des cellules, pas le reste : le contenu réel a été
+**mesuré sur la couverture alpha de chaque cellule**, et il réserve deux
+surprises.
+
+- **L'animation est continue**, lue de gauche à droite puis ligne par ligne. Ce
+  ne sont pas six variantes de sept images : la couverture monte de 0 à 32 %
+  puis retombe à 0 sur l'ensemble de la planche.
+- **13 cellules sur 42 sont vides** — une au début, douze à la fin. Les jouer
+  ferait vivre le nœud un cinquième de seconde de plus sans rien afficher.
+  [`sprite_effect.gd`](scripts/vfx/sprite_effect.gd) joue donc une **plage**,
+  ici les images 1 à 29, à 60 images/s — soit 0,48 s.
+
+La boîte englobante du dessin fait 111 × 105 px dans une cellule de 120 × 109,
+centrée à un pixel près. L'échelle n'est donc pas choisie à l'œil : elle vaut
+`rayon × 2 / 111`, ce qui donne 2,43 pour le rayon de 135 px de l'explosion.
+**Le dessin fait exactement la taille de la zone qui blesse** — le joueur voit la
+portée au lieu de la deviner, et changer `explosion_radius` change le dessin.
+
+L'effet vit dans le conteneur des projectiles : c'est le seau des objets de monde
+éphémères, et la fin de vague le vide. Un effet en cours y disparaît, ce qui est
+le comportement voulu. Il n'a aucun effet de jeu — il ne blesse rien, ne bloque
+rien, et peut être retiré à tout moment.
+
+Vérifié en jeu : l'ennemi meurt, l'effet apparaît à sa position, 270 px de
+diamètre affichés pour 135 px de rayon de dégâts, et disparaît après 29 images.
 
 ## Sprites et animation
 
