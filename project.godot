@@ -12,9 +12,9 @@ config_version=5
 
 config/name="Infernum"
 config/description="Roguelite d'action top-down — ambiance enfer/démons."
+config/version="0.2.0"
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-config/version="0.1.0"
 config/icon="res://icon.png"
 
 [autoload]

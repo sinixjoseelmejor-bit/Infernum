@@ -24,6 +24,7 @@ Ouvrir le dossier dans Godot, puis F5. Scène de départ :
 |---|---|---|---|
 | Déplacement | ZQSD/WASD + flèches | stick gauche | joystick virtuel |
 | Tir | automatique | automatique | automatique |
+| **Pause** | `Échap` | `B` | — |
 | Recommencer | `R` | — | bouton de l'écran de fin |
 
 Le joystick virtuel est masqué sur desktop. Pour le tester à la souris, passer
@@ -92,9 +93,9 @@ Le limier s'immobilise pendant son armement : la menace vient de la pression au 
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
 
-### Objets — 20 objets, 4 raretés
+### Objets — 21 objets, 4 raretés
 
-6 communes · 6 rares · 5 épiques · 3 légendaires, plus **3 objets à débloquer aux clés**.
+6 communes · 6 rares · 6 épiques · 3 légendaires, plus **3 objets à débloquer aux clés**.
 Tout est déclaré en données dans [item_database.gd](scripts/items/item_database.gd) :
 ajouter un objet purement statistique ne demande aucune ligne de code.
 
@@ -123,6 +124,7 @@ au lieu de ×3.5. [`PlayerStats`](scripts/core/player_stats.gd) additionne des
 |---|---|
 | Dégâts | +200 % |
 | Cadence | +150 % |
+| Ennemis traversés | +3 |
 | Projectiles | +4 |
 | Chance critique | 60 % |
 | Dégâts critiques | ×3.5 max (×3.2 réellement atteignable) |
@@ -329,6 +331,67 @@ intact et rien ne subsiste à vide.
 réglage pour du pixel art, et l'interface en hérite sans réglage par écran. Le
 sol de l'arène, seule texture non pixel art, repasse en linéaire sur son nœud.
 
+## Menu de pause — qui possède la pause
+
+`Échap` / `B` ouvre le menu de pause : reprendre, options, abandonner la run.
+Il met l'arbre en pause et réutilise l'écran d'options tel quel, sans le
+dupliquer.
+
+La seule difficulté est de savoir **à qui appartient la touche**. Boutique,
+malédictions et fin de run mettent déjà l'arbre en pause pendant qu'ils sont
+ouverts : un menu de pause qui s'ouvrirait par-dessus la boutique relancerait la
+partie en se refermant, boutique toujours affichée.
+
+Le test tient en une ligne — `get_tree().paused`. Si l'arbre est en pause et que
+le menu n'est pas visible, c'est qu'un autre écran la détient, et `Échap` lui
+appartient. Aucune référence croisée entre écrans, rien à mettre à jour en
+ajoutant un écran qui met en pause.
+
+L'écran d'options est le seul cas inverse : il s'ouvre *par-dessus* le menu de
+pause, donc c'est lui qui doit consommer `Échap` en premier. Il est placé après
+le menu dans l'arbre (l'entrée non gérée remonte les frères à l'envers) et le
+menu s'efface tant que les options sont visibles. En les refermant, le menu
+**reprend le focus** : sans ça il restait visible mais sans rien à quoi la
+manette puisse s'accrocher.
+
+Vérifié, entrées simulées : ouverture et fermeture par `Échap`, options
+par-dessus puis refermées sans fermer le menu, et `Échap` avec la boutique
+ouverte qui ferme bien la boutique sans ouvrir le menu.
+
+## Le focus doit survivre à une reconstruction
+
+La Forge et l'écran de fin de run se reconstruisent sur signal : débloquer un
+nœud émet `keys_changed`, puis `node_unlocked`, et chaque signal relançait un
+`refresh()` complet. Trois conséquences, toutes mesurées :
+
+- l'écran était reconstruit **trois fois par clic** ;
+- le bouton qu'on venait de presser était **détruit pendant l'exécution de son
+  propre signal** ;
+- le porteur du focus partait avec lui, donc **plus rien n'avait le focus**.
+
+À la souris ça ne se voit pas. À la manette, l'écran devenait un cul-de-sac : la
+navigation directionnelle n'a plus de point de départ, et il fallait reprendre la
+souris pour en sortir. C'est exactement le symptôme remonté.
+
+Deux corrections :
+
+1. **Reconstruction différée et dédoublonnée.** Un drapeau et un
+   `call_deferred` : une seule reconstruction, à la fin de la frame, donc plus
+   jamais pendant le signal qui l'a déclenchée.
+2. **Le focus est capturé puis rendu.** `UIUtils.capture_focus` retient le NOM du
+   contrôle focalisé et son RANG parmi les contrôles atteignables ;
+   `restore_focus` rend le focus au même nom, sinon au voisin de même rang,
+   sinon au bouton de repli. Les boutons portent donc un nom stable
+   (`noeud_<id>`, `objet_<id>`).
+
+Au passage, un bouton désactivé passe en `FOCUS_NONE` : sans ça, traverser la
+Forge au stick obligeait à parcourir les douze nœuds verrouillés pour atteindre
+le seul qu'on pouvait ouvrir.
+
+Vérifié : après déblocage d'un nœud puis d'un objet, le focus atterrit sur un
+bouton voisin encore actionnable, et il reste au moins un contrôle atteignable
+même lorsque tout est déjà débloqué.
+
 ## Mise en page des écrans
 
 Tous les panneaux suivent la même règle, et elle vaut d'être écrite parce que
@@ -484,6 +547,37 @@ remise en route) et le sprite revient au neutre par interpolation.
 
 Contrepartie assumée : faire tourner du pixel art l'échantillonne en biais et
 crénèle légèrement les contours. À 9° ça reste propre ; au-delà, ça se voit.
+
+### La perforation — mesurée, pas estimée
+
+**Lance de Longin** (épique, 2 piles) fait traverser les corps aux projectiles :
+au lieu de s'arrêter au premier ennemi, le trait continue et frappe les suivants.
+
+C'est un multiplicateur de DPS, comme le multishot, et dans un jeu de horde les
+cibles s'alignent en permanence. Il est donc **plafonné** (3 corps traversés) et
+**taxé** : chaque corps traversé encaisse 35 % de moins que le précédent —
+100 %, 65 %, 42 %, 27 %. Sans cette décote, un seul objet vaudrait plus que
+n'importe quel autre du catalogue, gratuitement.
+
+Mesuré en vague 12, build et densité identiques, 60 s de jeu :
+
+| Perforation | Dégâts infligés | Gain | Impacts | Ennemis touchés |
+|---|---|---|---|---|
+| 0 | 3 180 | — | 331 | — |
+| 1 | 4 264 | **+34 %** | 501 | ×1,51 |
+| 2 | 4 777 | **+50 %** | 611 | ×1,85 |
+| 3 | 4 622 | +45 % | 648 | ×1,96 |
+
+Deux choses se lisent là-dedans. Le nombre d'ennemis touchés monte bien à ×1,96 —
+l'objet fait ce qu'il promet, il frappe plus de monde à la fois. Mais le gain en
+dégâts sature vers +50 % : la décote fait que le troisième et le quatrième corps
+ne rapportent presque plus rien.
+
+Avec son malus de −8 % de cadence par pile, l'objet vaut ~+23 % net à une pile et
+~+26 % à deux. Il se range donc juste à côté de Cœur de forge (+38 % de dégâts,
+−10 % de cadence) au lieu de l'écraser — et empiler la seconde pile rapporte
+visiblement moins que la première, ce qui est exactement le comportement
+recherché.
 
 ## Boss — un palier toutes les 5 vagues
 

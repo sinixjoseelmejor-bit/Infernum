@@ -9,6 +9,10 @@ extends Area2D
 @export var lifetime: float = 1.6
 ## Nombre d'ennemis traversés en plus du premier.
 @export var pierce: int = 0
+## Décote cumulative par corps traversé : le deuxième ennemi touché encaisse
+## (1 - taxe), le troisième (1 - taxe)², etc. Un projectile perforant ne doit pas
+## valoir autant de dégâts par ennemi que deux tirs séparés.
+@export_range(0.0, 0.9, 0.05) var pierce_falloff: float = 0.0
 ## Correction de trajectoire vers la cible, en degrés/seconde (aide à la visée).
 @export var homing_speed_deg: float = 0.0
 @export var knockback: float = 140.0
@@ -72,10 +76,11 @@ func _resolve_hit(node: Node2D) -> void:
 	# La source peut avoir été libérée entre le tir et l'impact (tireur tué en
 	# vol) : passer une référence morte lève une erreur de type côté appelé.
 	var origin: Node = source if is_instance_valid(source) else null
-	node.call(&"apply_damage", damage, origin, direction * knockback)
-	GameEvents.damage_dealt.emit(damage, global_position, is_crit)
+	var dealt := damage * pow(1.0 - pierce_falloff, float(_hit.size() - 1))
+	node.call(&"apply_damage", dealt, origin, direction * knockback)
+	GameEvents.damage_dealt.emit(dealt, global_position, is_crit)
 	if origin != null and origin.is_in_group(Groups.PLAYER):
-		GameEvents.player_damage_dealt.emit(damage, node)
+		GameEvents.player_damage_dealt.emit(dealt, node)
 
 	if _remaining_pierce > 0:
 		_remaining_pierce -= 1

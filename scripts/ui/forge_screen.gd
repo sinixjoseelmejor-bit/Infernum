@@ -10,6 +10,8 @@ extends CanvasLayer
 @onready var items_list: VBoxContainer = %ForgeItemsList
 @onready var close_button: Button = %ForgeCloseButton
 
+var _refresh_queued: bool = false
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -21,8 +23,14 @@ func _ready() -> void:
 
 func open() -> void:
 	visible = true
-	refresh()
-	close_button.grab_focus()
+	_rebuild()
+	# Premier nœud ouvrable plutôt que « Retour » : à la manette, on arrive là
+	# où il y a quelque chose à faire.
+	var reachable := UIUtils.focusable_controls(self)
+	if reachable.is_empty():
+		close_button.grab_focus()
+	else:
+		reachable[0].grab_focus()
 
 
 func close() -> void:
@@ -39,7 +47,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		close()
 
 
+## Débloquer un nœud émet `keys_changed` PUIS `node_unlocked` : reconstruire à
+## chaque signal, c'est reconstruire trois fois par clic, et détruire le bouton
+## pressé pendant l'exécution de son propre signal. On diffère à la fin de la
+## frame et on ne reconstruit qu'une fois.
 func refresh() -> void:
+	if _refresh_queued:
+		return
+	_refresh_queued = true
+	_rebuild.call_deferred()
+
+
+func _rebuild() -> void:
+	_refresh_queued = false
+	var keep := UIUtils.capture_focus(self)
 	var progress := Forge.get_progress()
 	keys_label.text = "Clés : %d" % SaveGame.banked_keys
 	progress_label.text = "Forge %d / %d nœuds  ·  %d clés pour tout ouvrir" % [
@@ -58,6 +79,8 @@ func refresh() -> void:
 	else:
 		for item in locked:
 			items_list.add_child(_build_item_row(item))
+
+	UIUtils.restore_focus(self, keep, close_button)
 
 
 func _build_branch(branch: String) -> Control:
@@ -112,6 +135,8 @@ func _build_node_row(node: Dictionary) -> Control:
 	box.add_child(effect)
 
 	var button := Button.new()
+	# Nom stable : c'est par lui que le focus se retrouve après reconstruction.
+	button.name = "noeud_%s" % id
 	if unlocked:
 		button.text = "Acquis"
 		button.disabled = true
@@ -123,6 +148,8 @@ func _build_node_row(node: Dictionary) -> Control:
 		button.text = "%d clés" % int(node["cost"])
 		button.disabled = not Forge.can_unlock(id)
 		button.pressed.connect(func() -> void: Forge.unlock(id))
+	if button.disabled:
+		button.focus_mode = Control.FOCUS_NONE
 	box.add_child(button)
 	return panel
 
@@ -147,8 +174,11 @@ func _build_item_row(item: ItemData) -> Control:
 	row.add_child(label)
 
 	var button := Button.new()
+	button.name = "objet_%s" % item.id
 	button.text = "%d clés" % item.key_cost
 	button.disabled = SaveGame.banked_keys < item.key_cost
+	if button.disabled:
+		button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: SaveGame.unlock_item(item))
 	row.add_child(button)
 	return row

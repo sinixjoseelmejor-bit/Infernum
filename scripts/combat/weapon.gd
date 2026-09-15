@@ -20,6 +20,8 @@ signal fired(target: Node2D)
 @export var fire_rate: float = 4.0
 @export var projectile_speed: float = 720.0
 @export var projectile_count: int = 1
+## Ennemis traversés de base, avant le bonus des objets.
+@export var pierce: int = 0
 @export var spread_deg: float = 8.0
 @export_range(0.0, 1.0, 0.01) var crit_chance: float = 0.05
 @export var crit_multiplier: float = 2.0
@@ -42,6 +44,7 @@ signal fired(target: Node2D)
 var damage_multiplier: float = 1.0
 var fire_rate_multiplier: float = 1.0
 var count_bonus: int = 0
+var pierce_bonus: int = 0
 var flat_damage_bonus: float = 0.0
 var crit_chance_bonus: float = 0.0
 var crit_damage_bonus: float = 0.0
@@ -109,6 +112,7 @@ func apply_stats(stats: PlayerStats) -> void:
 	damage_multiplier = maxf(0.1, 1.0 + stats.get_damage_pct())
 	fire_rate_multiplier = maxf(0.25, 1.0 + stats.get_fire_rate_pct())
 	count_bonus = stats.get_projectile_bonus()
+	pierce_bonus = stats.get_pierce()
 	crit_chance_bonus = stats.get_crit_chance()
 	crit_damage_bonus = stats.get_crit_damage_pct()
 
@@ -151,6 +155,8 @@ func fire(target: Node2D) -> void:
 		projectile.is_crit = is_crit
 		projectile.knockback = knockback
 		projectile.homing_speed_deg = projectile_homing_deg
+		projectile.pierce = pierce + pierce_bonus
+		projectile.pierce_falloff = PlayerStats.PIERCE_DAMAGE_TAX
 		projectile.target = target
 		projectile.source = owner if owner != null else self
 		parent.add_child(projectile)

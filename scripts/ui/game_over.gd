@@ -17,6 +17,7 @@ extends CanvasLayer
 var forge_screen: CanvasLayer
 
 var _open: bool = false
+var _unlocks_queued: bool = false
 
 
 func _ready() -> void:
@@ -26,7 +27,7 @@ func _ready() -> void:
 	forge_button.pressed.connect(_on_forge_pressed)
 	menu_button.pressed.connect(_on_menu_pressed)
 	GameEvents.player_died.connect(_on_player_died)
-	SaveGame.keys_changed.connect(func(_total: int) -> void: _refresh_unlocks())
+	SaveGame.keys_changed.connect(func(_total: int) -> void: _queue_unlocks())
 
 
 func _on_player_died(_player: Node2D) -> void:
@@ -55,7 +56,19 @@ func _show(summary: Dictionary) -> void:
 	restart_button.grab_focus()
 
 
+## Même piège que dans la Forge : débloquer un objet reconstruit la liste, donc
+## détruit le bouton pressé pendant son propre signal, et le focus manette part
+## avec lui. On diffère la reconstruction et on rend le focus ensuite.
+func _queue_unlocks() -> void:
+	if _unlocks_queued:
+		return
+	_unlocks_queued = true
+	_refresh_unlocks.call_deferred()
+
+
 func _refresh_unlocks() -> void:
+	_unlocks_queued = false
+	var keep := UIUtils.capture_focus(self)
 	keys_label.text = "Clés disponibles : %d   ·   Meilleure vague : %d" % [
 		SaveGame.banked_keys, SaveGame.best_wave
 	]
@@ -71,6 +84,8 @@ func _refresh_unlocks() -> void:
 	for item in locked:
 		unlock_list.add_child(_build_unlock_row(item))
 
+	UIUtils.restore_focus(self, keep, restart_button)
+
 
 func _build_unlock_row(item: ItemData) -> Control:
 	var row := HBoxContainer.new()
@@ -85,8 +100,11 @@ func _build_unlock_row(item: ItemData) -> Control:
 	row.add_child(label)
 
 	var button := Button.new()
+	button.name = "objet_%s" % item.id
 	button.text = "%d clés" % item.key_cost
 	button.disabled = SaveGame.banked_keys < item.key_cost
+	if button.disabled:
+		button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(func() -> void: SaveGame.unlock_item(item))
 	row.add_child(button)
 	return row

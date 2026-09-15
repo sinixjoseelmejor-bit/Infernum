@@ -12,6 +12,8 @@ extends Node2D
 @onready var curse_select: CanvasLayer = %CurseSelect
 @onready var forge: CanvasLayer = %Forge
 @onready var game_over: CanvasLayer = %GameOver
+@onready var pause_menu: CanvasLayer = %PauseMenu
+@onready var pause_options: CanvasLayer = %PauseOptions
 
 
 func _ready() -> void:
@@ -26,6 +28,8 @@ func _ready() -> void:
 
 	# La run ne démarre qu'une fois l'écran de malédictions validé. Cet écran est
 	# purement facultatif : son bouton par défaut lance une run sans malédiction.
+	pause_menu.call(&"bind_options", pause_options)
+
 	curse_select.connect(&"confirmed", waves.start)
 	curse_select.call(&"open")
 

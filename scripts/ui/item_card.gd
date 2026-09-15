@@ -115,6 +115,7 @@ static func format_mods(mods: Dictionary) -> String:
 		"damage_pct": "dégâts",
 		"fire_rate_pct": "cadence",
 		"projectile_bonus": "projectile",
+		"pierce": "ennemi traversé",
 		"crit_chance": "chance critique",
 		"crit_damage_pct": "dégâts critiques",
 		"move_speed_pct": "vitesse",
@@ -127,6 +128,8 @@ static func format_mods(mods: Dictionary) -> String:
 		"soul_gain_pct": "âmes",
 		"luck": "chance",
 	}
+	## Stats qui se comptent en entiers : « +1.0 projectile » n'a aucun sens.
+	const INTEGER_KEYS := ["projectile_bonus", "pierce"]
 	const PERCENT_KEYS := [
 		"damage_pct", "fire_rate_pct", "crit_chance", "crit_damage_pct",
 		"move_speed_pct", "lifesteal_pct", "pickup_radius_pct", "range_pct",
@@ -139,7 +142,7 @@ static func format_mods(mods: Dictionary) -> String:
 		var line := ""
 		if String(key) in PERCENT_KEYS:
 			line = "%+d %% %s" % [roundi(value * 100.0), label]
-		elif String(key) == "projectile_bonus":
+		elif String(key) in INTEGER_KEYS:
 			line = "%+d %s" % [roundi(value), label]
 		else:
 			line = "%+.1f %s" % [value, label]

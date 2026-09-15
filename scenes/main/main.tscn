@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://tgokdgch2gx2"]
+[gd_scene load_steps=26 format=3 uid="uid://tgokdgch2gx2"]
 
 [ext_resource type="Script" uid="uid://bc86s38iod8l0" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
@@ -21,6 +21,8 @@
 [ext_resource type="Script" path="res://scripts/systems/character_effects.gd" id="19_charfx"]
 [ext_resource type="Texture2D" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
 [ext_resource type="Script" path="res://scripts/components/floor_tiler.gd" id="21_tiler"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
 
 [sub_resource type="Animation" id="Animation_necax"]
 resource_name = "new_animation"
@@ -93,6 +95,12 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="Forge" parent="." unique_id=2138385495 instance=ExtResource("13_forge")]
+unique_name_in_owner = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("22_pause")]
+unique_name_in_owner = true
+
+[node name="PauseOptions" parent="." instance=ExtResource("23_options")]
 unique_name_in_owner = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=276187787]

@@ -20,7 +20,10 @@ extends Node
 ##    atteint le plafond, celui-ci cesse d'être une incitation à diversifier et
 ##    devient « achetez 4 fois le même objet ». Seule exception assumée : Éclat
 ##    trifide, seule source de projectiles — c'est la taxe multishot globale, et
-##    non le plafond, qui borne cet axe.
+##    non le plafond, qui borne cet axe. Lance de Longin suit la même logique
+##    pour la perforation : 2 piles sur un plafond de 3, et une décote par corps
+##    traversé qui rend le troisième ennemi deux fois moins rentable que le
+##    premier.
 ## F. UN OBJET PUREMENT DÉFENSIF NE PEUT PAS EMPILER SANS LIMITE. Les i-frames
 ##    du joueur (0,4 s) bornent les dégâts entrants à 2,5 coups/seconde : les PV
 ##    effectifs sont l'axe le plus rentable du jeu, et il faut le brider par les
@@ -126,6 +129,12 @@ const ITEMS: Array[Dictionary] = [
 		"desc": "Frapper juste plutôt que frapper souvent.",
 		"mods": {"crit_chance": 0.15, "crit_damage_pct": 0.40, "fire_rate_pct": -0.08},
 		"max_stacks": 3,
+	},
+	{
+		"id": &"longinus_lance", "name": "Lance de Longin", "rarity": 2,
+		"desc": "Le fer qui a percé le flanc. Les traits ne s'arrêtent plus au premier corps.",
+		"mods": {"pierce": 1, "fire_rate_pct": -0.08},
+		"max_stacks": 2,
 	},
 	{
 		"id": &"guardian_seal", "name": "Sceau du gardien", "rarity": 2,

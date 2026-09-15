@@ -23,6 +23,10 @@ extends RefCounted
 const CAP_DAMAGE_PCT := 2.0        ## +200 %
 const CAP_FIRE_RATE_PCT := 1.5     ## +150 %
 const CAP_PROJECTILE_BONUS := 4
+## Ennemis traversés EN PLUS du premier. Comme le multishot, la perforation est
+## un multiplicateur de DPS : dans un jeu de horde, les cibles s'alignent tout
+## le temps. Elle est donc plafonnée ET taxée.
+const CAP_PIERCE := 3
 const CAP_CRIT_CHANCE := 0.60
 const CAP_CRIT_DAMAGE_PCT := 1.5   ## multiplicateur crit max = 2.0 + 1.5 = 3.5
 const CAP_MOVE_SPEED_PCT := 0.60
@@ -39,6 +43,10 @@ const CAP_LUCK := 3.0
 
 ## Taxe appliquée à chaque projectile supplémentaire (gain total sous-linéaire).
 const PROJECTILE_DAMAGE_TAX := 0.35
+## Décote appliquée à chaque corps traversé, cumulative : 100 %, 65 %, 42 %,
+## 27 %. Sans elle, perforation 3 vaudrait ×4 de dégâts sur une file d'ennemis —
+## plus que n'importe quel objet du catalogue, et gratuitement.
+const PIERCE_DAMAGE_TAX := 0.35
 ## Plafond de soin par vol de vie, en fraction des PV max et par seconde.
 ## 2.5 %/s = 2.5 PV/s à 100 PV, soit ~10 % du pire flux de dégâts entrant
 ## possible (2 coups/s via les i-frames). À 8 %/s, un seul objet rare annulait
@@ -50,6 +58,7 @@ var damage_flat: float = 0.0
 var damage_pct: float = 0.0
 var fire_rate_pct: float = 0.0
 var projectile_bonus: int = 0
+var pierce: int = 0
 var crit_chance: float = 0.0
 var crit_damage_pct: float = 0.0
 var move_speed_pct: float = 0.0
@@ -70,6 +79,7 @@ func clear() -> void:
 	damage_pct = 0.0
 	fire_rate_pct = 0.0
 	projectile_bonus = 0
+	pierce = 0
 	crit_chance = 0.0
 	crit_damage_pct = 0.0
 	move_speed_pct = 0.0
@@ -90,6 +100,7 @@ func add_mod(key: String, value: float) -> void:
 		"damage_pct": damage_pct += value
 		"fire_rate_pct": fire_rate_pct += value
 		"projectile_bonus": projectile_bonus += int(value)
+		"pierce": pierce += int(value)
 		"crit_chance": crit_chance += value
 		"crit_damage_pct": crit_damage_pct += value
 		"move_speed_pct": move_speed_pct += value
@@ -117,6 +128,10 @@ func get_fire_rate_pct() -> float:
 
 func get_projectile_bonus() -> int:
 	return mini(projectile_bonus, CAP_PROJECTILE_BONUS)
+
+
+func get_pierce() -> int:
+	return mini(pierce, CAP_PIERCE)
 
 
 func get_crit_chance() -> float:
