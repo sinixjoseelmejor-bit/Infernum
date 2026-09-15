@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3 uid="uid://tgokdgch2gx2"]
+[gd_scene format=3 uid="uid://tgokdgch2gx2"]
 
 [ext_resource type="Script" uid="uid://bc86s38iod8l0" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
@@ -19,7 +19,7 @@
 [ext_resource type="PackedScene" path="res://scenes/bosses/asmodee.tscn" id="17_asmodee"]
 [ext_resource type="PackedScene" path="res://scenes/bosses/lucifer.tscn" id="18_lucifer"]
 [ext_resource type="Script" path="res://scripts/systems/character_effects.gd" id="19_charfx"]
-[ext_resource type="Texture2D" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
+[ext_resource type="Texture2D" uid="uid://7de4da1kgwo4" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
 [ext_resource type="Script" path="res://scripts/components/floor_tiler.gd" id="21_tiler"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
@@ -48,14 +48,14 @@ color = Color(0.17, 0.16, 0.15, 1)
 
 [node name="Floor" type="Sprite2D" parent="." unique_id=1395687943]
 modulate = Color(0.66, 0.52, 0.5, 1)
+z_index = -100
 texture_filter = 2
 texture_repeat = 2
-z_index = -100
 texture = ExtResource("20_floor")
 centered = false
+offset = Vector2(-3072, -3072)
 region_enabled = true
 region_rect = Rect2(0, 0, 6144, 6144)
-offset = Vector2(-3072, -3072)
 script = ExtResource("21_tiler")
 
 [node name="Entities" type="Node2D" parent="." unique_id=543909541]
@@ -97,10 +97,10 @@ unique_name_in_owner = true
 [node name="Forge" parent="." unique_id=2138385495 instance=ExtResource("13_forge")]
 unique_name_in_owner = true
 
-[node name="PauseMenu" parent="." instance=ExtResource("22_pause")]
+[node name="PauseMenu" parent="." unique_id=1906874088 instance=ExtResource("22_pause")]
 unique_name_in_owner = true
 
-[node name="PauseOptions" parent="." instance=ExtResource("23_options")]
+[node name="PauseOptions" parent="." unique_id=1389086880 instance=ExtResource("23_options")]
 unique_name_in_owner = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=276187787]
