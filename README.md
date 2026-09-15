@@ -1129,8 +1129,9 @@ développement :
   sont donc versionnés — seuls le sont le code, les scènes, les réglages, et
   l'art propre au projet (le carreau de sol, le sprite de Caïn fait main). Tout
   le reste se régénère par [`tools/extract_assets.py`](tools/extract_assets.py).
-  Le prix à payer est une étape d'installation ; le dépôt reste public et
-  personne ne télécharge d'art depuis lui.
+  Le prix à payer est une étape d'installation. Le dépôt est par ailleurs passé
+  en **privé**, ce qui ferme aussi les anciens commits — un fichier poussé puis
+  retiré reste sinon accessible par le SHA de son commit.
 - **Signature.** L'exécutable n'est pas signé ; Windows SmartScreen affichera un
   avertissement au premier lancement. Normal pour une première version, mais
   autant le dire dans la page de téléchargement.
