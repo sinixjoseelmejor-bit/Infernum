@@ -20,6 +20,7 @@ func _ready() -> void:
 	# L'état de run est un autoload : il survit au rechargement de scène, donc il
 	# doit être remis à zéro explicitement à chaque nouvelle partie.
 	RunState.reset_run()
+	Audio.play_music(&"arene")
 
 	waves.target = player
 	waves.container = enemies

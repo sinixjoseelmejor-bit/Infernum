@@ -33,6 +33,7 @@ func _ready() -> void:
 	# Une run précédente peut avoir laissé l'arbre en pause ou des malédictions.
 	get_tree().paused = false
 	Curses.clear_all()
+	Audio.play_music(&"menu")
 	_refresh_meta()
 	play_button.grab_focus()
 

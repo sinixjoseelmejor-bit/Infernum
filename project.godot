@@ -30,6 +30,7 @@ Forge="*res://scripts/meta/forge_tree.gd"
 Curses="*res://scripts/systems/curse_system.gd"
 WaveMods="*res://scripts/systems/wave_modifiers.gd"
 Characters="*res://scripts/characters/character_db.gd"
+Audio="*res://scripts/core/audio.gd"
 
 [display]
 

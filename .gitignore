@@ -32,3 +32,11 @@ Thumbs.db
 /icon.png
 /icon.png.import
 /icon.ico
+
+# Musiques et effets sonores.
+#
+# Meme raison, provenance non verifiee : tant que la licence de ces fichiers
+# n'est pas etablie, ils ne partent pas sur un depot public. Le jeu les lit
+# depuis le disque ; sans eux il tourne muet, avec un avertissement par fichier
+# et aucune erreur.
+/assets/audio/SoundEffects/

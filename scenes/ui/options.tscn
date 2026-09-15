@@ -43,7 +43,7 @@ text = "OPTIONS"
 horizontal_alignment = 1
 
 [node name="Scroll" type="ScrollContainer" parent="Center/Panel/Layout"]
-custom_minimum_size = Vector2(0, 340)
+custom_minimum_size = Vector2(0, 520)
 layout_mode = 2
 horizontal_scroll_mode = 0
 

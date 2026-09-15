@@ -65,6 +65,10 @@ func _ready() -> void:
 
 	for weapon in get_weapons():
 		weapon.setup(targeting)
+		# Seules les armes DU JOUEUR sonnent. Les cultistes tirent aussi, et
+		# ajouter leur salve au même son remplirait la banque de voix avec du
+		# bruit sur lequel le joueur n'a aucune prise.
+		weapon.fired.connect(func(_target: Node2D) -> void: Audio.play(&"tir"))
 
 	RunState.stats_recomputed.connect(_on_stats_recomputed)
 	apply_stats(RunState.stats)

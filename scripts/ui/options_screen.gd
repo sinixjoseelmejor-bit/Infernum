@@ -45,6 +45,14 @@ func refresh() -> void:
 	fullscreen.toggled.connect(func(on: bool) -> void: Settings.set_fullscreen(on))
 	rows.add_child(_row("Affichage", "Bascule entre fenêtré et plein écran.", fullscreen))
 
+	rows.add_child(_percent_row("Musique",
+		"Volume des musiques du menu et de l'arène.",
+		Settings.music_volume, 1.0, Settings.set_music_volume))
+
+	rows.add_child(_percent_row("Effets",
+		"Volume des tirs, des rugissements et de l'interface.",
+		Settings.sfx_volume, 1.0, Settings.set_sfx_volume))
+
 	var joystick := OptionButton.new()
 	for mode in [Settings.JoystickMode.AUTO, Settings.JoystickMode.ALWAYS,
 			Settings.JoystickMode.NEVER]:
@@ -56,24 +64,9 @@ func refresh() -> void:
 		"« Automatique » ne l'affiche que sur écran tactile. « Toujours » permet de le tester à la souris.",
 		joystick))
 
-	var shake := HSlider.new()
-	shake.min_value = 0.0
-	shake.max_value = 1.5
-	shake.step = 0.05
-	shake.value = Settings.shake_scale
-	shake.custom_minimum_size = Vector2(240, 0)
-	var shake_value := Label.new()
-	shake_value.custom_minimum_size = Vector2(60, 0)
-	shake_value.text = "%d %%" % roundi(Settings.shake_scale * 100.0)
-	shake.value_changed.connect(func(v: float) -> void:
-		Settings.set_shake_scale(v)
-		shake_value.text = "%d %%" % roundi(v * 100.0))
-	var shake_box := HBoxContainer.new()
-	shake_box.add_theme_constant_override(&"separation", 10)
-	shake_box.add_child(shake)
-	shake_box.add_child(shake_value)
-	rows.add_child(_row("Tremblement de caméra",
-		"Réduire ou couper les secousses d'écran (confort visuel).", shake_box))
+	rows.add_child(_percent_row("Tremblement de caméra",
+		"Réduire ou couper les secousses d'écran (confort visuel).",
+		Settings.shake_scale, 1.5, Settings.set_shake_scale))
 
 	var eight_way := CheckButton.new()
 	eight_way.text = "8 directions"
@@ -82,6 +75,31 @@ func refresh() -> void:
 	rows.add_child(_row("Déplacement",
 		"Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre.",
 		eight_way))
+
+
+## Curseur exprimé en pourcentage, avec la valeur lue à droite. Le réglage part
+## dans `Settings` au fil du glissement : on entend le volume qu'on règle.
+func _percent_row(title: String, help: String, value: float, maximum: float,
+		setter: Callable) -> Control:
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = maximum
+	slider.step = 0.05
+	slider.value = value
+	slider.custom_minimum_size = Vector2(240, 0)
+
+	var readout := Label.new()
+	readout.custom_minimum_size = Vector2(60, 0)
+	readout.text = "%d %%" % roundi(value * 100.0)
+	slider.value_changed.connect(func(v: float) -> void:
+		setter.call(v)
+		readout.text = "%d %%" % roundi(v * 100.0))
+
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 10)
+	box.add_child(slider)
+	box.add_child(readout)
+	return _row(title, help, box)
 
 
 ## Une ligne = intitulé + explication à gauche, contrôle à droite.

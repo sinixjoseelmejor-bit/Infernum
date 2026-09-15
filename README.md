@@ -284,13 +284,15 @@ scène : le retour est instantané.
 
 ### Options
 
-Quatre réglages, tous **réellement branchés** — aucun contrôle décoratif. Ils
+Six réglages, tous **réellement branchés** — aucun contrôle décoratif. Ils
 sont écrits à chaque modification dans `user://infernum_settings.cfg`, hors
 profil (ce sont des préférences, pas de la progression).
 
 | Réglage | Effet |
 |---|---|
 | **Plein écran** | bascule la fenêtre (`DisplayServer`) |
+| **Musique** | 0 à 100 % — agit sur le bus `Musique` |
+| **Effets** | 0 à 100 % — agit sur le bus `Effets` |
 | **Joystick virtuel** | Automatique (tactile uniquement) · Toujours affiché · Masqué |
 | **Tremblement de caméra** | 0 à 150 % — à 0, plus aucune secousse (confort visuel) |
 | **Déplacement 8 directions** | quantifie stick et joystick sur 8 axes, ou déplacement libre |
@@ -886,10 +888,12 @@ scenes/
   combat/                     telegraph
   ui/                         main_menu · character_select · options · profiles
                               hud · shop · game_over · forge · curse_select
+                              pause
 scripts/
   core/       game_events.gd (autoload)   bus de signaux global
               player_input.gd (autoload)  clavier/manette + tactile
-              settings.gd (autoload)      préférences (affichage, confort)
+              settings.gd (autoload)      préférences (affichage, son, confort)
+              audio.gd (autoload)         bus, banque de voix, musique
               run_state.gd (autoload)     vague, monnaies, inventaire, stats
               save_manager.gd (autoload)  clés et déblocages persistants
               player_stats.gd             agrégation + PLAFONDS d'équilibrage
@@ -913,16 +917,18 @@ scripts/
   meta/       forge_tree.gd (autoload)    arbre de méta-progression
   ui/         hud.gd · shop.gd · item_card.gd · game_over.gd
               forge_screen.gd · profiles_screen.gd · curse_select.gd
-              virtual_joystick.gd · ui_utils.gd
+              pause_menu.gd · virtual_joystick.gd · ui_utils.gd
   main.gd
 assets/
   sprites/    un dossier par entité : characters/cain, enemies/imp,
               bosses/lucifer, projectiles/hell_bolt, pickups/soul...
               chaque entité porte deux planches : <nom>_idle.png, <nom>_walk.png
               les packs sources portent un .gdignore (non importés)
-  audio/ vfx/ mêmes catégories, à remplir
+  audio/      SoundEffects/ 2 musiques + 5 effets (OGG Vorbis)
+  vfx/        à remplir
   fonts/
   README.md   planches, échelles, recalages, procédure d'ajout
+default_bus_layout.tres       bus Master · Musique · Effets
 ```
 
 ## Sprites et animation
@@ -976,6 +982,113 @@ invisible (un carreau en vaut un autre) et le dallage reste accroché au monde.
 Le carreau lui-même est découpé sur un joint de dalle et son éclairage aplati,
 faute de quoi la répétition se verrait ; le détail est dans
 [`assets/README.md`](assets/README.md).
+
+## Son
+
+Sept fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
+format qui reboucle sans trou : le MP3 porte dans sa définition un silence
+d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
+
+Comme les sprites, ces fichiers **ne sont pas versionnés** : leur provenance n'est
+pas établie et le dépôt est public. Après un clone, déposez les sept OGG dans
+`assets/audio/SoundEffects/` sous les noms du tableau plus bas. Sans eux le jeu
+démarre normalement, muet, avec un avertissement par fichier manquant.
+
+### Deux bus, deux curseurs
+
+`Musique` et `Effets` partent l'un et l'autre dans `Master`
+([`default_bus_layout.tres`](default_bus_layout.tres)). Les deux curseurs des
+options écrivent directement sur ces bus, donc aucun `AudioStreamPlayer` n'a à
+connaître le réglage : un son choisit son bus à la création, et c'est tout. À
+0 %, le bus est **coupé** plutôt que mis à −∞ dB — un gain infiniment petit reste
+un calcul de mixage à chaque image.
+
+Les volumes sont écrits par `Settings`, pas par l'autoload `Audio` : les
+réglages se chargent avant lui, et un bus coupé doit l'être dès la première
+image. `AudioServer`, lui, est disponible immédiatement.
+
+### La banque de voix
+
+Un `AudioStreamPlayer` ne joue qu'un son à la fois. [`audio.gd`](scripts/core/audio.gd)
+en garde seize et les distribue ; quand tout est occupé, il vole la plus
+ancienne. Couper un son déjà bien entamé s'entend infiniment moins que d'ignorer
+le tir qui vient de partir.
+
+Chaque son déclare aussi son propre garde-fou : un intervalle minimal entre deux
+déclenchements, et un nombre maximal d'exemplaires simultanés. Mesuré : **40
+morts dans la même image ne produisent qu'un seul rugissement**, ce qui est le
+comportement voulu — quarante copies décalées de quelques millisecondes ne font
+pas quarante rugissements, elles font un peigne métallique.
+
+### Le tir a dû être coupé
+
+`Fireball.ogg` dure 8,04 s, et la mesure du débit instantané montre de l'énergie
+sur **toute** la durée : ce n'est pas une détonation, c'est une nappe. L'arme
+tire jusqu'à 6,2 coups par seconde une fois la cadence améliorée ; jouer le
+fichier entier empilerait une vingtaine de voix et noierait tout le reste.
+
+Le son est donc coupé à **0,5 s**, avec une descente de 0,12 s pour ne pas
+remplacer le problème par un clic.
+
+Mesuré sur 10 s de tir continu à 6,2 coups/s, quota de voix compris :
+
+| Coupure | Quota | Voix moyennes | Empilement | Tirs coupés en plein vol |
+|---|---|---|---|---|
+| 0,45 s | 4 | 2,80 | +4,5 dB | 0 % |
+| **0,5 s** | **4** | **3,10** | **+4,9 dB** | **0 %** |
+| 1,0 s | 4 | 3,84 | +5,8 dB | **93 %** |
+| 1,0 s | 8 | 5,84 | +7,7 dB | 0 % |
+
+La ligne à 1,0 s avec le quota d'origine est le piège : le son déborde ses
+quatre voix et 93 % des tirs en reprennent une qui joue encore. Un vol de voix
+est brutal — il claque. Allonger le tir demande donc de monter le quota **et**
+de baisser le volume de 3 dB pour compenser l'empilement ; les trois valeurs
+sont dans le commentaire de [`audio.gd`](scripts/core/audio.gd).
+
+À 1 s le tir mobilise 7 des 16 voix en permanence et cesse d'être un évènement :
+six copies d'une nappe qui se recouvrent en continu font un bourdon. À 0,5 s
+chaque coup s'articule encore. D'où le choix.
+
+### Les boutons sonnent sans être câblés
+
+L'interface fabrique ses boutons à la volée : boutique, Forge, sélection de
+personnage. Les connecter un par un demanderait de repasser sur chaque script,
+et d'y penser à chaque ajout. `Audio` écoute donc `node_added` sur l'arbre et
+branche tout `BaseButton` qui apparaît.
+
+Un bouton qui veut un autre son que le clic par défaut le dit lui-même :
+
+```gdscript
+button.set_meta(&"sfx", &"objet")
+```
+
+Ce branchement passe par `node_added`, donc **chaque** nœud du jeu — projectile,
+ennemi, âme — traverse un appel de plus. Mesuré sur 4 000 nœuds : 13,39 ms avec
+le hook contre 11,71 ms sans, soit **0,4 µs par nœud**. Une vague chargée en crée
+quelques dizaines par image : le coût est sous la microseconde par image, contre
+un budget de 16,7 ms.
+
+### Pourquoi l'audio tourne en pause
+
+`PROCESS_MODE_ALWAYS`. Le menu de pause, la boutique et l'écran de malédictions
+mettent l'arbre en pause, et leurs boutons doivent quand même cliquer — sans ça
+l'interface devient muette dès qu'un écran s'ouvre, c'est-à-dire presque tout le
+temps.
+
+### Les fichiers
+
+| Fichier | Durée | Rôle |
+|---|---|---|
+| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, en boucle |
+| `MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
+| `Fireball.ogg` | 8,04 s | tir du joueur, coupé à 0,5 s |
+| `BigRoar.ogg` | 5,09 s | apparition d'un boss |
+| `chooseUpgradeSound.ogg` | 1,37 s | objet obtenu, nœud de Forge débloqué |
+| `smallRoar1sec.ogg` | 0,84 s | mort d'un ennemi |
+| `StoneSoundForButtonMenuSelect.ogg` | 0,47 s | clic d'interface |
+
+Deux évènements n'ont pas encore de son faute de fichier : **le joueur qui
+encaisse un coup** et **l'âme ramassée**. Ce sont les deux premiers à ajouter.
 
 ## Livrer une version
 

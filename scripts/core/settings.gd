@@ -25,11 +25,16 @@ const JOYSTICK_LABELS := {
 @export var shake_scale: float = 1.0
 ## Quantifie l'entrée analogique sur 8 axes (le clavier l'est nativement).
 @export var eight_way: bool = true
+## Volumes linéaires 0..1. Ils agissent sur les bus `Musique` et `Effets`, donc
+## sur tout ce qui y est branché — aucun lecteur n'a à être au courant.
+@export_range(0.0, 1.0, 0.05) var music_volume: float = 0.7
+@export_range(0.0, 1.0, 0.05) var sfx_volume: float = 0.9
 
 
 func _ready() -> void:
 	load_settings()
 	apply_display()
+	apply_audio()
 
 
 # --- Accès ------------------------------------------------------------------
@@ -72,12 +77,27 @@ func set_eight_way(value: bool) -> void:
 	_commit()
 
 
+func set_music_volume(value: float) -> void:
+	music_volume = clampf(value, 0.0, 1.0)
+	apply_audio()
+	_commit()
+
+
+func set_sfx_volume(value: float) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	apply_audio()
+	_commit()
+
+
 func reset() -> void:
 	fullscreen = false
 	joystick_mode = JoystickMode.AUTO
 	shake_scale = 1.0
 	eight_way = true
+	music_volume = 0.7
+	sfx_volume = 0.9
 	apply_display()
+	apply_audio()
 	_commit()
 
 
@@ -88,6 +108,24 @@ func apply_display() -> void:
 	DisplayServer.window_set_mode(
 		DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen
 		else DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+## Les bus sont écrits directement plutôt que via l'autoload `Audio` : les
+## réglages se chargent avant lui, et un bus coupé doit l'être dès la première
+## image. `AudioServer` est disponible immédiatement, lui.
+func apply_audio() -> void:
+	_set_bus(&"Musique", music_volume)
+	_set_bus(&"Effets", sfx_volume)
+
+
+func _set_bus(bus: StringName, volume: float) -> void:
+	var index := AudioServer.get_bus_index(bus)
+	if index < 0:
+		return
+	# À zéro on coupe le bus : `linear_to_db(0)` vaut -inf, et un volume de -inf
+	# reste un calcul de mixage inutile à chaque image.
+	AudioServer.set_bus_mute(index, volume <= 0.001)
+	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(volume, 0.001)))
 
 
 func _commit() -> void:
@@ -103,6 +141,8 @@ func save_settings() -> void:
 	config.set_value("input", "joystick_mode", int(joystick_mode))
 	config.set_value("input", "eight_way", eight_way)
 	config.set_value("accessibility", "shake_scale", shake_scale)
+	config.set_value("audio", "music", music_volume)
+	config.set_value("audio", "sfx", sfx_volume)
 	config.save(PATH)
 
 
@@ -114,3 +154,5 @@ func load_settings() -> void:
 	joystick_mode = config.get_value("input", "joystick_mode", JoystickMode.AUTO) as JoystickMode
 	eight_way = config.get_value("input", "eight_way", true)
 	shake_scale = clampf(config.get_value("accessibility", "shake_scale", 1.0), 0.0, 1.5)
+	music_volume = clampf(config.get_value("audio", "music", 0.7), 0.0, 1.0)
+	sfx_volume = clampf(config.get_value("audio", "sfx", 0.9), 0.0, 1.0)

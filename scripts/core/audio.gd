@@ -1,0 +1,254 @@
+extends Node
+## Son du jeu (autoload `Audio`).
+##
+## DEUX BUS, PAS UN. `Musique` et `Effets` partent tous deux dans `Master` :
+## c'est ce qui permet aux deux curseurs des options d'agir séparément sans
+## qu'aucun `AudioStreamPlayer` n'ait à connaître le réglage. Un son se contente
+## de choisir son bus à la création.
+##
+## POURQUOI CE NŒUD TOURNE EN PAUSE. `PROCESS_MODE_ALWAYS` : le menu de pause,
+## la boutique et l'écran de malédictions mettent l'arbre en pause, et leurs
+## boutons doivent quand même cliquer. Sans ça, toute l'interface devient muette
+## dès qu'un écran s'ouvre — c'est-à-dire presque tout le temps.
+##
+## LA BANQUE DE VOIX. Un `AudioStreamPlayer` ne joue qu'un son à la fois ; on en
+## garde donc `VOICES` sous la main et on distribue. Quand tout est occupé, on
+## vole la voix la plus ancienne : couper un son déjà bien entamé s'entend
+## infiniment moins que d'ignorer le tir qui vient de partir.
+
+const DIR := "res://assets/audio/SoundEffects/"
+const VOICES := 16
+## Fondu enchaîné entre deux musiques, et descente d'une voix coupée.
+const MUSIC_FADE := 0.7
+const CUT_FADE := 0.12
+const SILENCE_DB := -60.0
+
+const MUSIC := {
+	&"menu": "MenuSoundMusic.ogg",
+	&"arene": "MusicGameplay.ogg",
+}
+
+## Un son = un fichier plus la façon de le jouer.
+##   vol   : correction en dB (les fichiers ne sont pas normalisés entre eux)
+##   pitch : variation aléatoire de hauteur, ±, en proportion
+##   gap   : intervalle minimal entre deux déclenchements, en secondes
+##   voix  : nombre maximal d'exemplaires simultanés de CE son
+##   duree : coupe le son au bout de N secondes (0 = jouer le fichier entier)
+##
+## `tir` est le cas intéressant. Fireball.ogg dure 8 s d'énergie continue — ce
+## n'est pas une détonation, c'est une nappe. L'arme tire jusqu'à 6,2 fois par
+## seconde : jouer le fichier entier empilerait une vingtaine de voix et
+## noierait tout le reste. On ne garde donc que l'attaque, avec un fondu court
+## pour ne pas remplacer le problème par un clic.
+##
+## POUR UN TIR PLUS LONG. `duree` ne se change pas seule. À 1,0 s le son déborde
+## son quota de 4 voix et 93 % des tirs en coupent un autre en plein vol — et un
+## vol de voix est brutal, il claque. Passer à 1 s demande donc les trois
+## valeurs ensemble :
+##
+##     "voix": 8, "duree": 1.0, "vol": -18.0
+##
+## Le quota monte à 8 (mesuré : 5,84 voix en moyenne), et le volume descend de
+## 3 dB pour compenser l'empilement, qui passe de +4,9 à +7,7 dB. Coût : 7 des
+## 16 voix mobilisées en permanence pendant les tirs.
+const SFX := {
+	&"clic": {"file": "StoneSoundForButtonMenuSelect.ogg", "vol": -6.0, "pitch": 0.05, "gap": 0.04, "voix": 2},
+	&"objet": {"file": "chooseUpgradeSound.ogg", "vol": -3.0, "pitch": 0.0, "gap": 0.08, "voix": 2},
+	&"tir": {"file": "Fireball.ogg", "vol": -15.0, "pitch": 0.12, "gap": 0.06, "voix": 4, "duree": 0.5},
+	&"mort": {"file": "smallRoar1sec.ogg", "vol": -9.0, "pitch": 0.16, "gap": 0.07, "voix": 3},
+	&"boss": {"file": "BigRoar.ogg", "vol": -1.0, "pitch": 0.0, "gap": 1.0, "voix": 1},
+}
+
+var _streams: Dictionary = {}
+var _voices: Array[AudioStreamPlayer] = []
+## Par voix : clé jouée, instant de départ, temps restant avant coupure (< 0 =
+## pas de coupure), et volume nominal — mémorisé parce que le fondu l'écrase.
+var _voice_key: Array[StringName] = []
+var _voice_start: Array[float] = []
+var _voice_left: Array[float] = []
+var _voice_db: Array[float] = []
+var _last_played: Dictionary = {}
+
+var _music: Array[AudioStreamPlayer] = []
+var _music_active: int = 0
+var _music_track: StringName = &""
+var _music_tween: Tween
+
+var _clock: float = 0.0
+var _rng := RandomNumberGenerator.new()
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_rng.randomize()
+
+	for key in MUSIC:
+		_load(key, MUSIC[key], true)
+	for key in SFX:
+		_load(key, (SFX[key] as Dictionary)["file"], false)
+
+	for i in VOICES:
+		var player := AudioStreamPlayer.new()
+		player.bus = &"Effets"
+		player.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(player)
+		_voices.append(player)
+		_voice_key.append(&"")
+		_voice_start.append(-999.0)
+		_voice_left.append(-1.0)
+		_voice_db.append(0.0)
+
+	for i in 2:
+		var player := AudioStreamPlayer.new()
+		player.bus = &"Musique"
+		player.process_mode = Node.PROCESS_MODE_ALWAYS
+		player.volume_db = SILENCE_DB
+		add_child(player)
+		_music.append(player)
+
+	GameEvents.enemy_died.connect(func(_e: Node2D, _p: Vector2) -> void: play(&"mort"))
+	GameEvents.boss_spawned.connect(func(_b: Node2D) -> void: play(&"boss"))
+	RunState.item_gained.connect(func(_i: ItemData, _n: int) -> void: play(&"objet"))
+	SaveGame.item_unlocked.connect(func(_id: StringName) -> void: play(&"objet"))
+	Forge.node_unlocked.connect(func(_id: StringName) -> void: play(&"objet"))
+
+	# TOUS LES BOUTONS, SANS TOUCHER À UN SEUL ÉCRAN. L'interface crée ses
+	# boutons à la volée (boutique, Forge, personnages) : les câbler un par un
+	# demanderait de repasser sur chaque script et d'y penser à chaque ajout.
+	# On écoute donc l'arbre lui-même. Un bouton peut demander un autre son que
+	# le clic par défaut en posant `set_meta(&"sfx", &"objet")`.
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _load(key: StringName, file: String, looping: bool) -> void:
+	var path := DIR + file
+	if not ResourceLoader.exists(path):
+		push_warning("Audio : fichier manquant, son ignoré — " + path)
+		return
+	var stream: AudioStream = load(path)
+	if stream == null:
+		return
+	# La boucle se règle ici plutôt que dans le fichier `.import` : le réglage
+	# suit le code, il ne peut pas être perdu par un réimport.
+	if stream is AudioStreamOggVorbis:
+		(stream as AudioStreamOggVorbis).loop = looping
+	_streams[key] = stream
+
+
+# --- Effets ------------------------------------------------------------------
+
+func play(key: StringName) -> void:
+	var cfg: Dictionary = SFX.get(key, {})
+	var stream: AudioStream = _streams.get(key)
+	if stream == null or cfg.is_empty():
+		return
+
+	# L'anti-spam sert deux fois : il évite le peigne métallique de deux copies
+	# décalées de 5 ms, et il protège la banque de voix les vagues chargées, où
+	# une dizaine d'ennemis peuvent mourir dans la même image.
+	var gap: float = cfg.get("gap", 0.0)
+	if _clock - float(_last_played.get(key, -999.0)) < gap:
+		return
+	_last_played[key] = _clock
+
+	var index := _take_voice(key, int(cfg.get("voix", VOICES)))
+	if index < 0:
+		return
+	var player := _voices[index]
+	var db: float = cfg.get("vol", 0.0)
+	var pitch: float = cfg.get("pitch", 0.0)
+	player.stream = stream
+	player.volume_db = db
+	player.pitch_scale = 1.0 + _rng.randf_range(-pitch, pitch)
+	player.play()
+
+	_voice_key[index] = key
+	_voice_start[index] = _clock
+	_voice_db[index] = db
+	_voice_left[index] = cfg.get("duree", 0.0)
+	if _voice_left[index] <= 0.0:
+		_voice_left[index] = -1.0
+
+
+## Une voix libre ; sinon la plus ancienne du même son s'il sature son quota ;
+## sinon la plus ancienne tout court.
+func _take_voice(key: StringName, limit: int) -> int:
+	var free := -1
+	var oldest := -1
+	var oldest_same := -1
+	var same := 0
+	for i in _voices.size():
+		if not _voices[i].playing:
+			if free < 0:
+				free = i
+			continue
+		if _voice_key[i] == key:
+			same += 1
+			if oldest_same < 0 or _voice_start[i] < _voice_start[oldest_same]:
+				oldest_same = i
+		if oldest < 0 or _voice_start[i] < _voice_start[oldest]:
+			oldest = i
+	if same >= limit and oldest_same >= 0:
+		return oldest_same
+	if free >= 0:
+		return free
+	return oldest
+
+
+func _process(delta: float) -> void:
+	_clock += delta
+	for i in _voices.size():
+		if _voice_left[i] < 0.0 or not _voices[i].playing:
+			continue
+		_voice_left[i] -= delta
+		if _voice_left[i] <= 0.0:
+			_voices[i].stop()
+			_voice_left[i] = -1.0
+		elif _voice_left[i] < CUT_FADE:
+			# Couper net une nappe encore pleine claque. On descend sur la fin.
+			_voices[i].volume_db = _voice_db[i] - (1.0 - _voice_left[i] / CUT_FADE) * 24.0
+
+
+# --- Musique -----------------------------------------------------------------
+
+func play_music(track: StringName) -> void:
+	if track == _music_track:
+		return
+	_music_track = track
+	var stream: AudioStream = _streams.get(track)
+	var outgoing := _music[_music_active]
+	_music_active = 1 - _music_active
+	var incoming := _music[_music_active]
+
+	if is_instance_valid(_music_tween):
+		_music_tween.kill()
+	_music_tween = create_tween().set_parallel()
+
+	if stream != null:
+		incoming.stream = stream
+		incoming.volume_db = SILENCE_DB
+		incoming.play()
+		_music_tween.tween_property(incoming, ^"volume_db", 0.0, MUSIC_FADE)
+	if outgoing.playing:
+		_music_tween.tween_property(outgoing, ^"volume_db", SILENCE_DB, MUSIC_FADE)
+		_music_tween.chain().tween_callback(outgoing.stop)
+
+
+func stop_music() -> void:
+	play_music(&"")
+
+
+# --- Boutons -----------------------------------------------------------------
+
+func _on_node_added(node: Node) -> void:
+	if not (node is BaseButton):
+		return
+	var button := node as BaseButton
+	var handler := _on_button_pressed.bind(button)
+	if button.pressed.is_connected(handler):
+		return
+	button.pressed.connect(handler)
+
+
+func _on_button_pressed(button: BaseButton) -> void:
+	play(button.get_meta(&"sfx", &"clic"))
