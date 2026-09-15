@@ -989,10 +989,11 @@ Sept fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
 format qui reboucle sans trou : le MP3 porte dans sa définition un silence
 d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
 
-Comme les sprites, ces fichiers **ne sont pas versionnés** : leur provenance n'est
-pas établie et le dépôt est public. Après un clone, déposez les sept OGG dans
-`assets/audio/SoundEffects/` sous les noms du tableau plus bas. Sans eux le jeu
-démarre normalement, muet, avec un avertissement par fichier manquant.
+Contrairement aux sprites, ces fichiers **sont versionnés** : leur licence
+n'interdit la mise à disposition que sous forme de banque de sons ou de pack
+autonome (voir [`CREDITS.md`](CREDITS.md)). Un clone suffit donc pour avoir le
+son. S'ils venaient à manquer, le jeu démarre quand même, muet, avec un
+avertissement par fichier et aucune erreur.
 
 ### Deux bus, deux curseurs
 

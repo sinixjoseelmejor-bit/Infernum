@@ -6,9 +6,10 @@ Tout le code, l'équilibrage et les scènes du dépôt.
 
 ## Assets tiers
 
-Aucun pack d'origine n'est versionné ici (voir [`.gitignore`](.gitignore)) : leurs
-licences interdisent de rendre les assets téléchargeables ou extractibles en
-dehors du projet fini, ce qu'un dépôt public ferait. Seules les pièces
+Aucun pack d'**image** n'est versionné ici (voir [`.gitignore`](.gitignore)) :
+leurs licences interdisent de rendre les assets téléchargeables ou extractibles
+en dehors du projet fini. L'audio fait exception, sa licence étant plus étroite
+sur ce point. Seules les pièces
 réellement employées, recadrées et adaptées, vivent dans les dossiers d'entité.
 
 ### PixelUIKit — interface
@@ -52,6 +53,25 @@ Utilisé ici, planches de repos et de marche uniquement :
 | Lucifer | Black Knight_C |
 
 L'icône du jeu (`icon.png`, `icon.ico`) est dérivée du sprite du Flame Golem.
+
+### Effets sonores et musiques
+
+`assets/audio/SoundEffects/` — `LICENSE.txt` fourni avec les fichiers. C'est le
+seul lot d'assets tiers **versionné ici**, parce que sa licence l'autorise :
+
+- Licence non exclusive, mondiale, libre de droits, projets **personnels et
+  commerciaux**.
+- Découpe, modification et mixage autorisés — le tir du joueur est d'ailleurs
+  coupé à 0,5 s.
+- Mise à disposition interdite **uniquement** sous forme de banque de sons, de
+  pack d'échantillons ou de tout autre format autonome ; les sons doivent être
+  intégrés à un projet global et ne pas en être le produit principal.
+- Attribution appréciée mais non exigée (d'où cette page). Le fichier de licence
+  ne nomme pas son auteur — la mention est restée à l'état de gabarit —, on ne
+  peut donc créditer personne nommément.
+
+Deux musiques (menus, arène) et cinq effets : tir, mort d'un ennemi, apparition
+d'un boss, objet obtenu, clic d'interface.
 
 ### Sol de l'arène
 
