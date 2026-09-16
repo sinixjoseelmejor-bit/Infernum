@@ -11,10 +11,12 @@ ce script reconstruit tout le reste a l'identique.
 
 INSTALLATION
 ------------
-1. Recuperer les trois packs et les deposer dans assets/sprites/ :
+1. Recuperer les cinq packs et les deposer dans assets/packs/ :
        PixelUIKit/
        Tiny RPG Character Asset Pack v1.03 -Full 20 Characters/
        Tiny RPG Character Asset Pack 02 -Full 20 Characters/
+       ItemIconPack/
+       Texture/
 2. python tools/extract_assets.py
 3. Ouvrir le projet dans Godot une fois, pour l'import.
 
@@ -31,11 +33,14 @@ from pngio import decode, encode
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPR = os.path.join(ROOT, "assets", "sprites")
-KIT = os.path.join(SPR, "PixelUIKit")
-P13 = os.path.join(SPR, "Tiny RPG Character Asset Pack v1.03 -Full 20 Characters",
+PACKS = os.path.join(ROOT, "assets", "packs")
+KIT = os.path.join(PACKS, "PixelUIKit")
+ICONS_PACK = os.path.join(PACKS, "ItemIconPack")
+P13 = os.path.join(PACKS, "Tiny RPG Character Asset Pack v1.03 -Full 20 Characters",
                    "Characters(100x100)")
-P02 = os.path.join(SPR, "Tiny RPG Character Asset Pack 02 -Full 20 Characters",
+P02 = os.path.join(PACKS, "Tiny RPG Character Asset Pack 02 -Full 20 Characters",
                    "Characters(100x100 split)")
+DECOR_PACK = os.path.join(PACKS, "Texture", "Extra")
 
 # (categorie, entite, pack, nom d'origine, separateur, nom de la planche de marche)
 ENTITIES = [
@@ -54,6 +59,79 @@ ENTITIES = [
 ]
 
 ICONS = ["heart", "coin", "lock", "star", "gear", "close"]
+
+# Le decor de l'arene. Les deux planches du pack Texture sont des atlas sans
+# grille : chaque objet est pose ou il tient, et rien dans le pack ne dit ou.
+# Ces rectangles ont ete releves en detectant les ilots de pixels opaques puis
+# identifies sur une planche de contact — comme les icones d'objets, c'est la
+# partie qu'il ne faut PAS perdre.
+#
+# Choix de contenu : uniquement de la PIERRE et de la TERRE CUITE. Le pack offre
+# aussi des caisses, des tonneaux, des portes, un banc et des panneaux indicateurs
+# avec du texte grave — hors sujet dans un enfer, et le texte serait illisible a
+# cette echelle. Les trois buissons sont repris mais passes a la cendre (voir
+# `ASH`), le vert n'ayant rien a faire ici.
+#
+# Les quatre pieces de CIMETIERE du pack (stele, stele haute, croix, tombe gravee
+# « RIP ») ont ete retirees : le decor genere ne compose plus que des ruines et
+# des eboulis, ou elles n'ont pas de place. Leurs rectangles de decoupe, s'il
+# fallait les reprendre : stele (227,183,31,38), stele_haute (288,158,35,57),
+# croix (227,303,34,40), tombe (225,239,35,41).
+#
+# (nom, planche, x, y, largeur, hauteur)
+DECOR = [
+    ("caillou",      "TX Props with Shadow",  68, 487, 25, 19),
+    ("roche_petite", "TX Props with Shadow", 130, 484, 29, 22),
+    ("roche",        "TX Props with Shadow", 162, 482, 29, 27),
+    ("dalles",       "TX Props with Shadow", 289, 486, 31, 19),
+    ("rocaille",     "TX Props with Shadow",   3, 430, 60, 42),
+    ("gravats",      "TX Props with Shadow", 416, 194, 35, 57),
+    ("pierre_levee", "TX Props with Shadow", 387,   2, 32, 61),
+    ("autel",        "TX Props with Shadow", 289, 251, 32, 29),
+    ("urne",         "TX Props with Shadow", 165, 217, 23, 34),
+    ("jarre",        "TX Props with Shadow", 164, 288, 28, 27),
+    ("anneau",       "TX Props with Shadow", 420, 359, 58, 49),
+    ("tour",         "TX Props with Shadow", 352, 174, 44, 77),
+    ("buisson",      "TX Plant with Shadow", 216, 185, 50, 44),
+    ("buisson_petit","TX Plant with Shadow",  98, 195, 29, 27),
+    ("touffe",       "TX Plant with Shadow", 156, 190, 41, 33),
+]
+
+# Passage a la cendre : on garde la LUMINANCE de l'original (donc le modele et
+# les ombres du pixel art, qu'un simple filtre de teinte aplatirait) et on la
+# reteinte en gris chaud. Applique aux seules planches de vegetation.
+ASH = (0.80, 0.72, 0.64)
+
+# Les icones d'objets. Le pack en compte 1244, nommees itemN.png sans aucune
+# indication de contenu : ces correspondances ont ete etablies a l'oeil sur des
+# planches de contact, et n'ont aucune chance d'etre redecouvertes autrement.
+# C'est la partie de ce script qu'il ne faut PAS perdre.
+ITEM_ICONS = {
+    "ember": 723,            # torche allumee
+    "ash_soles": 262,        # bottes
+    "rusty_striker": 933,    # engrenage rouille
+    "tanned_hide": 232,      # veste de cuir
+    "chipped_fang": 1187,    # croc
+    "soul_magnet": 921,      # aimant en fer a cheval
+    "demon_bile": 919,       # flacon vert
+    "infernal_breech": 934,  # engrenage d'acier
+    "basalt_scales": 239,    # armure sombre
+    "hunter_eye": 1169,      # oeil
+    "leech": 1222,           # ver rouge
+    "spectral_drift": 689,   # volute spectrale
+    "trifid_shard": 542,     # eclats de cristal
+    "forge_heart": 688,      # coeur rouge
+    "blood_pact": 1179,      # organe sanglant
+    "predator_crown": 874,   # couronne d or
+    "longinus_lance": 124,   # lance
+    "guardian_seal": 199,    # bouclier
+    "eternal_ember": 721,    # brasier
+    "damned_clock": 765,     # cadran
+    "reaper_claw": 1240,     # griffe
+    "thorn_mantle": 891,     # cape verte
+    "phoenix_down": 1178,    # plume rouge
+    "void_siphon": 1195,     # orbe noire
+}
 UI = os.path.join(SPR, "ui")
 MASTER = 1024
 ICON_SIZES = [256, 128, 64, 48, 32, 24, 16]
@@ -131,6 +209,58 @@ def ui():
             fill.append(fi)
         open(os.path.join(UI, "bar_track.png"), "wb").write(encode(8, h, track))
         open(os.path.join(UI, "bar_fill.png"), "wb").write(encode(8, h, fill))
+
+
+def item_icons():
+    """Une icone 16x16 par objet du catalogue, nommee par son identifiant.
+
+    Le jeu les charge PAR CONVENTION (assets/sprites/items/<id>.png) : aucun
+    chemin n est ecrit dans le catalogue, ajouter un objet revient a deposer un
+    fichier au bon nom."""
+    done = 0
+    for name, index in sorted(ITEM_ICONS.items()):
+        if copy(os.path.join(ICONS_PACK, "item%d.png" % index),
+                os.path.join(SPR, "items", name + ".png")):
+            done += 1
+    return done
+
+
+def decor():
+    """Un objet de decor par fichier, nomme par son identifiant.
+
+    Meme convention que les icones d'objets : le jeu les charge depuis
+    assets/sprites/decor/<id>.png sans qu'aucun chemin soit ecrit dans une
+    scene. Ajouter un decor = deposer un fichier et citer son nom dans
+    `scripts/components/decor_scatter.gd`."""
+    done = 0
+    sheets = {}
+    for name, sheet, x, y, w, h in DECOR:
+        path = os.path.join(DECOR_PACK, sheet + ".png")
+        if sheet not in sheets:
+            if not need(path):
+                sheets[sheet] = None
+            else:
+                sheets[sheet] = decode(path)
+        if sheets[sheet] is None:
+            continue
+        sw, sh, px = sheets[sheet]
+        assert x + w <= sw and y + h <= sh, "%s : decoupe hors planche" % name
+        ash = "Plant" in sheet
+        rows = []
+        for yy in range(h):
+            row = []
+            for xx in range(w):
+                p = px[y + yy][x + xx]
+                if ash and p[3] > 0:
+                    lum = min(255.0, (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) * 1.10)
+                    p = (int(lum * ASH[0]), int(lum * ASH[1]), int(lum * ASH[2]), p[3])
+                row.append(p)
+            rows.append(row)
+        out = os.path.join(SPR, "decor", name + ".png")
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        open(out, "wb").write(encode(w, h, rows))
+        done += 1
+    return done
 
 
 def icon():
@@ -225,6 +355,8 @@ if __name__ == "__main__":
     print("Extraction vers", os.path.relpath(SPR, ROOT))
     count = entities()
     ui()
+    items = item_icons()
+    props = decor()
     icon()
     if missing:
         print("\n%d fichier(s) source introuvable(s) :" % len(missing))
@@ -232,10 +364,12 @@ if __name__ == "__main__":
             print("   ", m)
         if len(missing) > 10:
             print("    ... et %d autres" % (len(missing) - 10))
-        print("\nDeposez les trois packs dans assets/sprites/ (voir l'entete de"
+        print("\nDeposez les quatre packs dans assets/packs/ (voir l'entete de"
               " ce fichier), puis relancez.")
         sys.exit(1)
     print("  %d entites : planches repos + marche" % count)
     print("  interface : panneau, 3 boutons, 2 barres, %d icones" % len(ICONS))
+    print("  objets : %d icones sur %d attendues" % (items, len(ITEM_ICONS)))
+    print("  decor : %d objets sur %d attendus" % (props, len(DECOR)))
     print("  application : icon.png + icon.ico")
     print("\nOuvrez le projet dans Godot une fois pour lancer l'import.")

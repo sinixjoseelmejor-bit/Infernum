@@ -21,7 +21,10 @@
 [ext_resource type="Script" path="res://scripts/systems/character_effects.gd" id="19_charfx"]
 [ext_resource type="Texture2D" uid="uid://7de4da1kgwo4" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
 [ext_resource type="Script" path="res://scripts/components/floor_tiler.gd" id="21_tiler"]
+[ext_resource type="Texture2D" path="res://assets/sprites/arena/floor/floor2.png" id="22_floor2"]
+[ext_resource type="Script" path="res://scripts/components/decor_scatter.gd" id="23_decor"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
+[ext_resource type="PackedScene" path="res://scenes/ui/stats.tscn" id="24_stats"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
 
 [sub_resource type="Animation" id="Animation_necax"]
@@ -57,9 +60,14 @@ offset = Vector2(-3072, -3072)
 region_enabled = true
 region_rect = Rect2(0, 0, 6144, 6144)
 script = ExtResource("21_tiler")
+deep_texture = ExtResource("22_floor2")
 
 [node name="Entities" type="Node2D" parent="." unique_id=543909541]
 y_sort_enabled = true
+
+[node name="Decor" type="Node2D" parent="Entities"]
+y_sort_enabled = true
+script = ExtResource("23_decor")
 
 [node name="Enemies" type="Node2D" parent="Entities" unique_id=915153143 groups=["enemy_container"]]
 unique_name_in_owner = true
@@ -72,6 +80,7 @@ unique_name_in_owner = true
 
 [node name="WaveManager" type="Node2D" parent="." unique_id=663288704 groups=["wave_manager"]]
 unique_name_in_owner = true
+position = Vector2(1, 0)
 script = ExtResource("3_waves")
 boss_scenes = Array[PackedScene]([ExtResource("14_golgota"), ExtResource("15_lilith"), ExtResource("16_baal"), ExtResource("17_asmodee"), ExtResource("18_lucifer")])
 enemy_scenes = Array[PackedScene]([ExtResource("4_imp"), ExtResource("5_hound"), ExtResource("6_cultist"), ExtResource("7_brute")])
@@ -95,6 +104,9 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="Forge" parent="." unique_id=2138385495 instance=ExtResource("13_forge")]
+unique_name_in_owner = true
+
+[node name="StatsScreen" parent="." instance=ExtResource("24_stats")]
 unique_name_in_owner = true
 
 [node name="PauseMenu" parent="." unique_id=1906874088 instance=ExtResource("22_pause")]

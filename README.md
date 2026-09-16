@@ -9,16 +9,16 @@ Ouvrir le dossier dans Godot, puis F5. Scène de départ :
 `scenes/ui/main_menu.tscn`. L'arène est `scenes/main/main.tscn`.
 
 > **Après un clone, il manque les images.** Les sprites des personnages, des
-> ennemis, des boss et de l'interface viennent de packs tiers dont la licence
-> interdit la redistribution : ils ne sont pas dans le dépôt. Déposer les trois
-> packs dans `assets/sprites/` puis lancer
+> ennemis, des boss, de l'interface et du décor viennent de packs tiers dont la
+> licence interdit la redistribution : ils ne sont pas dans le dépôt. Déposer les
+> cinq packs dans `assets/packs/` puis lancer
 > ```bash
 > python tools/extract_assets.py
 > ```
 > Le script n'a aucune dépendance et reconstruit tout à l'identique : les 12
-> planches d'entité, les pièces d'interface, et l'icône de l'application. Les
-> noms de packs attendus sont en tête du fichier, les licences dans
-> [`CREDITS.md`](CREDITS.md).
+> planches d'entité, les pièces d'interface, les 24 icônes d'objets, les 19
+> pièces de décor et l'icône de l'application. Les noms de packs attendus sont en
+> tête du fichier, les licences dans [`CREDITS.md`](CREDITS.md).
 
 | Action | Clavier | Manette | Mobile |
 |---|---|---|---|
@@ -1140,16 +1140,226 @@ scripts/
               pause_menu.gd · virtual_joystick.gd · ui_utils.gd
   main.gd
 assets/
+  packs/      LES CINQ PACKS SOURCES, tels que téléchargés. Un seul
+              .gdignore à la racine les masque à Godot — donc ni importés ni
+              exportés — et une seule ligne de .gitignore les exclut du dépôt.
+              Rien du jeu ne pointe ici : tout en est DÉRIVÉ, par
+              tools/extract_assets.py.
   sprites/    un dossier par entité : characters/cain, enemies/imp,
               bosses/lucifer, projectiles/hell_bolt, pickups/soul...
               chaque entité porte deux planches : <nom>_idle.png, <nom>_walk.png
-              les packs sources portent un .gdignore (non importés)
+              items/ une icône 16×16 par objet, nommée par son identifiant
+              decor/ une pièce de décor par fichier, nommée pareil
+              arena/floor/ les deux carreaux de sol (art du projet)
   audio/      SoundEffects/ 2 musiques + 5 effets (OGG Vorbis)
   vfx/        Effect_pushAndStars/ planche d'explosion (domaine public)
+  ui/         theme.tres
   fonts/
   README.md   planches, échelles, recalages, procédure d'ajout
 default_bus_layout.tres       bus Master · Musique · Effets
 ```
+
+Les dossiers vides `audio/{bosses,characters,…}` et `vfx/{bosses,…}`, posés au
+départ « à remplir », ont été supprimés : le contenu réel est arrivé sous
+d'autres noms et ils ne servaient plus qu'à faire croire à une structure.
+
+### Les icônes d'objets
+
+Une par objet, dans `assets/sprites/items/<id>.png`, chargée **par convention** :
+aucun chemin n'est écrit dans le catalogue, et ajouter un objet revient à déposer
+un fichier au bon nom. Une icône manquante ne casse rien — la carte se contente
+de ne pas en afficher.
+
+Elles sortent d'un pack de 1244 icônes nommées `item1.png` à `item1244.png`,
+**sans aucune indication de contenu**. Les correspondances ont donc été établies
+à l'œil, sur des planches de contact générées pour l'occasion, et n'ont aucune
+chance d'être redécouvertes autrement : elles vivent dans `ITEM_ICONS`, au sein
+de [`tools/extract_assets.py`](tools/extract_assets.py). C'est la partie de ce
+script qu'il ne faut pas perdre.
+
+Les cartes les affichent en 32 px — un facteur **entier** sur la source de 16 px,
+filtré au plus proche. À l'échelle 2,5 un pixel sur deux serait deux fois plus
+large que son voisin.
+
+### Le sol de l'arène, et ses deux étages
+
+L'arène n'a pas de bord. Le sol ne peut donc pas être une image posée une fois :
+c'est un seul `Sprite2D` dont la texture se répète sur une `region_rect` de
+6144², recalé à chaque image sur un multiple exact de la taille du carreau pour
+rester **accroché au monde** (voir
+[`floor_tiler.gd`](scripts/components/floor_tiler.gd)).
+
+Un carreau répété doit se raccorder à lui-même, et ça se mesure : on compare
+l'écart de luminance entre les deux bords qui vont se toucher à l'écart entre
+deux colonnes VOISINES à l'intérieur du carreau. Si le joint est au niveau du
+bruit interne, il est indistinguable d'un joint normal entre deux pierres, donc
+invisible.
+
+| Carreau | taille | bruit interne | joint vertical | joint horizontal |
+|---|---|---|---|---|
+| `floor.png` avant | 420 × 420 | 7,8 | **53,6** | 11,2 |
+| `floor.png` après recadrage | 348 × 362 | 7,3 | 2,6 | 2,3 |
+| `floor2.png` | 528 × 576 | 4,6 | 5,8 | 5,2 |
+
+Le premier carreau **portait une couture visible** : une ligne franche traversait
+l'arène tous les 420 px. Un recadrage interne en (68, 52) la supprime, au prix de
+17 % de la surface.
+
+Le second étage part d'un rendu de 1408 × 768 qui ne pouvait pas se répéter tel
+quel : il est **vignetté** (bords et coins plus sombres), ce qui aurait dessiné
+une grille sombre à l'infini. La tuile en est tirée en mesurant d'abord le pas
+des dalles par autocorrélation (88 px en x, 96 en y), en découpant un nombre
+entier de dalles aligné sur un joint, puis en divisant le vignettage — estimé
+par une moyenne glissante d'exactement un pas, car c'est la seule fenêtre qui
+efface le motif périodique et ne laisse que l'éclairage. Diviser par le profil
+brut effacerait les joints entre dalles.
+
+Le changement d'étage tombe à la **vague 11**, juste après Lilith : là où
+s'arrêtent la plupart des premières runs, donc le passage se mérite et se
+remarque.
+
+### Le décor de l'arène
+
+Même problème que le sol : rien ne peut être posé une fois, l'arène n'a pas de
+bord. Il a fallu deux versions jetées pour arriver à celle-ci, et les raisons
+valent d'être gardées.
+
+1. **Une pièce par cellule, tirée indépendamment.** Ça marchait et ça ne voulait
+   rien dire : aucune de ces pierres n'expliquait la présence des autres, et
+   l'œil ne lisait qu'un bruit régulier. Un décor n'est pas une densité.
+2. **Des compositions ancrées**, quelques pièces dispersées autour d'un point
+   selon une forme. Mieux, mais toujours du semis : un tas de pierres reste un
+   tas de pierres, il ne dit pas d'où elles viennent.
+
+Ce qui est en place ne sème plus des pièces, il **engendre des zones**. Deux
+générateurs, un par famille, et rien d'autre. Le monde est découpé en parcelles
+de 950 px, et **chacune porte une zone** : ce qui varie n'est pas leur présence
+mais leur TAILLE. Petite six fois sur dix, moyenne trois fois, grande une fois.
+
+**La ruine, c'est une empreinte.** On tire un rectangle de 2 à 4 modules sur 2 à
+3, on parcourt son périmètre, et on dresse une colonne à chaque nœud de la trame
+sauf ceux que l'érosion a emportés, entre 30 et 62 % d'entre eux. L'œil reconnaît
+un bâtiment à son **plan**, pas à ses pierres : c'est le rectangle interrompu qui
+fait la ruine. Les angles reçoivent souvent la tour, la pièce la plus haute, parce
+qu'un angle debout tient le plan mieux qu'un pan de mur. La grande ruine seule
+reçoit un cœur, de la poterie et la végétation qui reprend la place : c'est ce qui
+en fait un endroit et non un tas. La petite n'a pas de plan du tout, juste un pan
+de mur tombé et ses gravats au pied.
+
+**L'éboulis, c'est une pente.** Un ou deux blocs en tête, puis les débris, dont
+la taille **décroît** et l'écart **croît** à mesure qu'on descend : un éventail.
+C'est ce double gradient qui donne une direction à la chute, donc un sens à la
+scène. Un nuage de pierres de taille égale ne raconte rien. Le petit éboulis n'a
+pas de pente : c'est un affleurement, un bloc et deux éclats à son pied.
+
+Et c'est là le point qui a demandé une deuxième passe. **Trois pierres qui se
+touchent font une chose ; trois pierres espacées font du bruit.** C'est parce que
+les petites zones restent des scènes qu'on peut en mettre dans chaque parcelle
+sans revenir au semis du début.
+
+L'éboulis est deux fois plus fréquent que la ruine : c'est du terrain, et du
+terrain il y en a partout.
+
+**La répartition a dû être corrigée, et ça se mesure.** La version précédente ne
+servait que trois parcelles sur dix, tirées indépendamment. Des points
+indépendants s'agglutinent et laissent du vide ailleurs, ce qui est la loi des
+grands nombres et non un mauvais réglage. Mesuré en jeu, dans un cadre de
+1920 × 1080, et en marchant en ligne droite sur près de 20 000 px :
+
+| | tirage indépendant | une zone par parcelle |
+|---|---|---|
+| pièces en champ, moyenne | 7,4 | 10,0 |
+| vues sans aucune pièce | 16 sur 60 | 5 sur 60 |
+| plus longue traversée sans rien | 4 840 px | 1 320 px |
+
+Quatre mille huit cents pixels, c'est vingt secondes de marche sans rien croiser.
+
+**Le point de départ est garanti.** Le joueur commence toujours à l'origine du
+monde et il y regarde avant de bouger : la parcelle de l'origine porte donc
+toujours une zone, ancrée à 380 px de lui plutôt qu'au hasard dans sa parcelle.
+Assez loin pour ne pas être dans ses jambes, assez près pour être vue sans
+marcher. La pièce la plus proche est à 277 px au lancement.
+
+Le socle n'a pas changé : tout sort d'un **hachage des coordonnées de la
+parcelle**, jamais d'un tirage au sort. Une parcelle revue redonne la même zone,
+pierre par pierre, au pixel près, sans qu'on mémorise rien, et c'est infini par
+construction. Seules les parcelles visibles portent des sprites, recyclés d'une
+parcelle à l'autre.
+
+Une conséquence à connaître avant de toucher aux générateurs : **l'ordre des
+tirages fait partie de la définition du paysage.** Une zone se lit dans une suite
+de nombres tirée du hachage, consommée dans l'ordre des appels. Sauter un tirage
+dans une branche décalerait tout ce qui suit, donc les générateurs tirent toujours
+le même nombre de fois par pièce, quelle que soit la branche prise. C'est pour ça
+qu'on y voit des tirages faits puis ignorés.
+
+Quatre décisions valent d'être retenues :
+
+- **Aucune collision.** Dans un jeu où l'on lit le sol pour esquiver, un obstacle
+  qui arrête le joueur sans arrêter ce qui le frappe serait une trahison.
+- **Trié en Y avec les créatures**, donc le joueur passe derrière une colonne
+  comme derrière un ennemi. Les zones annoncées et les projectiles vivent dans un autre
+  conteneur, dessiné par-dessus : rien du décor ne peut les masquer.
+- **Les créatures ne se trient pas sur leurs pieds**, et il a fallu le mesurer
+  pour le voir. Leurs planches sont des frames de 100 × 100 où le dessin flotte
+  au milieu : l'origine du nœud tombe à mi-corps et les pieds bien plus bas.
+
+  | sprite | pieds sous l'origine |
+  |---|---|
+  | joueur | 37,5 px |
+  | brute | 34,5 px |
+  | cultiste | 27 px |
+  | chien | 27,5 px |
+  | imp | 21 px |
+
+  Un décor trié sur sa base gagnait donc contre un joueur dont les pieds étaient
+  visiblement plus bas que la pierre : le rocher lui passait devant sans raison
+  visible. Le décor est donc dessiné **sa base 37,5 px sous son nœud**, la valeur
+  du joueur, pour que « comparer les origines » revienne à comparer les points de
+  contact. Déplacer les origines des créatures aurait décalé leurs collisions ;
+  l'écart résiduel avec un imp vaut 16 px, un cinquième de corps.
+- **Le tri en Y ne suffit pas**, et c'est la capture qui l'a montré. Une tour de
+  gravats fait 171 px à l'écran et le joueur 84 : passer derrière elle ne le
+  cachait pas à moitié, elle l'**avalait entièrement**, sans en laisser un pixel.
+  Les pièces de plus de 20 px de source s'effacent donc à 35 % d'opacité quand le
+  joueur est dans leur bande, en un fondu de 0,15 s — un basculement sec se
+  remarquerait plus que l'occultation qu'il corrige. Le seuil vaut 20 parce que le
+  dessin du joueur mesure 22 px : au-dessus, une pièce posée à ses pieds dépasse
+  sa tête. Seuls le caillou et les dalles restent en dessous, et c'est heureux, on
+  marche dessus sans arrêt.
+- **Les deux lieux « bâtis » sont rares.** La colonnade et le sanctuaire pèsent 2
+  contre 5 à l'éboulis : ils racontent trop pour être partout. Deux réglages de la
+  colonnade viennent d'ailleurs d'une capture ratée — à un pas de 168 px, quatre
+  pièces s'étalaient sur 670 px et l'œil ne les rattachait plus les unes aux
+  autres ; et les dalles plates, posées à ce pas, lisaient comme des débris semés
+  au hasard plutôt que comme des colonnes tombées. Pas resserré à 132 px, dalles
+  rendues à l'éboulis.
+
+Le contenu est de la pierre et de la terre cuite, plus trois buissons **passés à
+la cendre** : la luminance de l'original est conservée (donc le modelé du pixel
+art, qu'un simple filtre de teinte aplatirait) et reteintée en gris chaud. Quinze
+pièces en tout, et chacune tient un **rôle** plutôt que d'attendre dans un sac
+commun : mur, angle, cœur, sol, poterie, végétation, tête d'éboulis, gros, moyen,
+petit débris.
+
+Quatre d'entre elles sont bâties sur le même **socle de banc de pierre** du pack :
+le banc nu, le banc chargé de gravats, celui surmonté d'une dalle levée, celui
+surmonté d'une tour. Ce sont les pièces qu'on croise le plus puisqu'elles montent
+les murs des ruines, et à pleine échelle la tour faisait 231 px contre 84 au
+joueur, près de trois fois lui. Elles sont donc dessinées à l'échelle **2** et non
+3. Deux, et pas 2,5 : c'est du pixel art, et à une échelle fractionnaire un pixel
+sur deux serait deux fois plus large que son voisin. Le prix à payer est une
+densité de pixels mélangée, ces quatre pièces étant plus fines que le reste du
+décor ; l'entraxe des colonnes a été resserré de 115 à 95 px en conséquence, sans
+quoi les murs ne se touchaient plus et cessaient de se lire comme des murs.
+
+Deux retraits. Les quatre pièces de cimetière du pack (stèle, stèle haute, croix,
+tombe gravée) sont **sorties du jeu** : le décor ne compose plus que des ruines et
+des éboulis, où elles n'ont pas de place. Leurs rectangles de découpe restent en
+commentaire dans [`tools/extract_assets.py`](tools/extract_assets.py), parce
+qu'ils ne se retrouveraient pas autrement. Et le pack fournit aussi des caisses,
+des tonneaux, des portes, un banc et des panneaux indicateurs gravés, hors sujet
+dans un enfer, dont le texte serait de toute façon illisible à cette échelle.
 
 ## Effets visuels
 
@@ -1371,14 +1581,14 @@ développement :
 
 ### Avant une diffusion publique
 
-- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Les trois packs
+- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Les cinq packs
   autorisent l'usage commercial dans un jeu et interdisent la redistribution des
   assets. **Distribuer le jeu exporté est conforme** — c'est le cas d'usage
   explicitement prévu.
 - **Dépôt public.** C'est l'autre face de la même clause : « ni redistribution ni
   ré-upload, modifiés ou non ». Ni les packs ni les planches qu'on en tire ne
   sont donc versionnés — seuls le sont le code, les scènes, les réglages, et
-  l'art propre au projet (le carreau de sol, le sprite de Caïn fait main). Tout
+  l'art propre au projet (les deux carreaux de sol, le sprite de Caïn fait main). Tout
   le reste se régénère par [`tools/extract_assets.py`](tools/extract_assets.py).
   Le prix à payer est une étape d'installation. Le dépôt est par ailleurs passé
   en **privé**, ce qui ferme aussi les anciens commits — un fichier poussé puis
