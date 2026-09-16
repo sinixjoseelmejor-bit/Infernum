@@ -160,6 +160,20 @@ func unlock_id(id: StringName) -> void:
 	save_game()
 
 
+## Reverrouille des identifiants. RÉSERVÉ AU PANNEAU DE DÉVELOPPEMENT.
+##
+## Prend une LISTE explicite et ne vide jamais le registre en entier : objets et
+## nœuds de Forge le partagent, et « réinitialiser la Forge » ne doit pas
+## reverrouiller les objets achetés au fil des runs.
+func dev_lock_ids(ids: Array) -> void:
+	var touche := false
+	for id in ids:
+		if _unlocked.erase(id):
+			touche = true
+	if touche:
+		save_game()
+
+
 ## Tente de débloquer un objet. Retourne false si clés insuffisantes.
 func unlock_item(item: ItemData) -> bool:
 	if item == null or item.key_cost <= 0 or is_unlocked(item.id):
