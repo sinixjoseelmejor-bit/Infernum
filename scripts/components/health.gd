@@ -48,6 +48,18 @@ func take_damage(amount: float, source: Node = null) -> bool:
 	return true
 
 
+## Relève l'entité à une fraction de ses PV max, invulnérable un instant : la
+## « seconde chance » de la Forge. Ne fait rien sur une entité déjà morte, le
+## coup fatal doit être intercepté AVANT `take_damage`.
+func revive(ratio: float, invulnerability: float) -> void:
+	if is_dead:
+		return
+	current = clampf(max_health * ratio, 1.0, max_health)
+	_invuln_timer = maxf(_invuln_timer, invulnerability)
+	healed.emit(current)
+	health_changed.emit(current, max_health)
+
+
 func heal(amount: float) -> void:
 	if is_dead or amount <= 0.0:
 		return

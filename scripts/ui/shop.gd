@@ -106,7 +106,8 @@ func get_item_cost(item: ItemData) -> int:
 	var wave_factor := 1.0 + COST_WAVE_GROWTH * maxf(0.0, RunState.wave - 1.0)
 	var owned := float(RunState.owned_items.size())
 	var wealth_factor := 1.0 + COST_PER_OWNED_ITEM * owned + COST_PER_OWNED_ITEM_SQ * owned * owned
-	return maxi(1, roundi(item.get_base_cost() * wave_factor * wealth_factor))
+	var discount := 1.0 - Forge.get_special_total(&"shop_discount")
+	return maxi(1, roundi(item.get_base_cost() * wave_factor * wealth_factor * discount))
 
 
 func get_reroll_cost() -> int:
@@ -120,8 +121,9 @@ func _roll_offer() -> void:
 	UIUtils.clear_children(offer_row)
 	_cards.clear()
 
+	var size := OFFER_SIZE + int(Forge.get_special_total(&"shop_slots"))
 	var offer := ItemDB.roll_offer(
-		OFFER_SIZE, maxi(1, RunState.wave), RunState.owned_counts, RunState.stats.get_luck()
+		size, maxi(1, RunState.wave), RunState.owned_counts, RunState.stats.get_luck()
 	)
 	for item in offer:
 		var card := ItemCard.new()
@@ -137,6 +139,7 @@ func _roll_offer() -> void:
 
 
 func _refresh() -> void:
+	UIUtils.chain_focus(self)
 	souls_label.text = "%d âmes" % RunState.souls
 	reroll_button.text = "Relancer (%d âmes)" % get_reroll_cost()
 	reroll_button.disabled = RunState.souls < get_reroll_cost() or _cards.is_empty()

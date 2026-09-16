@@ -76,8 +76,11 @@ func _on_options_pressed() -> void:
 		options_screen.call(&"open")
 
 
-## Abandonner relance la scène : la run en cours est perdue, la méta-progression
-## (clés, Forge) est déjà enregistrée au fil de l'eau et survit.
+## Abandonner met FIN à la run avant de quitter la scène. Les clés ramassées ne
+## sont versées à la sauvegarde qu'à la fin de la run (`RunState.end_run`) : sans
+## cet appel, quitter perdait les clés et n'enregistrait pas la vague atteinte —
+## une run à la vague 20 abandonnée ne comptait pas.
 func _on_quit_pressed() -> void:
+	RunState.end_run()
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")

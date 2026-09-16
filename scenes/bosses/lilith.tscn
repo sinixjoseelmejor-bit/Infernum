@@ -21,8 +21,9 @@ move_speed = 140.0
 acceleration = 1100.0
 knockback_resistance = 1.0
 contact_damage = 15.0
+enrage_time = 50.0
 contact_cooldown = 0.8
-max_health = 3600.0
+max_health = 5600.0
 soul_value = 180
 boss_name = "Lilith"
 subtitle = "La Première Nuit"
@@ -47,7 +48,7 @@ shape = SubResource("CircleShape2D_body")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("3_health")
-max_health = 3600.0
+max_health = 5600.0
 
 [node name="Animator" type="Node" parent="."]
 script = ExtResource("91_anim")

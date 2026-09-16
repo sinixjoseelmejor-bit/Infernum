@@ -159,6 +159,17 @@ func heal(amount: float) -> void:
 
 func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2.ZERO) -> void:
 	var reduced := amount * (1.0 - RunState.stats.get_damage_reduction())
+	if health.is_dead or health.is_invulnerable():
+		return
+	if reduced >= health.current and RunState.consume_revive():
+		# Seconde chance (Forge) : le coup fatal relève à mi-vie, hors d'atteinte
+		# le temps de s'écarter. Une fois par run.
+		health.revive(0.5, 1.5)
+		_knockback = (_knockback + impulse).limit_length(max_knockback)
+		GameEvents.player_revived.emit(self)
+		GameEvents.request_shake(hit_shake * 2.0)
+		_flash()
+		return
 	if not health.take_damage(reduced, source):
 		return
 	_knockback = (_knockback + impulse).limit_length(max_knockback)

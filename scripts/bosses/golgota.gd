@@ -17,6 +17,11 @@ extends Boss
 ## Golgota est le SEUL boss rencontré sans build : à la vague 5 le joueur n'a ni
 ## armure ni PV bonus, soit environ 85 points de vie. À 20, quatre écrasements le
 ## tuaient ; à 17, il en faut six. Les boss suivants n'ont pas ce problème.
+##
+## Il est aussi le PREMIER CONTRÔLE DE BUILD : 3 800 PV et un enragement à 60 s
+## (voir la scène). Une arme de départ nue (60 DPS) ne le tue pas avant qu'il
+## s'enrage ; cinq ou six objets d'attaque, si. Le joueur qui a dépensé ses âmes
+## en vitesse et en ramassage apprend ici qu'il faut construire.
 @export var slam_damage: float = 17.0
 @export var slam_delay: float = 0.95
 @export var slam_interval: float = 2.6

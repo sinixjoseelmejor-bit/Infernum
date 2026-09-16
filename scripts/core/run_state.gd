@@ -31,6 +31,9 @@ var is_running: bool = false
 var owned_counts: Dictionary = {}
 var owned_items: Array[ItemData] = []
 
+## Secondes chances restantes (nœud de Forge « Seconde chance »).
+var revives_left: int = 0
+
 ## Modificateurs fixes du personnage choisi (figés au début de la run).
 var character_mods: Dictionary = {}
 ## Bonus dynamiques des passifs (Marque de Caïn, fuite de Loth...).
@@ -52,6 +55,7 @@ func reset_run() -> void:
 	owned_counts.clear()
 	owned_items.clear()
 	character_bonus.clear()
+	revives_left = int(Forge.get_special_total(&"revive"))
 	var character := Characters.get_selected()
 	character_mods = character.starting_mods.duplicate() if character != null else {}
 	recompute_stats()
@@ -101,6 +105,14 @@ func add_keys(amount: int) -> void:
 		return
 	keys += amount
 	keys_changed.emit(keys)
+
+
+## Consomme une seconde chance. Retourne false s'il n'en reste pas.
+func consume_revive() -> bool:
+	if revives_left <= 0:
+		return false
+	revives_left -= 1
+	return true
 
 
 # --- Inventaire ---

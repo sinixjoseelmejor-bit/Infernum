@@ -20,8 +20,9 @@ move_speed = 95.0
 acceleration = 900.0
 knockback_resistance = 1.0
 contact_damage = 24.0
+enrage_time = 60.0
 contact_cooldown = 0.8
-max_health = 7000.0
+max_health = 8900.0
 soul_value = 280
 boss_name = "Asmodée"
 subtitle = "Les Trois Têtes"
@@ -45,7 +46,7 @@ shape = SubResource("CircleShape2D_body")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("3_health")
-max_health = 7000.0
+max_health = 8900.0
 
 [node name="Animator" type="Node" parent="."]
 script = ExtResource("91_anim")
