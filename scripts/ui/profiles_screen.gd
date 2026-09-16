@@ -44,6 +44,7 @@ func refresh() -> void:
 	UIUtils.clear_children(list)
 	for summary in SaveGame.get_all_summaries():
 		list.add_child(_build_row(summary))
+	UIUtils.chain_focus(self)
 
 
 func _build_row(summary: Dictionary) -> Control:

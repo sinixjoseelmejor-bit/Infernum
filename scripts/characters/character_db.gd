@@ -64,7 +64,9 @@ const CHARACTERS: Array[Dictionary] = [
 		"max_health": 80.0, "move_speed": 288.0, "targeting_range": 300.0,
 		"weapon_damage": 9.0, "weapon_fire_rate": 5.2,
 		"weapon_projectile_speed": 820.0, "weapon_crit_chance": 0.05,
-		"starting_mods": {"pickup_radius_pct": 0.60},
+		# Il ramassait de plus loin ; ça ne rapportait rien (voir Aimant d'âmes).
+		# Le fuyard fait main basse sur ce qu'il trouve : plus d'âmes.
+		"starting_mods": {"soul_gain_pct": 0.10},
 		"passive_name": "Ne pas se retourner",
 		"passive_desc": "+20 % de cadence de tir tant qu'il se déplace. "
 			+ "Le bonus tombe dès qu'il s'arrête.",

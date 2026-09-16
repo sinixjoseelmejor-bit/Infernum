@@ -11,6 +11,7 @@ var item: ItemData
 var cost: int = 0
 var purchased: bool = false
 
+var _icon: TextureRect
 var _name_label: Label
 var _rarity_label: Label
 var _desc_label: Label
@@ -37,10 +38,26 @@ func _build() -> void:
 	box.add_theme_constant_override(&"separation", 6)
 	margin.add_child(box)
 
+	# L'icône vit dans la même ligne que le nom : elle ne coûte donc pas de
+	# hauteur à la carte, dont la taille est déjà contrainte par l'écran.
+	var title := HBoxContainer.new()
+	title.add_theme_constant_override(&"separation", 8)
+	box.add_child(title)
+
+	_icon = TextureRect.new()
+	# 16 px d'origine agrandis d'un facteur ENTIER, au plus proche : à l'échelle
+	# 2,5 un pixel sur deux serait deux fois plus large que son voisin.
+	_icon.custom_minimum_size = Vector2(32, 32)
+	_icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	title.add_child(_icon)
+
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override(&"font_size", 20)
 	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(_name_label)
+	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_child(_name_label)
 
 	_rarity_label = Label.new()
 	_rarity_label.add_theme_font_size_override(&"font_size", 13)
@@ -89,6 +106,8 @@ func _refresh() -> void:
 	if item == null:
 		return
 	var color := item.get_rarity_color()
+	_icon.texture = item.icon
+	_icon.visible = item.icon != null
 	_name_label.text = item.display_name
 	_name_label.add_theme_color_override(&"font_color", color)
 	_rarity_label.text = item.get_rarity_name().to_upper()

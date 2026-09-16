@@ -54,6 +54,24 @@ Utilisé ici, planches de repos et de marche uniquement :
 
 L'icône du jeu (`icon.png`, `icon.ico`) est dérivée du sprite du Flame Golem.
 
+### Texture — décor de l'arène
+
+`assets/packs/Texture/` — deux atlas de 512 × 512, `LICENCE` fourni avec le pack.
+
+- Usage **libre, personnel et commercial**.
+- Modification autorisée.
+- **Redistribution et revente interdites** — d'où l'exclusion du dépôt.
+- Crédit apprécié mais non exigé (d'où cette page) ; le fichier de licence ne
+  nomme pas son auteur.
+
+15 pièces en sont tirées, découpées et renommées : pierres, gravats, dalles,
+autel, urnes, jarre, anneau, pierre levée, tour, et trois buissons reteintés en
+cendre. Quatre pièces de cimetière ont été découpées puis retirées, le décor ne
+composant que des ruines et des éboulis. Les rectangles de découpe sont dans `DECOR`, au sein de
+[`tools/extract_assets.py`](tools/extract_assets.py) ; les atlas n'ont aucune
+grille, ces relevés ne se retrouveraient pas autrement. Le reste du pack — caisses,
+tonneaux, portes, banc, panneaux gravés, tuiles d'herbe — n'est pas employé.
+
 ### Effets sonores et musiques
 
 `assets/audio/SoundEffects/` — `LICENSE.txt` fourni avec les fichiers. C'est le
@@ -82,10 +100,38 @@ elle n'impose rien, la mention est ici parce que l'auteur la dit appréciée.
 
 Utilisée pour l'explosion de *Braise éternelle*.
 
+### Icônes d'objets
+
+`assets/packs/ItemIconPack/` — 1244 icônes 16×16, `LICENSE.txt` fourni avec le
+pack.
+
+- Usage **libre, personnel et commercial**.
+- Modification de n'importe quelle partie autorisée.
+- **Redistribution et revente interdites** — d'où l'exclusion du dépôt.
+- Crédit vivement apprécié (d'où cette page) ; le fichier de licence ne nomme
+  pas son auteur.
+
+24 icônes en sont tirées, une par objet du catalogue. La table de correspondance
+est dans [`tools/extract_assets.py`](tools/extract_assets.py).
+
 ### Sol de l'arène
 
-`assets/sprites/arena/floor/floor.png` — carreau de 420 × 420 découpé dans une
-carte d'arène fournie par l'auteur du projet.
+Deux carreaux, tous deux de l'art fourni par l'auteur du projet, et les seules
+images versionnées ici avec les effets sonores.
+
+- `floor.png` — 348 × 362, découpé dans une carte d'arène. Le découpage d'origine
+  (420 × 420) portait une couture visible une fois répété ; il a été recadré en
+  (68, 52) pour que le carreau se raccorde à lui-même.
+- `floor2.png` — 528 × 576, le second étage, tiré d'un rendu de 1408 × 768 par
+  mesure du pas des dalles et suppression du vignettage. Le rendu source
+  (`floor/source/Floor2.jpg`) est conservé, masqué à Godot par un `.gdignore` :
+  il ne part pas dans l'export. L'outil qui en tire le carreau est
+  [`tools/floor_tile.gd`](tools/floor_tile.gd). **Si ce rendu venait d'un pack
+  tiers et non du projet, il faut le déplacer sous `assets/packs/` comme les
+  autres** : la clause de non-redistribution s'appliquerait à lui aussi.
+
+Le procédé des deux découpes, et la mesure qui les justifie, sont détaillés dans
+[`README.md`](README.md).
 
 ## Moteur
 

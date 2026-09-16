@@ -44,6 +44,31 @@ static func restore_focus(root: Node, captured: Dictionary, fallback: Control) -
 		list[0].grab_focus()
 
 
+## Boucle le focus sur un écran.
+##
+## Godot résout les voisins par GÉOMÉTRIE : depuis le contrôle le plus bas d'un
+## panneau, « bas » ne trouve rien et le focus ne bouge pas. Or tous ces écrans
+## s'ouvrent sur leur bouton de retour, qui est justement en bas — le premier
+## réflexe à la manette, pousser vers le bas, ne faisait donc RIEN. L'écran
+## passait pour bloqué alors qu'il suffisait de remonter.
+##
+## Les voisins haut/bas sont donc câblés explicitement, en anneau. Gauche et
+## droite restent géométriques : ce sont elles qui règlent la valeur d'un
+## curseur, les recâbler empêcherait de modifier les options.
+static func chain_focus(root: Node) -> void:
+	var list := focusable_controls(root)
+	if list.size() < 2:
+		return
+	for i in list.size():
+		var control := list[i]
+		var previous := list[(i - 1 + list.size()) % list.size()]
+		var next := list[(i + 1) % list.size()]
+		control.focus_neighbor_top = previous.get_path()
+		control.focus_neighbor_bottom = next.get_path()
+		control.focus_previous = previous.get_path()
+		control.focus_next = next.get_path()
+
+
 ## Contrôles réellement atteignables à la manette, dans l'ordre de l'arbre.
 ## Un bouton désactivé est exclu : le laisser focalisable oblige à traverser les
 ## douze nœuds verrouillés de la Forge pour atteindre le seul qu'on peut ouvrir.

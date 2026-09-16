@@ -1,20 +1,29 @@
 extends Node
 ## Forge Éternelle (autoload `Forge`) : arbre de méta-progression persistant.
 ##
-## 15 nœuds, 3 branches, débloqués avec des clés et conservés entre les runs.
+## 21 nœuds, 3 branches, débloqués avec des clés et conservés entre les runs.
 ##
-## ÉQUILIBRAGE — pourquoi ça ne trivialise pas le début de partie :
+## CE QUE LA FORGE DOIT FAIRE — et ce qu'elle ne faisait pas. Le jeu est fait
+## pour être REJOUÉ : une run se termine sur un boss, et c'est la Forge qui doit
+## rendre le boss suivant atteignable. L'ancien arbre valait +33 % de puissance
+## au total, soit une vague et demie d'avance : dix runs de clés ne changeaient
+## pas quel boss vous tuait. Le budget a été triplé et surtout complété par des
+## nœuds à EFFET (seconde chance, soin après boss, étal élargi, clés doublées)
+## dont chacun change visiblement la run suivante.
 ##
-## 1. LES BONUS ALIMENTENT LES MÊMES POOLS PLAFONNÉS que les objets
-##    (`PlayerStats`). Un joueur avec +12 % de dégâts de Forge démarre à 12 %
-##    des 200 % autorisés : la Forge avance le curseur, elle ne le déplace pas.
-## 2. BUDGET TOTAL VOLONTAIREMENT MODESTE. Arbre complet ≈ +33 % de puissance,
-##    soit ~8 objets communs, soit environ 1.5 à 2 vagues d'avance. Le mur de
-##    difficulté (vague ~15-20) recule à peine.
-## 3. COÛT ÉTALÉ : 42 clés au total, soit ~8 à 10 runs. Un débutant joue sans,
-##    un vétéran ne saute pas les vagues 1-5 pour autant — elles sont déjà
-##    confortables sans Forge (DPS de base 50 pour 21 requis en vague 1).
+## GARDE-FOUS :
+## 1. Les bonus de statistiques alimentent LES MÊMES POOLS PLAFONNÉS que les
+##    objets (`PlayerStats`) : la Forge avance le curseur, elle ne le déplace pas.
+## 2. Les effets sont bornés à l'unité : une seule seconde chance par run, un
+##    seul objet de plus en boutique, une seule clé de plus par boss.
+## 3. Le début de partie ne se trivialise pas : les vagues 1-4 sont déjà
+##    confortables sans Forge (DPS de base 50 pour 21 requis en vague 1), et les
+##    boss sont remis à l'échelle de la vague, pas de la Forge.
 ## 4. AUCUN NŒUD NE TOUCHE DEUX AXES MULTIPLICATIFS à la fois.
+##
+## RYTHME : 66 clés au total. Une run qui meurt à Lilith rapporte 2 clés, à Baal
+## 4, à Asmodée 7, à Lucifer 10 : l'arbre se termine vers la dixième run si le
+## joueur gagne un boss toutes les deux runs — c'est la cadence visée.
 
 signal node_unlocked(id: StringName)
 
@@ -23,56 +32,78 @@ const NODES: Array[Dictionary] = [
 	{
 		"id": &"forge_ember", "branch": "Fer", "name": "Braise de forge",
 		"desc": "Les armes sortent du feu plus mordantes.",
-		"cost": 1, "requires": [], "mods": {"damage_pct": 0.03},
+		"cost": 1, "requires": [], "mods": {"damage_pct": 0.04},
 	},
 	{
 		"id": &"forge_temper", "branch": "Fer", "name": "Trempe",
 		"desc": "Le métal garde le tranchant.",
-		"cost": 2, "requires": [&"forge_ember"], "mods": {"damage_pct": 0.04},
+		"cost": 2, "requires": [&"forge_ember"], "mods": {"damage_pct": 0.05},
 	},
 	{
 		"id": &"forge_oiled", "branch": "Fer", "name": "Mécanisme huilé",
 		"desc": "Plus rien ne grippe.",
-		"cost": 3, "requires": [&"forge_ember"], "mods": {"fire_rate_pct": 0.05},
+		"cost": 2, "requires": [&"forge_ember"], "mods": {"fire_rate_pct": 0.06},
 	},
 	{
 		"id": &"forge_razor", "branch": "Fer", "name": "Fil rasoir",
 		"desc": "Trouve la faille plus souvent.",
-		"cost": 3, "requires": [&"forge_temper"], "mods": {"crit_chance": 0.04},
+		"cost": 3, "requires": [&"forge_temper"], "mods": {"crit_chance": 0.05},
 	},
 	{
 		"id": &"forge_blacksteel", "branch": "Fer", "name": "Acier noir",
 		"desc": "Forgé dans quelque chose de très ancien.",
-		"cost": 5, "requires": [&"forge_oiled", &"forge_razor"],
-		"mods": {"damage_pct": 0.05},
+		"cost": 4, "requires": [&"forge_oiled", &"forge_razor"],
+		"mods": {"damage_pct": 0.08},
+	},
+	{
+		"id": &"forge_pierce", "branch": "Fer", "name": "Fer qui traverse",
+		"desc": "Les traits ne s'arrêtent plus au premier corps.",
+		"cost": 5, "requires": [&"forge_blacksteel"], "mods": {"pierce": 1},
+	},
+	{
+		"id": &"forge_wrath", "branch": "Fer", "name": "Colère",
+		"desc": "Ce qui reste quand tout le reste a brûlé.",
+		"cost": 6, "requires": [&"forge_pierce"], "mods": {"damage_pct": 0.10},
 	},
 
 	# ----------------------------- BRANCHE CHAIR ------------------------------
 	{
 		"id": &"forge_hide", "branch": "Chair", "name": "Cuir cousu",
 		"desc": "Une couche de plus entre vous et eux.",
-		"cost": 1, "requires": [], "mods": {"max_health_flat": 8.0},
+		"cost": 1, "requires": [], "mods": {"max_health_flat": 10.0},
 	},
 	{
 		"id": &"forge_plates", "branch": "Chair", "name": "Plaques rivetées",
 		"desc": "Ça pèse, mais ça tient.",
-		"cost": 2, "requires": [&"forge_hide"], "mods": {"armor": 6.0},
+		"cost": 2, "requires": [&"forge_hide"], "mods": {"armor": 8.0},
 	},
 	{
 		"id": &"forge_breath", "branch": "Chair", "name": "Souffle lent",
 		"desc": "Les plaies se referment d'elles-mêmes.",
-		"cost": 3, "requires": [&"forge_hide"], "mods": {"regen": 0.3},
+		"cost": 2, "requires": [&"forge_hide"], "mods": {"regen": 0.4},
 	},
 	{
 		"id": &"forge_carcass", "branch": "Chair", "name": "Carcasse épaisse",
 		"desc": "Il en faut plus pour vous abattre.",
-		"cost": 3, "requires": [&"forge_plates"], "mods": {"max_health_flat": 10.0},
+		"cost": 3, "requires": [&"forge_plates"], "mods": {"max_health_flat": 15.0},
 	},
 	{
 		"id": &"forge_scale", "branch": "Chair", "name": "Écaille de forge",
 		"desc": "Trempée dans la même cuve que les armes.",
-		"cost": 5, "requires": [&"forge_breath", &"forge_carcass"],
-		"mods": {"armor": 10.0},
+		"cost": 4, "requires": [&"forge_breath", &"forge_carcass"],
+		"mods": {"armor": 12.0},
+	},
+	{
+		"id": &"forge_boss_heal", "branch": "Chair", "name": "Repos du vainqueur",
+		"desc": "Abattre un boss rend deux coups de plus.",
+		"cost": 4, "requires": [&"forge_carcass"], "mods": {},
+		"special": &"boss_heal_hits", "value": 2.0,
+	},
+	{
+		"id": &"forge_revive", "branch": "Chair", "name": "Seconde chance",
+		"desc": "Une fois par run, le coup fatal vous relève à mi-vie au lieu de vous achever.",
+		"cost": 7, "requires": [&"forge_scale", &"forge_boss_heal"], "mods": {},
+		"special": &"revive", "value": 1,
 	},
 
 	# ----------------------------- BRANCHE CENDRE -----------------------------
@@ -84,24 +115,37 @@ const NODES: Array[Dictionary] = [
 	{
 		"id": &"forge_light_step", "branch": "Cendre", "name": "Pas léger",
 		"desc": "La cendre ne ralentit plus.",
-		"cost": 2, "requires": [&"forge_embers"], "mods": {"move_speed_pct": 0.04},
+		"cost": 2, "requires": [&"forge_embers"], "mods": {"move_speed_pct": 0.05},
 	},
 	{
-		"id": &"forge_call", "branch": "Cendre", "name": "Appel des âmes",
-		"desc": "Elles viennent de plus loin.",
-		"cost": 2, "requires": [&"forge_embers"], "mods": {"pickup_radius_pct": 0.40},
+		"id": &"forge_call", "branch": "Cendre", "name": "Marchandage",
+		"desc": "La boutique baisse ses prix de 10 %.",
+		"cost": 2, "requires": [&"forge_embers"], "mods": {},
+		"special": &"shop_discount", "value": 0.10,
 	},
 	{
 		"id": &"forge_augur", "branch": "Cendre", "name": "Augure",
 		"desc": "La boutique propose de meilleures raretés.",
-		"cost": 4, "requires": [&"forge_light_step", &"forge_call"],
+		"cost": 3, "requires": [&"forge_light_step", &"forge_call"],
 		"mods": {"luck": 1.0},
 	},
 	{
 		"id": &"forge_chest", "branch": "Cendre", "name": "Coffre de forge",
 		"desc": "Chaque run commence avec 60 âmes.",
-		"cost": 5, "requires": [&"forge_augur"], "mods": {},
+		"cost": 3, "requires": [&"forge_augur"], "mods": {},
 		"special": &"start_souls", "value": 60,
+	},
+	{
+		"id": &"forge_stall", "branch": "Cendre", "name": "Étal élargi",
+		"desc": "La boutique propose un objet de plus.",
+		"cost": 4, "requires": [&"forge_augur"], "mods": {},
+		"special": &"shop_slots", "value": 1,
+	},
+	{
+		"id": &"forge_keys", "branch": "Cendre", "name": "Clé du geôlier",
+		"desc": "Chaque boss abattu laisse une clé de plus.",
+		"cost": 5, "requires": [&"forge_chest", &"forge_stall"], "mods": {},
+		"special": &"boss_keys", "value": 1,
 	},
 ]
 
@@ -170,12 +214,19 @@ func get_bonus_mods() -> Dictionary:
 	return total
 
 
-func get_start_souls() -> int:
-	var souls := 0
+## Somme des effets spéciaux débloqués portant cette clé. Chaque consommateur
+## (boutique, vagues, boss, joueur) lit la sienne : `start_souls`,
+## `shop_discount`, `shop_slots`, `boss_heal_hits`, `boss_keys`, `revive`.
+func get_special_total(key: StringName) -> float:
+	var total := 0.0
 	for node in NODES:
-		if is_unlocked(node["id"]) and node.get("special", &"") == &"start_souls":
-			souls += int(node.get("value", 0))
-	return souls
+		if is_unlocked(node["id"]) and node.get("special", &"") == key:
+			total += float(node.get("value", 0.0))
+	return total
+
+
+func get_start_souls() -> int:
+	return int(get_special_total(&"start_souls"))
 
 
 func get_progress() -> Vector2i:

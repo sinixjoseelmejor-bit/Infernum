@@ -27,6 +27,7 @@ func open() -> void:
 	get_tree().paused = true
 	_build()
 	_refresh()
+	UIUtils.chain_focus(self)
 	start_button.grab_focus()
 
 

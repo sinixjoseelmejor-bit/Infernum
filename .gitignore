@@ -21,14 +21,16 @@ Thumbs.db
 # Pour les regenerer apres un clone :  python tools/extract_assets.py
 # (voir l'entete du script : il faut d'abord deposer les trois packs)
 
-# Les packs d'origine
-/assets/sprites/PixelUIKit/
-/assets/sprites/Tiny RPG Character Asset Pack*/
+# Les packs d'origine, tous regroupes sous assets/packs/ : un seul .gdignore
+# les masque a Godot, une seule ligne les tient hors de git.
+/assets/packs/
 
 # Ce qui en est extrait
 *_idle.png*
 *_walk.png*
 /assets/sprites/ui/
+/assets/sprites/items/
+/assets/sprites/decor/
 /icon.png
 /icon.png.import
 /icon.ico

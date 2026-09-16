@@ -21,12 +21,13 @@ acceleration = 420.0
 knockback_resistance = 1.0
 contact_damage = 22.0
 contact_cooldown = 0.8
-max_health = 2200.0
+max_health = 3800.0
 soul_value = 140
 boss_name = "Golgota"
 subtitle = "Le Mont du Crâne"
 phase_thresholds = Array[float]([0.5])
 engage_distance = 300.0
+enrage_time = 60.0
 pressure_rate = 1.1
 pressure_max = 4.0
 projectile_scene = ExtResource("4_bolt")
@@ -45,7 +46,7 @@ shape = SubResource("CircleShape2D_body")
 
 [node name="Health" type="Node" parent="."]
 script = ExtResource("3_health")
-max_health = 2200.0
+max_health = 3800.0
 
 [node name="Animator" type="Node" parent="."]
 script = ExtResource("91_anim")

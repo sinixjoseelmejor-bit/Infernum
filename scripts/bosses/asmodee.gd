@@ -104,7 +104,7 @@ func _release_pressure() -> void:
 		var strength := minf(chain_pull_speed, (offset.length() - chain_min_gap) * 3.0)
 		target.call(&"apply_impulse", offset.normalized() * strength)
 	if target.has_method(&"apply_damage"):
-		target.call(&"apply_damage", chain_damage, self, Vector2.ZERO)
+		target.call(&"apply_damage", _outgoing_damage(chain_damage), self, Vector2.ZERO)
 	telegraph_at(global_position, 150.0, 0.7, bolt_damage, Color(0.95, 0.75, 0.3))
 	GameEvents.request_shake(8.0)
 	_attack_timer = 0.8

@@ -93,12 +93,23 @@ enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 ## Au-delà du dernier boss, on reboucle en renforçant (PV et dégâts).
 @export var boss_repeat_health_growth: float = 0.45
 @export var boss_repeat_damage_growth: float = 0.20
-## Les PV des boss étaient FIXES alors que le DPS du joueur est multiplié par 22
-## entre les vagues 5 et 20 : Asmodée tombait en 4 s, sans jamais atteindre sa
-## phase 2 (50 % de PV) ni son enragement (100 s). Ces deux courbes maintiennent
-## le combat entre 12 et 21 s, la durée pour laquelle les patterns sont écrits.
+## Les PV des boss étaient FIXES alors que le DPS du joueur grandit à chaque
+## vague : Asmodée tombait sans jamais atteindre sa phase 2 (45 % de PV) ni son
+## enragement (100 s). Cette courbe rend au combat la durée pour laquelle les
+## patterns sont écrits.
+##
+## LES BOSS SONT DES CONTRÔLES DE BUILD. Chaque scène de boss fixe ses PV et son
+## `enrage_time` de sorte qu'un DPS insuffisant fasse durer le combat jusqu'à
+## l'enragement (dégâts ×1,6, pression ×2) — et c'est là que la run se termine.
+## Le seuil de DPS visé, en multiples du DPS de départ (≈ 60) : Golgota ×1,25,
+## Lilith ×3, Baal ×5, Asmodée ×7, Lucifer ×9. Sans Forge, une bonne build
+## franchit Lilith et bute sur Baal ; la Forge complète (≈ ×2 de DPS) porte
+## jusqu'à Lucifer. C'est la boucle « rejouer pour aller plus loin ».
+##
+## Mesuré en partie réelle avant ce réglage : 116 s pour Baal et 542 s pour
+## Lucifer avec une build faible et la mort neutralisée — c'est précisément ce
+## que l'enragement transforme désormais en mort.
 @export var boss_wave_health_growth: float = 0.09
-@export var boss_wave_damage_growth: float = 0.04
 
 @export_group("Placement")
 @export var min_spawn_distance: float = 480.0
@@ -199,6 +210,10 @@ func _begin_wave() -> void:
 	DropSystem.reset_wave_budget()
 	GameEvents.wave_started.emit(wave)
 	if is_boss_wave():
+		# Une clé garantie en ATTEIGNANT chaque boss. Elle était versée à la fin
+		# de la vague : une run qui mourait sur Golgota rentrait avec zéro clé, et
+		# le joueur pour qui la Forge est faite ne pouvait jamais la commencer.
+		RunState.add_keys(1)
 		_spawn_boss()
 
 
@@ -213,11 +228,14 @@ func _spawn_boss() -> void:
 	boss.target = target
 	var elapsed := float(wave - boss_wave_interval)
 	boss.max_health *= 1.0 + boss_wave_health_growth * elapsed
-	boss.contact_damage *= 1.0 + boss_wave_damage_growth * elapsed
+	var threat := get_boss_threat_multiplier(wave)
+	boss.contact_damage *= threat
+	boss.attack_damage_multiplier = threat
 	if loops > 0:
 		# Rencontre répétée : on renforce, sans toucher aux patterns.
 		boss.max_health *= 1.0 + boss_repeat_health_growth * loops
 		boss.contact_damage *= 1.0 + boss_repeat_damage_growth * loops
+		boss.attack_damage_multiplier *= 1.0 + boss_repeat_damage_growth * loops
 	boss.global_position = _random_ring_position()
 	container.add_child(boss)
 	_boss = boss
@@ -232,13 +250,11 @@ func _end_wave() -> void:
 	if is_instance_valid(target) and target.has_method(&"heal"):
 		var hits := wave_clear_heal_hits
 		if is_boss_wave():
-			hits += boss_clear_heal_hits
+			hits += boss_clear_heal_hits + Forge.get_special_total(&"boss_heal_hits")
 		if hits > 0.0:
 			target.call(&"heal", hits * get_hit_damage())
-	# Une clé garantie toutes les 5 vagues : le joueur régulier progresse même
-	# sans dépendre du drop aléatoire des élites.
-	if wave % 5 == 0:
-		RunState.add_keys(1)
+	# (La clé garantie des vagues de boss est versée à l'ARRIVÉE du boss, dans
+	# `_begin_wave` : mourir contre lui doit quand même rapporter quelque chose.)
 
 
 ## TOUT LE BUTIN REJOINT LE JOUEUR AVANT LA BOUTIQUE.
@@ -322,6 +338,22 @@ func get_health_multiplier() -> float:
 	if wave >= late_wave:
 		base += late_health_growth * (wave - late_wave + 1)
 	return base * Curses.get_enemy_health_mult() * WaveMods.get_enemy_health_mult()
+
+
+## Les dégâts d'un boss dans l'unité du jeu : le « coup » de
+## `reference_hit_damage`, qui grandit de `damage_growth` à chaque vague. Les
+## valeurs écrites dans chaque boss sont calibrées sur la vague du premier
+## palier, et cette fonction les y ramène.
+##
+## LE DÉFAUT QU'ELLE CORRIGE : seul le dégât de CONTACT montait, et deux fois
+## moins vite que la piétaille (4 % contre 9,5 % par vague). Les dégâts
+## d'ATTAQUE — foudre, braise, salves, tout ce qui blesse réellement le joueur —
+## ne montaient pas du tout. Une attaque de Lucifer vague 25 valait 0,55 coup
+## quand un marteau de Golgota vague 5 en valait 1,7 : le boss le plus tardif
+## était le moins dangereux du jeu.
+func get_boss_threat_multiplier(at_wave: int) -> float:
+	var reference := 1.0 + damage_growth * (boss_wave_interval - 1)
+	return (1.0 + damage_growth * maxf(0.0, at_wave - 1.0)) / reference
 
 
 func get_damage_multiplier() -> float:

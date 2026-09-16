@@ -54,6 +54,15 @@ extends Enemy
 @export var projectile_scene: PackedScene
 @export var telegraph_scene: PackedScene
 
+## Mise a l'echelle des degats d'ATTAQUE (zones annoncees et projectiles), posee
+## par le WaveManager a l'apparition. Les valeurs ecrites dans chaque boss sont
+## calibrees sur la vague du PREMIER palier : sans ce facteur, la foudre de
+## Lucifer vague 25 frappe comme le marteau de Golgota vague 5, alors que le
+## joueur a entre-temps multiplie ses PV, son armure et ses soins. Seul le degat
+## de CONTACT etait mis a l'echelle, et deux fois moins vite que la pietaille qui
+## accompagne le boss.
+var attack_damage_multiplier: float = 1.0
+
 var current_phase: int = 0
 var fight_time: float = 0.0
 var pressure: float = 0.0
@@ -226,9 +235,16 @@ func _spawn_projectile(direction: Vector2, speed: float, damage: float) -> void:
 	projectile.global_position = global_position + direction * 42.0
 	projectile.direction = direction
 	projectile.speed = speed
-	projectile.damage = damage * (enrage_damage_multiplier if is_enraged else 1.0)
+	projectile.damage = _outgoing_damage(damage)
 	projectile.source = self
 	_projectile_parent().add_child(projectile)
+
+
+## Point de passage unique de tous les degats sortants : palier de vague, puis
+## enragement. Tout ce qui blesse le joueur doit passer par ici.
+func _outgoing_damage(damage: float) -> float:
+	var enrage := enrage_damage_multiplier if is_enraged else 1.0
+	return damage * attack_damage_multiplier * enrage
 
 
 func _projectile_parent() -> Node:
@@ -247,7 +263,7 @@ func telegraph_at(point: Vector2, radius: float, delay: float, damage: float,
 	zone.global_position = point
 	zone.radius = radius
 	zone.delay = delay
-	zone.damage = damage * (enrage_damage_multiplier if is_enraged else 1.0)
+	zone.damage = _outgoing_damage(damage)
 	zone.color = color
 	_projectile_parent().add_child(zone)
 
@@ -312,5 +328,6 @@ func apply_wave_scaling(_health_mult: float, _damage_mult: float, _speed_mult: f
 
 func _on_died(source: Node) -> void:
 	GameEvents.boss_died.emit(self)
-	DropSystem.spawn_keys(get_parent(), global_position, guaranteed_keys)
+	var keys := guaranteed_keys + int(Forge.get_special_total(&"boss_keys"))
+	DropSystem.spawn_keys(get_parent(), global_position, keys)
 	super(source)

@@ -8,12 +8,19 @@ extends Node
 signal player_spawned(player: Node2D)
 signal player_health_changed(current: float, maximum: float)
 signal player_died(player: Node2D)
+## Seconde chance consommée : le coup fatal a été absorbé.
+signal player_revived(player: Node2D)
 
 signal enemy_spawned(enemy: Node2D)
 signal enemy_died(enemy: Node2D, death_position: Vector2)
 
 signal wave_started(wave_index: int)
 signal wave_cleared(wave_index: int)
+
+## L'arène change d'étage. Émis par `floor_tiler.gd`, qui détient le seuil ;
+## tout ce qui doit suivre la lumière du sol écoute ici plutôt que de compter
+## les vagues de son côté.
+signal arena_depth_changed(deep: bool)
 
 signal damage_dealt(amount: float, world_position: Vector2, is_crit: bool)
 ## Émis uniquement quand la source des dégâts est le joueur (vol de vie, stats).

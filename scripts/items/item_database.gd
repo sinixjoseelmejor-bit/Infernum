@@ -65,9 +65,12 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"crit_chance": 0.06},
 	},
 	{
+		# Le rayon de ramassage n'est plus vendu : la fin de vague aspire tout le
+		# butin et les âmes ne servent qu'à la boutique d'après, donc ramasser
+		# plus tôt ne rapportait rien. L'objet ne porte que l'effet réel.
 		"id": &"soul_magnet", "name": "Aimant d'âmes", "rarity": 0,
-		"desc": "Les âmes viennent à vous.",
-		"mods": {"pickup_radius_pct": 0.35, "soul_gain_pct": 0.10},
+		"desc": "Les âmes viennent à vous, et plus nombreuses.",
+		"mods": {"soul_gain_pct": 0.12},
 	},
 
 	# -------------------------------- RARES (6) -------------------------------
@@ -180,7 +183,7 @@ const ITEMS: Array[Dictionary] = [
 	{
 		"id": &"void_siphon", "name": "Siphon du vide", "rarity": 3,
 		"desc": "Beaucoup plus d'âmes récoltées, au prix de la puissance.",
-		"mods": {"soul_gain_pct": 0.45, "damage_pct": -0.05, "pickup_radius_pct": 0.50},
+		"mods": {"soul_gain_pct": 0.45, "damage_pct": -0.05},
 		"max_stacks": 1, "key_cost": 5,
 	},
 ]
@@ -207,6 +210,7 @@ func _ready() -> void:
 		item.special = entry.get("special", &"")
 		item.max_stacks = entry.get("max_stacks", 5)
 		item.key_cost = entry.get("key_cost", 0)
+		item.load_icon()
 		_catalog[item.id] = item
 	catalog_ready.emit()
 
@@ -248,13 +252,17 @@ func get_rarity_weights(wave: int, luck: float = 0.0) -> Array[float]:
 	var steps := maxf(0.0, wave - 1.0)
 	var weights: Array[float] = []
 	for i in 4:
-		var w: float = BASE_WEIGHTS[i] + WEIGHT_DRIFT[i] * steps
-		# La chance déplace la masse vers le haut, sans créer de nouveau plafond.
+		var w: float = clampf(BASE_WEIGHTS[i] + WEIGHT_DRIFT[i] * steps, WEIGHT_MIN[i], WEIGHT_MAX[i])
+		# La chance s'applique APRÈS les bornes de vague. Avant, elle était bornée
+		# avec elles : dès la vague 12 les quatre poids touchaient leur limite et
+		# la chance ne faisait plus rien — Augure, Fragilité mortelle, Rituel de
+		# sang et Fureur payaient en monnaie de singe. Une chance de 1 porte le
+		# légendaire de 10 à 14 % en fin de run, le plafond de 3 à 20 %.
 		if i > 0:
-			w += luck * float(i)
+			w += luck * float(i) * 1.5
 		else:
-			w -= luck * 3.0
-		weights.append(clampf(w, WEIGHT_MIN[i], WEIGHT_MAX[i]))
+			w = maxf(w - luck * 4.0, 8.0)
+		weights.append(w)
 	return weights
 
 
