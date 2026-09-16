@@ -192,7 +192,7 @@ Deux détails qui comptent :
 L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
 instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
-### Ennemis — 4 comportements
+### Ennemis — 5 comportements
 
 | Type | Script | Comportement | Vague |
 |---|---|---|---|
@@ -200,8 +200,9 @@ instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 | **Limier** | `dasher_enemy.gd` | rapide : approche → armement télégraphié → charge → récupération | 2 |
 | **Cultiste** | `ranged_enemy.gd` | distance : garde ~320 px, recule si on l'approche, tire | 3 |
 | **Brute** | `enemy.gd` | tanky : lent, 90 PV, résistant au recul, gros dégâts de contact | 4 |
+| **Œil** | `beam_enemy.gd` | rayon : vise, verrouille, frappe en ligne droite | 11 |
 
-Âmes par ennemi : imp 3, limier 3, cultiste 5, brute 6 — soit environ 0,1 âme par
+Âmes par ennemi : imp 3, limier 3, cultiste 5, brute 6, œil 8 — soit environ 0,1 âme par
 point de PV pour tout le monde. La brute était réglée sur une propriété morte
 (`xp_value`, qui n'existe pas sur `Enemy`) et retombait donc sur 3 âmes pour
 90 PV : l'ennemi le plus coûteux à tuer était aussi le moins rentable, et c'est
@@ -210,6 +211,42 @@ son poids d'apparition qui croît le plus vite.
 Le limier s'immobilise pendant son armement : la menace vient de la pression au sol,
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
+
+#### L'Œil sanctionne l'immobilité
+
+C'est ce qu'aucun des quatre autres ne faisait. Le cultiste tire des traits : ils
+se lisent un par un et s'esquivent en marchant. L'Œil, lui, transforme une
+position sûre en la seule où il ne faut pas être. Dans une arène où l'on tourne
+en rond en tirant automatiquement, c'est la première chose qui punit le fait de
+se poser.
+
+Son rayon a **trois temps**, et c'est le deuxième qui porte tout le sens :
+
+| Temps | Durée | Ce que ça dit |
+|---|---|---|
+| Visée | 0,70 s | un fil sombre suit le joueur : un coup se prépare |
+| Verrouillage | 0,38 s | la direction se fige et la ligne s'allume : **bougez** |
+| Tir | 0,16 s | le trait s'épaissit et frappe une fois |
+
+La ligne suit le joueur pendant la visée, donc reculer ne sert à rien : seul le
+pas de côté après le verrouillage esquive. Le rayon est un **segment**, pas une
+demi-droite infinie — passer derrière l'Œil est une esquive valable, et il serait
+faux de la refuser.
+
+Sa faiblesse est son immobilité : il se fige pendant toute la charge, plus d'une
+seconde d'arrêt complet, et il ne recule jamais quand on l'approche. Un Œil qu'on
+laisse tranquille tire toutes les 3,4 s ; un Œil qu'on charge meurt sans avoir
+fini de viser.
+
+Il entre à la **vague 11**, juste après Lilith, et c'est un seuil de jeu et non
+d'équilibrage : l'introduire plus tôt punirait un joueur qui n'a pas encore de
+quoi choisir où se placer. Son poids monte doucement — deux ou trois Yeux
+suffisent à interdire de se poser, dix en feraient un jeu de couloirs.
+
+Comme les zones de boss, le rayon est **entièrement dessiné par code**, sans
+asset ni collision : au moment du tir on mesure la distance du joueur au segment.
+C'est un test exact, là où une zone de collision allongée demanderait un corps et
+une couche de physique.
 
 ### Objets — 21 objets, 4 raretés
 
@@ -1101,7 +1138,7 @@ vol (90 °/s), et un enum `target_priority` (`NEAREST`, `AIM_ASSISTED`, `LOWEST_
 scenes/
   main/main.tscn              arène, câble les systèmes entre eux
   player/player.tscn          joueur + Targeting + Weapons + Camera
-  enemies/                    imp · hound · cultist · brute
+  enemies/                    imp · hound · cultist · brute · oeil
   projectiles/                hell_bolt (joueur) · cursed_bolt (ennemi)
   pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
@@ -1551,6 +1588,59 @@ temps.
 
 Deux évènements n'ont pas encore de son faute de fichier : **le joueur qui
 encaisse un coup** et **l'âme ramassée**. Ce sont les deux premiers à ajouter.
+
+## Mode développement
+
+`F12` dans l'arène ouvre un panneau derrière un mot de passe. Il sert à voir du
+contenu sans le mériter : sauter à n'importe quelle vague, faire apparaître un
+boss, s'offrir le catalogue, se rendre invulnérable, régler la vitesse du jeu.
+
+**Le mot de passe n'est pas une sécurité, et il ne faut pas se raconter le
+contraire.** Le jeu tourne sur la machine du joueur : qui sait ouvrir un `.pck`
+trouvera de quoi le contourner, et l'empreinte stockée ne résiste pas à une
+attaque par dictionnaire sur un mot courant. C'est un **verrou contre la
+curiosité**, il empêche d'ouvrir le panneau par accident ou par jeu, ce qui est
+exactement le besoin. Pour que ce soit une vraie protection il faudrait que le
+jeu ne contienne pas le panneau, donc une version séparée — retirer le nœud
+`DevScreen` de [`main.tscn`](scenes/main/main.tscn) suffit.
+
+C'est une **empreinte SHA-256** qui est stockée, pas le mot : une chaîne en clair
+dans l'exécutable se lit avec n'importe quel éditeur hexadécimal, donc sans même
+chercher. Pour en changer :
+
+```bash
+python -c "import hashlib;print(hashlib.sha256(b'nouveau').hexdigest())"
+```
+
+Le déverrouillage vaut pour la **session**, pas pour le profil : relancer le jeu
+redemande le mot. Un dossier de sauvegarde ne doit pas garder trace de qui a
+triché.
+
+### Ce que le panneau touche, et ce qu'il ne touche pas
+
+Tout est **dans la run** sauf une section, séparée et signalée en rouge : les
+deux boutons de Forge écrivent dans le profil actif. Débloquer est additif et se
+rattrape ; réinitialiser ne se rattrape pas, donc il demande un second clic dans
+les trois secondes. Le conseil qui vaut mieux que les deux : utiliser un profil
+dédié, les emplacements existent pour ça.
+
+### Deux crochets dans le code de production
+
+Le panneau ne pilote pas le jeu par des méthodes privées. Deux fonctions ont été
+ajoutées, nommées pour qu'un `grep dev_` les retrouve toutes :
+
+- `WaveManager.dev_jump_to_wave` efface les ennemis en place et démarre la vague
+  demandée. Il court-circuite la fin de vague : ni aspiration des âmes, ni
+  boutique, ni récompense. On saute pour **voir** une vague, pas pour la gagner.
+  Un boss en cours est annoncé mort avant d'être effacé, sans quoi sa barre de
+  vie resterait à l'écran.
+- `SaveGame.dev_lock_ids` reverrouille une liste explicite d'identifiants. Il ne
+  vide jamais le registre en entier : objets et nœuds de Forge le partagent, et
+  réinitialiser la Forge ne doit pas reverrouiller les objets gagnés en jouant.
+
+L'invulnérabilité, elle, vit dans [`health.gd`](scripts/components/health.gd) et
+non dans le panneau : c'est le seul endroit où tout ce qui blesse passe, y
+compris ce qui contourne `take_damage`.
 
 ## Livrer une version
 

@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/beam_enemy.gd" id="1_beam_enemy"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/oeil/oeil_idle.png" id="2_sprite"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/laser_beam.tscn" id="4_beam"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/oeil/oeil_walk.png" id="90_walk"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_oeil"]
+radius = 16.0
+
+[node name="Oeil" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 7
+motion_mode = 1
+script = ExtResource("1_beam_enemy")
+move_speed = 70.0
+acceleration = 700.0
+contact_damage = 6.0
+max_health = 46.0
+soul_value = 8
+beam_scene = ExtResource("4_beam")
+preferred_distance = 430.0
+distance_tolerance = 60.0
+beam_range = 950.0
+beam_interval = 3.4
+beam_initial_delay = 1.2
+beam_damage = 15.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+texture_filter = 1
+scale = Vector2(3.0, 3.0)
+hframes = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_oeil")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 46.0
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("91_anim")
+idle_texture = ExtResource("2_sprite")
+walk_texture = ExtResource("90_walk")

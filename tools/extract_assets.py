@@ -51,6 +51,7 @@ ENTITIES = [
     ("enemies",    "hound",   P02, "Hellhound",      "_", "Walk"),
     ("enemies",    "cultist", P02, "Warlock",        "_", "Walk"),
     ("enemies",    "brute",   P02, "Minotaur",       "_", "Walk"),
+    ("enemies",    "oeil",    P02, "Eyeball Monster","_", "Walk"),
     ("bosses",     "golgota", P02, "Flame Golem",    "_", "Walk"),
     ("bosses",     "lilith",  P02, "Demoness_A",     "_", "Walk"),
     ("bosses",     "baal",    P02, "Demon_C",        "_", "Walk"),

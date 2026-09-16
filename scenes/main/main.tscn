@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/hound.tscn" id="5_hound"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/cultist.tscn" id="6_cultist"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/brute.tscn" id="7_brute"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/oeil.tscn" id="25_oeil"]
 [ext_resource type="Script" uid="uid://c144mxv4yonf3" path="res://scripts/systems/item_effects.gd" id="8_effects"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop.tscn" id="10_shop"]
@@ -25,6 +26,7 @@
 [ext_resource type="Script" path="res://scripts/components/decor_scatter.gd" id="23_decor"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/stats.tscn" id="24_stats"]
+[ext_resource type="Script" path="res://scripts/ui/dev_screen.gd" id="26_dev"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
 
 [sub_resource type="Animation" id="Animation_necax"]
@@ -83,7 +85,7 @@ unique_name_in_owner = true
 position = Vector2(1, 0)
 script = ExtResource("3_waves")
 boss_scenes = Array[PackedScene]([ExtResource("14_golgota"), ExtResource("15_lilith"), ExtResource("16_baal"), ExtResource("17_asmodee"), ExtResource("18_lucifer")])
-enemy_scenes = Array[PackedScene]([ExtResource("4_imp"), ExtResource("5_hound"), ExtResource("6_cultist"), ExtResource("7_brute")])
+enemy_scenes = Array[PackedScene]([ExtResource("4_imp"), ExtResource("5_hound"), ExtResource("6_cultist"), ExtResource("7_brute"), ExtResource("25_oeil")])
 
 [node name="ItemEffects" type="Node" parent="." unique_id=718003909]
 script = ExtResource("8_effects")
@@ -108,6 +110,9 @@ unique_name_in_owner = true
 
 [node name="StatsScreen" parent="." instance=ExtResource("24_stats")]
 unique_name_in_owner = true
+
+[node name="DevScreen" type="CanvasLayer" parent="."]
+script = ExtResource("26_dev")
 
 [node name="PauseMenu" parent="." unique_id=1906874088 instance=ExtResource("22_pause")]
 unique_name_in_owner = true

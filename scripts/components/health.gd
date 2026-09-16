@@ -17,6 +17,12 @@ signal died(source: Node)
 var current: float = 0.0
 var is_dead: bool = false
 
+## Invulnérabilité PERMANENTE, posée par le panneau de développement. Distincte
+## du délai d'invulnérabilité après un coup : celui-ci se vide tout seul, celle-ci
+## se retire à la main. Elle vit ici plutôt que dans le panneau pour que tout ce
+## qui blesse passe par le même test, y compris ce qui ignore `take_damage`.
+var invincible: bool = false
+
 var _invuln_timer: float = 0.0
 
 
@@ -31,7 +37,7 @@ func _process(delta: float) -> void:
 
 
 func is_invulnerable() -> bool:
-	return _invuln_timer > 0.0
+	return invincible or _invuln_timer > 0.0
 
 
 ## Retourne true si les dégâts ont été appliqués.
