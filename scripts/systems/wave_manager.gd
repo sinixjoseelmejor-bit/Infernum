@@ -117,10 +117,17 @@ enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 
 ## Roster : chaque entrée déclare à partir de quelle vague le type apparaît et
 ## son poids relatif (croissant ou décroissant avec les vagues).
+##
+## L'ŒIL entre à la vague 11, juste après Lilith, et c'est un seuil de jeu et
+## non d'équilibrage : il sanctionne l'immobilité, ce qu'aucun autre ennemi ne
+## fait. L'introduire plus tôt punirait un joueur qui n'a pas encore de quoi
+## choisir où se placer. Son poids monte doucement, il ne doit jamais devenir
+## l'ennemi principal — deux ou trois yeux dans l'arène suffisent à interdire
+## de se poser, dix en feraient un jeu de couloirs.
 @export var enemy_scenes: Array[PackedScene] = []
-@export var enemy_min_wave: Array[int] = [1, 2, 3, 4]
-@export var enemy_base_weight: Array[float] = [60.0, 25.0, 22.0, 14.0]
-@export var enemy_weight_drift: Array[float] = [-2.0, 1.0, 1.5, 2.0]
+@export var enemy_min_wave: Array[int] = [1, 2, 3, 4, 11]
+@export var enemy_base_weight: Array[float] = [60.0, 25.0, 22.0, 14.0, 14.0]
+@export var enemy_weight_drift: Array[float] = [-2.0, 1.0, 1.5, 2.0, 1.4]
 
 var target: Node2D
 var container: Node
@@ -215,6 +222,27 @@ func _begin_wave() -> void:
 		# le joueur pour qui la Forge est faite ne pouvait jamais la commencer.
 		RunState.add_keys(1)
 		_spawn_boss()
+
+
+## Saute directement à une vague donnée.
+##
+## RÉSERVÉ AU PANNEAU DE DÉVELOPPEMENT. Il court-circuite la fin de vague :
+## ni aspiration des âmes restantes, ni boutique, ni récompense. C'est voulu —
+## on saute pour VOIR une vague, pas pour la gagner. Les ennemis en place sont
+## effacés sans mourir, donc sans rien lâcher.
+##
+## Un boss en cours est annoncé mort avant d'être effacé : sans ça sa barre de
+## vie resterait à l'écran, l'interface n'ayant aucun autre moyen d'apprendre
+## qu'il a disparu.
+func dev_jump_to_wave(target: int) -> void:
+	for boss in get_tree().get_nodes_in_group(&"bosses"):
+		GameEvents.boss_died.emit(boss)
+	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		enemy.queue_free()
+	_boss = null
+	wave = maxi(0, target - 1)
+	state = State.INTERMISSION
+	_begin_wave()
 
 
 func _spawn_boss() -> void:

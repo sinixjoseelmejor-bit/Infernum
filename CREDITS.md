@@ -46,6 +46,7 @@ Utilisé ici, planches de repos et de marche uniquement :
 | hound | Hellhound |
 | cultist | Warlock |
 | brute | Minotaur |
+| œil | Eyeball Monster |
 | Golgota | Flame Golem |
 | Lilith | Demoness_A |
 | Baal | Demon_C |

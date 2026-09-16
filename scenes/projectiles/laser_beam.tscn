@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/laser_beam.gd" id="1_beam"]
+
+[node name="LaserBeam" type="Node2D"]
+script = ExtResource("1_beam")
+length = 1100.0
+half_width = 13.0
+aim_time = 0.7
+lock_time = 0.38
+fire_time = 0.16
+damage = 15.0
+knockback = 260.0
+color = Color(1, 0.35, 0.45, 1)
+shake = 4.0
