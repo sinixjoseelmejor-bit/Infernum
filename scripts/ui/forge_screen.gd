@@ -80,6 +80,7 @@ func _rebuild() -> void:
 		for item in locked:
 			items_list.add_child(_build_item_row(item))
 
+	UIUtils.chain_focus(self)
 	UIUtils.restore_focus(self, keep, close_button)
 
 

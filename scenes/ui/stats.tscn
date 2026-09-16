@@ -1,0 +1,108 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/stats_screen.gd" id="1_stats"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dim"]
+bg_color = Color(0.03, 0.01, 0.015, 0.88)
+
+[node name="StatsScreen" type="CanvasLayer"]
+layer = 7
+script = ExtResource("1_stats")
+
+[node name="Dim" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dim")
+
+[node name="Center" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 28
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(1080, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Layout" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Panel/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
+theme_override_font_sizes/font_size = 30
+text = "FICHE DE RUN"
+horizontal_alignment = 1
+
+[node name="StatsWave" type="Label" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.74, 0.72, 1)
+theme_override_font_sizes/font_size = 15
+text = "Vague 1"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="Center/Panel/Layout"]
+layout_mode = 2
+
+[node name="Columns" type="HBoxContainer" parent="Center/Panel/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 34
+
+[node name="Left" type="VBoxContainer" parent="Center/Panel/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="StatsTitle" type="Label" parent="Center/Panel/Layout/Columns/Left"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
+theme_override_font_sizes/font_size = 17
+text = "STATISTIQUES"
+
+[node name="StatsColumn" type="VBoxContainer" parent="Center/Panel/Layout/Columns/Left"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Right" type="VBoxContainer" parent="Center/Panel/Layout/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="StatsItemsTitle" type="Label" parent="Center/Panel/Layout/Columns/Right"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
+theme_override_font_sizes/font_size = 17
+text = "OBJETS"
+
+[node name="ItemsScroll" type="ScrollContainer" parent="Center/Panel/Layout/Columns/Right"]
+custom_minimum_size = Vector2(0, 520)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="StatsItems" type="VBoxContainer" parent="Center/Panel/Layout/Columns/Right/ItemsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Hint" type="Label" parent="Center/Panel/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.58, 0.58, 1)
+theme_override_font_sizes/font_size = 13
+text = "TAB ou Back pour refermer."
+horizontal_alignment = 1

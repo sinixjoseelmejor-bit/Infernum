@@ -53,6 +53,7 @@ func _show(summary: Dictionary) -> void:
 		summary["keys"],
 	]
 	_refresh_unlocks()
+	UIUtils.chain_focus(self)
 	restart_button.grab_focus()
 
 

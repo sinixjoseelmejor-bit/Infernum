@@ -76,6 +76,8 @@ func refresh() -> void:
 		"Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre.",
 		eight_way))
 
+	UIUtils.chain_focus(self)
+
 
 ## Curseur exprimé en pourcentage, avec la valeur lue à droite. Le réglage part
 ## dans `Settings` au fil du glissement : on entend le volume qu'on règle.

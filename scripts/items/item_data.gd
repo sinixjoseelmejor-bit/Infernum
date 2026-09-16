@@ -41,6 +41,18 @@ const RARITY_BASE_COST := {
 @export var max_stacks: int = 5
 ## Coût de déblocage en clés. 0 = disponible dès le départ.
 @export var key_cost: int = 0
+## Icône 16×16, chargée par CONVENTION depuis `assets/sprites/items/<id>.png`.
+## Aucun chemin n'est écrit dans le catalogue : ajouter un objet, c'est déposer
+## un fichier au bon nom. Une icône manquante ne casse rien, la carte se
+## contente de ne pas en afficher.
+@export var icon: Texture2D
+
+
+## Appelé une fois au chargement du catalogue.
+func load_icon() -> void:
+	var path := "res://assets/sprites/items/%s.png" % id
+	if ResourceLoader.exists(path):
+		icon = load(path)
 
 
 func get_rarity_name() -> String:

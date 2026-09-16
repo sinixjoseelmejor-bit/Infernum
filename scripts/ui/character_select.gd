@@ -30,6 +30,7 @@ func open() -> void:
 	visible = true
 	_build_cards()
 	_refresh()
+	UIUtils.chain_focus(self)
 	start_button.grab_focus()
 
 
