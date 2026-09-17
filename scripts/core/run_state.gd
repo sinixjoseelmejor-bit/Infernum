@@ -162,6 +162,50 @@ func recompute_stats() -> void:
 	stats_recomputed.emit(stats)
 
 
+## Détail des statistiques par SOURCE, pour la fiche de run.
+##
+## Recalculé à la demande plutôt que tenu à jour au fil de l'eau : la fiche est
+## le seul consommateur et elle ne s'ouvre qu'à la touche.
+##
+## LES VALEURS SONT BRUTES, SANS PLAFOND, et c'est le point. Les plafonds
+## s'appliquent au TOTAL, jamais à une source prise à part. Quand la somme des
+## colonnes dépasse le total affiché, la différence est exactement ce que le
+## joueur a acheté pour rien — et c'est le genre de chose qu'une fiche doit
+## montrer plutôt que laisser deviner.
+func get_stat_sources() -> Array:
+	var perso := PlayerStats.new()
+	_verser(perso, character_mods)
+	_verser(perso, character_bonus)
+
+	var forge := PlayerStats.new()
+	_verser(forge, Forge.get_bonus_mods())
+
+	# Malédictions et pactes de vague sont réunis : ce sont les deux leviers de
+	# risque volontaire, l'un sur la run, l'autre sur une seule vague.
+	var pactes := PlayerStats.new()
+	_verser(pactes, Curses.get_reward_mods())
+	_verser(pactes, WaveMods.get_reward_mods())
+
+	var objets := PlayerStats.new()
+	for item in owned_items:
+		_verser(objets, item.mods)
+	# La Griffe du faucheur compte dans les objets : c'est un objet qui la donne.
+	if has_special(&"reaper_stacks"):
+		objets.damage_pct += get_reaper_bonus()
+
+	return [
+		["Personnage", perso],
+		["Forge", forge],
+		["Pactes", pactes],
+		["Objets", objets],
+	]
+
+
+func _verser(cible: PlayerStats, mods: Dictionary) -> void:
+	for key in mods:
+		cible.add_mod(String(key), float(mods[key]))
+
+
 ## Écrit un bonus de passif et ne recalcule que s'il a réellement changé.
 func set_character_bonus(key: StringName, value: float) -> void:
 	var previous := float(character_bonus.get(key, 0.0))

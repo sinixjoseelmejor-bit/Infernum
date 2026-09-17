@@ -22,26 +22,36 @@ extends CanvasLayer
 ## plafond n'est pas décoratif : tout l'équilibrage du jeu repose sur eux, et
 ## un joueur qui ignore qu'il est à +200 % de dégâts continue d'acheter des
 ## objets de dégâts pour rien.
+## Intitulé, clé, plafond, et UNITÉ. L'unité ne sert qu'aux colonnes de source :
+## le total garde son écriture riche (« ×2.00 », « 0 (−0 % de dégâts) »), qui
+## n'aurait aucun sens répétée quatre fois sur une ligne.
 const ROWS := [
-	["Dégâts", "damage", PlayerStats.CAP_DAMAGE_PCT],
-	["Cadence de tir", "fire_rate", PlayerStats.CAP_FIRE_RATE_PCT],
-	["Projectiles", "projectiles", PlayerStats.CAP_PROJECTILE_BONUS],
-	["Ennemis traversés", "pierce", PlayerStats.CAP_PIERCE],
-	["Chance de critique", "crit", PlayerStats.CAP_CRIT_CHANCE],
-	["Dégâts critiques", "crit_damage", 0.0],
-	["PV maximum", "health", 0.0],
-	["Armure", "armor", PlayerStats.CAP_ARMOR],
-	["Régénération", "regen", 0.0],
-	["Vol de vie", "lifesteal", PlayerStats.CAP_LIFESTEAL],
-	["Vitesse", "speed", PlayerStats.CAP_MOVE_SPEED_PCT],
-	["Portée de visée", "range", PlayerStats.CAP_RANGE_PCT],
-	["Gain d'âmes", "souls", PlayerStats.CAP_SOUL_PCT],
-	["Chance", "luck", PlayerStats.CAP_LUCK],
+	["Dégâts", "damage", PlayerStats.CAP_DAMAGE_PCT, "pct"],
+	["Cadence de tir", "fire_rate", PlayerStats.CAP_FIRE_RATE_PCT, "pct"],
+	["Projectiles", "projectiles", PlayerStats.CAP_PROJECTILE_BONUS, "ent"],
+	["Ennemis traversés", "pierce", PlayerStats.CAP_PIERCE, "ent"],
+	["Chance de critique", "crit", PlayerStats.CAP_CRIT_CHANCE, "pct"],
+	["Dégâts critiques", "crit_damage", 0.0, "pct"],
+	["PV maximum", "health", 0.0, "plat"],
+	["Armure", "armor", PlayerStats.CAP_ARMOR, "plat"],
+	["Régénération", "regen", 0.0, "dec"],
+	["Vol de vie", "lifesteal", PlayerStats.CAP_LIFESTEAL, "pct"],
+	["Vitesse", "speed", PlayerStats.CAP_MOVE_SPEED_PCT, "pct"],
+	["Portée de visée", "range", PlayerStats.CAP_RANGE_PCT, "pct"],
+	["Gain d'âmes", "souls", PlayerStats.CAP_SOUL_PCT, "pct"],
+	["Chance", "luck", PlayerStats.CAP_LUCK, "dec"],
 ]
+
+## Largeur d'une colonne de source, et de la colonne du total.
+const LARGEUR_SOURCE := 104
+const LARGEUR_TOTAL := 156
 
 const MAXED := Color(1.0, 0.62, 0.16)
 const NEUTRAL := Color(0.72, 0.72, 0.70)
 const BONUS := Color(0.55, 0.85, 0.6)
+## Une source peut RETIRER : le Siphon du vide coûte des dégâts, une malédiction
+## coûte du confort. Un malus vert se lirait comme un gain.
+const MALUS := Color(0.95, 0.5, 0.45)
 
 
 func _ready() -> void:
@@ -83,8 +93,21 @@ func _rebuild() -> void:
 		RunState.wave, RunState.souls, RunState.kills, _duration()]
 
 	UIUtils.clear_children(stats_column)
+	var sources := RunState.get_stat_sources()
+	var grille := GridContainer.new()
+	grille.columns = 3 + sources.size()
+	grille.add_theme_constant_override(&"h_separation", 10)
+	grille.add_theme_constant_override(&"v_separation", 4)
+	stats_column.add_child(grille)
+
+	grille.add_child(_entete(""))
+	for source: Array in sources:
+		grille.add_child(_entete(String(source[0]).to_upper(), LARGEUR_SOURCE))
+	grille.add_child(_entete("= TOTAL", LARGEUR_TOTAL))
+	grille.add_child(_entete(""))
+
 	for row in ROWS:
-		stats_column.add_child(_stat_row(row[0], row[1], stats, row[2]))
+		_ligne(grille, row, stats, sources)
 
 	var specials := _special_names(stats)
 	if not specials.is_empty():
@@ -116,87 +139,233 @@ func _duration() -> String:
 	return "%d min %02d s" % [total / 60, total % 60]
 
 
-## Les valeurs viennent des ACCESSEURS, pas des champs bruts : ce sont eux qui
-## appliquent les plafonds, et c'est le chiffre plafonné que le joueur subit.
-func _stat_row(title: String, key: String, stats: PlayerStats, cap: float) -> Control:
-	var value := ""
-	var raw := 0.0
-	match key:
+## Une ligne : l'intitulé, une cellule par source, le total, le plafond.
+##
+## Les sources sont BRUTES, le total est PLAFONNÉ. Une ligne dont les colonnes
+## additionnées dépassent le total est une ligne où l'on a acheté pour rien :
+## c'est là que la mention PLAFOND s'allume.
+func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Array) -> void:
+	var titre := Label.new()
+	titre.text = String(row[0])
+	titre.add_theme_font_size_override(&"font_size", 15)
+	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	titre.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
+	grille.add_child(titre)
+
+	# Première colonne : ce que vaut la statistique avec le personnage SEUL,
+	# en valeur absolue. Les suivantes restent des modificateurs.
+	grille.add_child(_cellule_base(String(row[1]), sources[0][1]))
+	for i in range(1, sources.size()):
+		grille.add_child(_cellule_source(String(row[1]), String(row[3]), sources[i][1]))
+
+	var brut := _valeur_totale(String(row[1]), stats)
+	# `brut` est un tableau non typé : sans ces conversions explicites, GDScript
+	# ne sait pas déduire le type de la comparaison au plafond.
+	var valeur := float(brut[1])
+	var cap := float(row[2])
+	var au_plafond: bool = cap > 0.0 and valeur >= cap - 0.0001
+	var total := Label.new()
+	total.text = String(brut[0])
+	total.add_theme_font_size_override(&"font_size", 15)
+	total.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	total.custom_minimum_size = Vector2(LARGEUR_TOTAL, 0)
+	total.add_theme_color_override(&"font_color",
+		MAXED if au_plafond else (BONUS if absf(valeur) > 0.0001 else NEUTRAL))
+	grille.add_child(total)
+
+	var plafond := Label.new()
+	plafond.text = "PLAFOND" if au_plafond else ""
+	plafond.add_theme_font_size_override(&"font_size", 11)
+	plafond.custom_minimum_size = Vector2(62, 0)
+	plafond.add_theme_color_override(&"font_color", MAXED)
+	grille.add_child(plafond)
+
+
+## Ce que vaut la statistique avec le PERSONNAGE SEUL, en valeur absolue quand
+## elle en a une.
+##
+## C'est la colonne qui manquait : la fiche n'affichait que des modificateurs,
+## donc elle disait « PV maximum +30 » sans jamais dire que la base est 100, ni
+## que l'arme tape à 12 et tire 4 fois par seconde. Un pourcentage sans son
+## point d'appui ne se compare a rien.
+##
+## Les statistiques qui n'ont pas de base — armure, régénération, vol de vie,
+## chance, projectiles supplémentaires — gardent leur écriture de bonus : leur
+## base EST zéro, et écrire « 0 » serait plus bavard que « — ».
+func _cellule_base(cle: String, perso: PlayerStats) -> Label:
+	var personnage := Characters.get_selected()
+	var texte := ""
+	match cle:
 		"damage":
-			raw = stats.get_damage_pct()
-			value = "+%d %%" % roundi(raw * 100.0)
+			var base: float = (personnage.weapon_damage + perso.damage_flat) \
+				* (1.0 + perso.damage_pct)
+			texte = "%.1f" % base
 		"fire_rate":
-			raw = stats.get_fire_rate_pct()
-			value = "%+d %%" % roundi(raw * 100.0)
-		"projectiles":
-			raw = float(stats.get_projectile_bonus())
-			value = "+%d" % int(raw)
-		"pierce":
-			raw = float(stats.get_pierce())
-			value = "+%d" % int(raw)
+			texte = "%.1f /s" % (personnage.weapon_fire_rate * (1.0 + perso.fire_rate_pct))
 		"crit":
-			raw = stats.get_crit_chance()
-			value = "%d %%" % roundi(raw * 100.0)
+			texte = "%d %%" % roundi((personnage.weapon_crit_chance + perso.crit_chance) * 100.0)
 		"crit_damage":
-			raw = stats.get_crit_damage_pct()
-			value = "×%.2f" % (2.0 + raw)
+			texte = "×%.2f" % (2.0 + perso.crit_damage_pct)
 		"health":
-			raw = stats.max_health_flat
-			value = "%+d" % roundi(raw)
-		"armor":
-			raw = stats.get_armor()
-			value = "%d  (−%d %% de dégâts)" % [
-				roundi(raw), roundi(stats.get_damage_reduction() * 100.0)]
-		"regen":
-			raw = stats.regen
-			value = "%.1f PV/s" % raw
-		"lifesteal":
-			raw = stats.get_lifesteal()
-			value = "%.1f %%" % (raw * 100.0)
+			texte = "%d" % roundi(personnage.max_health + perso.max_health_flat)
 		"speed":
-			raw = stats.get_move_speed_pct()
-			value = "%+d %%" % roundi(raw * 100.0)
+			texte = "%d" % roundi(personnage.move_speed * (1.0 + perso.move_speed_pct))
 		"range":
-			raw = stats.get_range_pct()
-			value = "+%d %%" % roundi(raw * 100.0)
+			texte = "%d" % roundi(personnage.targeting_range * (1.0 + perso.range_pct))
+		_:
+			# Pas de base : on retombe sur l'écriture de modificateur.
+			return _cellule_source(cle, _unite(cle), perso)
+
+	var cellule := Label.new()
+	cellule.text = texte
+	cellule.add_theme_font_size_override(&"font_size", 14)
+	cellule.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cellule.custom_minimum_size = Vector2(LARGEUR_SOURCE, 0)
+	cellule.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
+	return cellule
+
+
+func _unite(cle: String) -> String:
+	for row in ROWS:
+		if String(row[1]) == cle:
+			return String(row[3])
+	return "pct"
+
+
+## Contribution d'une source, en écriture COMPACTE. Un tiret quand elle
+## n'apporte rien : quatorze lignes de « +0 % » répétées quatre fois seraient un
+## mur de zéros où le regard ne trouverait plus les chiffres qui comptent.
+func _cellule_source(cle: String, unite: String, source: PlayerStats) -> Label:
+	var brut := _valeur_brute(cle, source)
+	var cellule := Label.new()
+	cellule.add_theme_font_size_override(&"font_size", 14)
+	cellule.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cellule.custom_minimum_size = Vector2(LARGEUR_SOURCE, 0)
+	if absf(brut) < 0.0001:
+		cellule.text = "—"
+		cellule.add_theme_color_override(&"font_color", Color(0.42, 0.40, 0.40))
+		return cellule
+	match unite:
+		"pct":
+			cellule.text = "%+d %%" % roundi(brut * 100.0)
+		"ent":
+			cellule.text = "%+d" % int(brut)
+		"plat":
+			cellule.text = "%+d" % roundi(brut)
+		_:
+			cellule.text = "%+.1f" % brut
+	cellule.add_theme_color_override(&"font_color", BONUS if brut > 0.0 else MALUS)
+	return cellule
+
+
+## Valeur brute d'une source : les CHAMPS, et non les accesseurs. Les accesseurs
+## appliquent les plafonds, or un plafond ne se répartit pas entre les sources.
+func _valeur_brute(cle: String, stats: PlayerStats) -> float:
+	match cle:
+		"damage": return stats.damage_pct
+		"fire_rate": return stats.fire_rate_pct
+		"projectiles": return float(stats.projectile_bonus)
+		"pierce": return float(stats.pierce)
+		"crit": return stats.crit_chance
+		"crit_damage": return stats.crit_damage_pct
+		"health": return stats.max_health_flat
+		"armor": return stats.armor
+		"regen": return stats.regen
+		"lifesteal": return stats.lifesteal_pct
+		"speed": return stats.move_speed_pct
+		"range": return stats.range_pct
+		"pickup": return stats.pickup_radius_pct
+		"souls": return stats.soul_gain_pct
+		"luck": return stats.luck
+	return 0.0
+
+
+## Total affiché : par les ACCESSEURS, donc plafonné, et surtout lu sur les
+## NŒUDS VIVANTS quand la statistique a une valeur absolue.
+##
+## Lire l'arme et le joueur plutôt que refaire leur calcul est le seul moyen
+## d'être sûr que la fiche dise la même chose que le jeu. Une formule recopiée
+## ici se désynchroniserait au premier changement d'équilibrage, et une fiche
+## qui ment est pire qu'une fiche absente.
+func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
+	var joueur := get_tree().get_first_node_in_group(&"player")
+	if joueur != null and is_instance_valid(joueur):
+		var arme := joueur.get_node_or_null("Weapons/Weapon")
+		var visee := joueur.get_node_or_null("Targeting")
+		var sante := joueur.get_node_or_null("Health")
+		match cle:
+			"damage":
+				if arme != null:
+					return ["%.1f /tir" % arme.get_projectile_damage(), stats.get_damage_pct()]
+			"fire_rate":
+				if arme != null:
+					var duree: float = arme.get_cooldown_duration()
+					return ["%.1f /s" % (1.0 / maxf(0.01, duree)), stats.get_fire_rate_pct()]
+			"projectiles":
+				if arme != null:
+					return ["%d" % arme.get_projectile_count(),
+						float(stats.get_projectile_bonus())]
+			"crit":
+				if arme != null:
+					return ["%d %%" % roundi(arme.get_crit_chance() * 100.0),
+						stats.get_crit_chance()]
+			"crit_damage":
+				if arme != null:
+					return ["×%.2f" % arme.get_crit_multiplier(), stats.get_crit_damage_pct()]
+			"health":
+				if sante != null:
+					return ["%d" % roundi(sante.max_health), stats.max_health_flat]
+			"speed":
+				return ["%d px/s" % roundi(joueur.move_speed), stats.get_move_speed_pct()]
+			"range":
+				if visee != null:
+					return ["%d px" % roundi(visee.range_radius), stats.get_range_pct()]
+
+	match cle:
+		"damage":
+			return ["+%d %%" % roundi(stats.get_damage_pct() * 100.0), stats.get_damage_pct()]
+		"fire_rate":
+			return ["%+d %%" % roundi(stats.get_fire_rate_pct() * 100.0), stats.get_fire_rate_pct()]
+		"projectiles":
+			return ["+%d" % stats.get_projectile_bonus(), float(stats.get_projectile_bonus())]
+		"pierce":
+			return ["+%d" % stats.get_pierce(), float(stats.get_pierce())]
+		"crit":
+			return ["%d %%" % roundi(stats.get_crit_chance() * 100.0), stats.get_crit_chance()]
+		"crit_damage":
+			return ["×%.2f" % (2.0 + stats.get_crit_damage_pct()), stats.get_crit_damage_pct()]
+		"health":
+			return ["%+d" % roundi(stats.max_health_flat), stats.max_health_flat]
+		"armor":
+			return ["%d  (−%d %%)" % [roundi(stats.get_armor()),
+				roundi(stats.get_damage_reduction() * 100.0)], stats.get_armor()]
+		"regen":
+			return ["%.1f PV/s" % stats.regen, stats.regen]
+		"lifesteal":
+			return ["%.1f %%" % (stats.get_lifesteal() * 100.0), stats.get_lifesteal()]
+		"speed":
+			return ["%+d %%" % roundi(stats.get_move_speed_pct() * 100.0), stats.get_move_speed_pct()]
+		"range":
+			return ["+%d %%" % roundi(stats.get_range_pct() * 100.0), stats.get_range_pct()]
 		"pickup":
-			raw = stats.get_pickup_radius_pct()
-			value = "+%d %%" % roundi(raw * 100.0)
+			return ["+%d %%" % roundi(stats.get_pickup_radius_pct() * 100.0),
+				stats.get_pickup_radius_pct()]
 		"souls":
-			raw = stats.get_soul_gain_pct()
-			value = "+%d %%" % roundi(raw * 100.0)
+			return ["+%d %%" % roundi(stats.get_soul_gain_pct() * 100.0), stats.get_soul_gain_pct()]
 		"luck":
-			raw = stats.get_luck()
-			value = "%.1f" % raw
+			return ["%.1f" % stats.get_luck(), stats.get_luck()]
+	return ["", 0.0]
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 10)
 
-	var name_label := Label.new()
-	name_label.text = title
-	name_label.add_theme_font_size_override(&"font_size", 15)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
-	row.add_child(name_label)
-
-	var value_label := Label.new()
-	value_label.text = value
-	value_label.add_theme_font_size_override(&"font_size", 15)
-	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value_label.custom_minimum_size = Vector2(150, 0)
-	var at_cap := cap > 0.0 and raw >= cap - 0.0001
-	value_label.add_theme_color_override(&"font_color",
-		MAXED if at_cap else (BONUS if absf(raw) > 0.0001 else NEUTRAL))
-	row.add_child(value_label)
-
-	if cap > 0.0:
-		var cap_label := Label.new()
-		cap_label.text = "PLAFOND" if at_cap else ""
-		cap_label.add_theme_font_size_override(&"font_size", 11)
-		cap_label.custom_minimum_size = Vector2(62, 0)
-		cap_label.add_theme_color_override(&"font_color", MAXED)
-		row.add_child(cap_label)
-	return row
+func _entete(texte: String, largeur: int = 0) -> Label:
+	var l := Label.new()
+	l.text = texte
+	l.add_theme_font_size_override(&"font_size", 11)
+	l.add_theme_color_override(&"font_color", Color(0.62, 0.58, 0.56))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	if largeur > 0:
+		l.custom_minimum_size = Vector2(largeur, 0)
+	return l
 
 
 func _special_names(stats: PlayerStats) -> Array[String]:
