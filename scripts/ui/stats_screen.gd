@@ -18,15 +18,18 @@ extends CanvasLayer
 @onready var items_column: VBoxContainer = %StatsItems
 @onready var items_title: Label = %StatsItemsTitle
 
-## Une ligne = intitulé, valeur, et le plafond quand il y en a un. Afficher le
-## plafond n'est pas décoratif : tout l'équilibrage du jeu repose sur eux, et
-## un joueur qui ignore qu'il est à +200 % de dégâts continue d'acheter des
-## objets de dégâts pour rien.
-## Intitulé, clé, plafond, et UNITÉ. L'unité ne sert qu'aux colonnes de source :
-## le total garde son écriture riche (« ×2.00 », « 0 (−0 % de dégâts) »), qui
-## n'aurait aucun sens répétée quatre fois sur une ligne.
+## Intitulé, clé, plafond, UNITÉ.
+##
+## Afficher le plafond n'est pas décoratif : tout l'équilibrage du jeu repose sur
+## eux, et un joueur qui ignore qu'il est à +200 % de dégâts continue d'acheter
+## des objets de dégâts pour rien.
+##
+## L'unité ne sert qu'aux colonnes de source : le total garde son écriture riche
+## (« ×2.00 », « 12 (−18 %) »), qui n'aurait aucun sens répétée cinq fois sur
+## une ligne.
 const ROWS := [
 	["Dégâts", "damage", PlayerStats.CAP_DAMAGE_PCT, "pct"],
+	["  dont dégâts plats", "damage_flat", 0.0, "dec"],
 	["Cadence de tir", "fire_rate", PlayerStats.CAP_FIRE_RATE_PCT, "pct"],
 	["Projectiles", "projectiles", PlayerStats.CAP_PROJECTILE_BONUS, "ent"],
 	["Ennemis traversés", "pierce", PlayerStats.CAP_PIERCE, "ent"],
@@ -41,6 +44,14 @@ const ROWS := [
 	["Gain d'âmes", "souls", PlayerStats.CAP_SOUL_PCT, "pct"],
 	["Chance", "luck", PlayerStats.CAP_LUCK, "dec"],
 ]
+
+## Lignes qui disparaissent quand AUCUNE source ne les alimente.
+##
+## Les dégâts plats n'existent que par la Braise ardente. Garder la ligne en
+## permanence, ce serait six tirets de plus sur chaque fiche pour un objet
+## commun que la plupart des runs n'auront pas — or la fiche a été refaite
+## précisément pour qu'on y trouve les chiffres qui comptent.
+const LIGNES_CONDITIONNELLES := ["damage_flat"]
 
 ## Largeur d'une colonne de source, et de la colonne du total.
 const LARGEUR_SOURCE := 104
@@ -107,6 +118,8 @@ func _rebuild() -> void:
 	grille.add_child(_entete(""))
 
 	for row in ROWS:
+		if String(row[1]) in LIGNES_CONDITIONNELLES and not _alimentee(String(row[1]), sources):
+			continue
 		_ligne(grille, row, stats, sources)
 
 	var specials := _special_names(stats)
@@ -137,6 +150,14 @@ func _rebuild() -> void:
 func _duration() -> String:
 	var total := int(RunState.run_time)
 	return "%d min %02d s" % [total / 60, total % 60]
+
+
+## Une source apporte-t-elle quelque chose sur cette statistique ?
+func _alimentee(cle: String, sources: Array) -> bool:
+	for source: Array in sources:
+		if absf(_valeur_brute(cle, source[1])) > 0.0001:
+			return true
+	return false
 
 
 ## Une ligne : l'intitulé, une cellule par source, le total, le plafond.
@@ -263,6 +284,7 @@ func _cellule_source(cle: String, unite: String, source: PlayerStats) -> Label:
 func _valeur_brute(cle: String, stats: PlayerStats) -> float:
 	match cle:
 		"damage": return stats.damage_pct
+		"damage_flat": return stats.damage_flat
 		"fire_rate": return stats.fire_rate_pct
 		"projectiles": return float(stats.projectile_bonus)
 		"pierce": return float(stats.pierce)
@@ -324,6 +346,12 @@ func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
 	match cle:
 		"damage":
 			return ["+%d %%" % roundi(stats.get_damage_pct() * 100.0), stats.get_damage_pct()]
+		"damage_flat":
+			# S'ajoute AVANT le pourcentage, donc il est multiplié par lui : +1.5
+			# plat sur une arme à +50 % vaut +2.25 de dégâts réels. La ligne
+			# « Dégâts » juste au-dessus en porte déjà la conséquence, celle-ci
+			# ne fait que dire d'où vient l'écart.
+			return ["%+.1f" % stats.damage_flat, stats.damage_flat]
 		"fire_rate":
 			return ["%+d %%" % roundi(stats.get_fire_rate_pct() * 100.0), stats.get_fire_rate_pct()]
 		"projectiles":

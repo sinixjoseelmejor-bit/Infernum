@@ -186,18 +186,24 @@ func get_stat_sources() -> Array:
 	_verser(pactes, Curses.get_reward_mods())
 	_verser(pactes, WaveMods.get_reward_mods())
 
+	# Les objets sacrés sont comptés à part : ce sont ceux qu'on ouvre avec des
+	# CLÉS, donc les seuls dont le prix se paie en runs précédentes. Les mêler
+	# aux objets de boutique effacerait ce que les clés ont acheté.
+	var sacres := PlayerStats.new()
 	var objets := PlayerStats.new()
 	for item in owned_items:
-		_verser(objets, item.mods)
-	# La Griffe du faucheur compte dans les objets : c'est un objet qui la donne.
+		_verser(sacres if item.key_cost > 0 else objets, item.mods)
+	# La Griffe du moissonneur compte dans les objets : c'est un objet de
+	# boutique qui la donne, et il ne coûte aucune clé.
 	if has_special(&"reaper_stacks"):
 		objets.damage_pct += get_reaper_bonus()
 
 	return [
 		["Personnage", perso],
 		["Forge", forge],
-		["Pactes", pactes],
+		["Sacrés", sacres],
 		["Objets", objets],
+		["Pactes", pactes],
 	]
 
 

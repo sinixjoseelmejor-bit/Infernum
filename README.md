@@ -217,19 +217,27 @@ auto-correction** — l'aide à la visée est un confort réservé au joueur.
 `TAB` ouvre la fiche. Chaque statistique y est décomposée par source, et lue en
 VALEUR ABSOLUE aux deux bouts :
 
-| | Personnage | Forge | Pactes | Objets | = Total |
-|---|---|---|---|---|---|
-| Dégâts | 19,0 | +9 % | — | −5 % | **19,8 /tir** |
-| PV maximum | 85 | +10 | — | +20 | **115** |
-| Portée de visée | 340 | — | — | +40 % | **476 px** |
+| | Personnage | Forge | Sacrés | Objets | Pactes | = Total |
+|---|---|---|---|---|---|---|
+| Dégâts | 9,0 | +4 % | −5 % | — | — | **10,4 /tir** |
+| dont dégâts plats | — | — | — | +1,5 | — | **+1,5** |
+| PV maximum | 80 | +10 | +10 | — | — | **100** |
+| Armure | — | — | +10 | +16 | — | **26  (−21 %)** |
+| Gain d'âmes | +10 % | +8 % | +45 % | — | +20 % | **+75 %** PLAFOND |
 
 La première version n'affichait que des modificateurs. Elle disait « PV maximum
-+30 » sans jamais dire que la base est 85, ni que l'arme tape à 19 et tire 2,9
++30 » sans jamais dire que la base est 80, ni que l'arme tape à 9 et tire 5,2
 fois par seconde : **un pourcentage sans son point d'appui ne se compare à
 rien.** La colonne Personnage porte donc la valeur du personnage SEUL, et le
 total la valeur effective.
 
-Quatre décisions valent d'être retenues.
+**Les objets sacrés ont leur propre colonne.** Ce sont ceux qu'on ouvre avec des
+**clés**, dans la Forge — le Manteau d'épines, le Duvet de phénix, le Siphon du
+vide. Les mêler aux objets de boutique effacerait la seule chose qui les
+distingue : ils se paient en runs précédentes, pas en âmes. Les voir à part, c'est
+voir ce que les clés ont acheté.
+
+Cinq décisions valent d'être retenues.
 
 **Les colonnes de source sont BRUTES, le total est PLAFONNÉ.** Un plafond
 s'applique au total, jamais à une source prise à part. Quand les colonnes
@@ -238,8 +246,10 @@ acheté pour rien, et c'est là que la mention PLAFOND s'allume. C'est le genre 
 chose qu'une fiche doit montrer plutôt que laisser deviner.
 
 **Un tiret, pas un zéro,** quand une source n'apporte rien. Quatorze lignes de
-« +0 % » répétées quatre fois seraient un mur de zéros où le regard ne
-trouverait plus les chiffres qui comptent.
+« +0 % » répétées cinq fois seraient un mur de zéros où le regard ne trouverait
+plus les chiffres qui comptent. Même raison pour la ligne « dont dégâts plats »,
+qui **disparaît** quand aucune source n'en donne : seule la Braise ardente en
+donne, et la plupart des runs ne l'auront pas.
 
 **Un malus s'écrit en rouge.** Le Siphon du vide coûte des dégâts, une
 malédiction coûte du confort : un malus en vert se lirait comme un gain.
@@ -252,6 +262,13 @@ d'équilibrage, et une fiche qui ment est pire qu'une fiche absente.
 Les statistiques sans base — armure, régénération, vol de vie, chance,
 projectiles supplémentaires — gardent l'écriture de bonus dans la colonne
 Personnage : leur base EST zéro, et écrire « 0 » serait plus bavard qu'un tiret.
+
+Les **dégâts plats** sont la seule statistique qui ne se lise pas dans la même
+unité que sa ligne, d'où la sous-ligne. Ils s'ajoutent **avant** le pourcentage,
+donc ils sont multipliés par lui : +1,5 plat sur une arme à +50 % vaut +2,25 de
+dégâts réels. Sans cette ligne, la Braise ardente affichait un tiret partout
+tout en augmentant les dégâts — exactement la fiche qui ment contre laquelle
+tout le reste a été écrit.
 
 #### L'Œil sanctionne l'immobilité
 
