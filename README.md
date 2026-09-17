@@ -212,6 +212,47 @@ Le limier s'immobilise pendant son armement : la menace vient de la pression au 
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
 
+### La fiche de run montre d'OÙ viennent les chiffres
+
+`TAB` ouvre la fiche. Chaque statistique y est décomposée par source, et lue en
+VALEUR ABSOLUE aux deux bouts :
+
+| | Personnage | Forge | Pactes | Objets | = Total |
+|---|---|---|---|---|---|
+| Dégâts | 19,0 | +9 % | — | −5 % | **19,8 /tir** |
+| PV maximum | 85 | +10 | — | +20 | **115** |
+| Portée de visée | 340 | — | — | +40 % | **476 px** |
+
+La première version n'affichait que des modificateurs. Elle disait « PV maximum
++30 » sans jamais dire que la base est 85, ni que l'arme tape à 19 et tire 2,9
+fois par seconde : **un pourcentage sans son point d'appui ne se compare à
+rien.** La colonne Personnage porte donc la valeur du personnage SEUL, et le
+total la valeur effective.
+
+Quatre décisions valent d'être retenues.
+
+**Les colonnes de source sont BRUTES, le total est PLAFONNÉ.** Un plafond
+s'applique au total, jamais à une source prise à part. Quand les colonnes
+additionnées dépassent le total, la différence est exactement ce que le joueur a
+acheté pour rien, et c'est là que la mention PLAFOND s'allume. C'est le genre de
+chose qu'une fiche doit montrer plutôt que laisser deviner.
+
+**Un tiret, pas un zéro,** quand une source n'apporte rien. Quatorze lignes de
+« +0 % » répétées quatre fois seraient un mur de zéros où le regard ne
+trouverait plus les chiffres qui comptent.
+
+**Un malus s'écrit en rouge.** Le Siphon du vide coûte des dégâts, une
+malédiction coûte du confort : un malus en vert se lirait comme un gain.
+
+**Le total est lu sur les NŒUDS VIVANTS**, l'arme et le joueur, et non recalculé
+par la fiche. C'est le seul moyen d'être sûr qu'elle dise la même chose que le
+jeu : une formule recopiée se désynchroniserait au premier changement
+d'équilibrage, et une fiche qui ment est pire qu'une fiche absente.
+
+Les statistiques sans base — armure, régénération, vol de vie, chance,
+projectiles supplémentaires — gardent l'écriture de bonus dans la colonne
+Personnage : leur base EST zéro, et écrire « 0 » serait plus bavard qu'un tiret.
+
 #### L'Œil sanctionne l'immobilité
 
 C'est ce qu'aucun des quatre autres ne faisait. Le cultiste tire des traits : ils
