@@ -134,6 +134,35 @@ images versionnées ici avec les effets sonores.
 Le procédé des deux découpes, et la mesure qui les justifie, sont détaillés dans
 [`README.md`](README.md).
 
+### Police du titre — Alagard
+
+`assets/fonts/alagard.ttf`, utilisée pour le mot INFERNUM du menu et nulle part
+ailleurs. La table `name` du fichier porte un seul crédit : **Pix3M**, version
+001.000. Elle ne contient **ni chaîne de licence ni URL**.
+
+**À vérifier avant une sortie publique.** Alagard circule comme police pixel
+gratuite, mais « gratuite » n'est pas une licence : il faut retrouver la source
+de distribution et ce qu'elle autorise exactement avant de livrer le fichier
+dans un exécutable. Tant que ce n'est pas fait, la police reste dans un dépôt
+privé, comme le reste.
+
+### Illustration du menu titre
+
+`assets/sprites/menu/menu.jpg`, 1588 × 656 — le gouffre en flammes du menu
+principal. Art fourni par l'auteur du projet, comme les carreaux de sol, et
+versionné pour la même raison.
+
+**Si cette illustration venait d'un pack tiers et non du projet, il faut la
+déplacer sous `assets/packs/` comme les autres** : la clause de
+non-redistribution s'appliquerait à elle aussi. Elle a d'ailleurs été déposée
+d'abord dans `assets/sprites/ui/`, un dossier tenu hors de git précisément
+parce qu'il reçoit les extractions de PixelUIKit — elle y aurait été invisible
+au dépôt sans que rien ne le signale.
+
+Le fichier est resté en JPEG : la mesure montre qu'il est déjà à sa résolution
+native, donc le convertir n'aurait rien enlevé aux artefacts et aurait doublé son
+poids. Le raisonnement et les chiffres sont dans [`README.md`](README.md).
+
 ## Moteur
 
 [Godot Engine](https://godotengine.org) 4.6.2, licence MIT.

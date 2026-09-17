@@ -1,10 +1,22 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/character_select.tscn" id="2_charsel"]
 [ext_resource type="PackedScene" path="res://scenes/ui/profiles.tscn" id="3_profiles"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="4_options"]
 [ext_resource type="PackedScene" path="res://scenes/ui/forge.tscn" id="5_forge"]
+[ext_resource type="Texture2D" path="res://assets/sprites/menu/menu.jpg" id="6_art"]
+[ext_resource type="FontFile" path="res://assets/fonts/alagard.ttf" id="7_alagard"]
+
+[sub_resource type="Gradient" id="Gradient_voile"]
+offsets = PackedFloat32Array(0, 0.42, 1)
+colors = PackedColorArray(0.04, 0.02, 0.03, 0.12, 0.04, 0.02, 0.03, 0.28, 0.04, 0.02, 0.03, 0.66)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_voile"]
+gradient = SubResource("Gradient_voile")
+width = 4
+height = 256
+fill_to = Vector2(0, 1)
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -23,6 +35,28 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.09, 0.035, 0.045, 1)
+
+[node name="Art" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_art")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Voile" type="TextureRect" parent="."]
+texture_filter = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_voile")
+expand_mode = 1
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -46,14 +80,19 @@ size_flags_vertical = 3
 
 [node name="Title" type="Label" parent="Margin/Layout"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.35, 0.2, 1)
-theme_override_font_sizes/font_size = 72
+theme_override_colors/font_color = Color(1, 0.45, 0.22, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("7_alagard")
+theme_override_font_sizes/font_size = 112
 text = "INFERNUM"
 horizontal_alignment = 1
 
 [node name="Tagline" type="Label" parent="Margin/Layout"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.66, 0.64, 1)
+theme_override_colors/font_color = Color(0.82, 0.77, 0.74, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 17
 text = "Roguelite d'action — descendez aussi loin que vous tiendrez."
 horizontal_alignment = 1
@@ -105,7 +144,9 @@ size_flags_vertical = 3
 [node name="MetaLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.58, 0.57, 1)
+theme_override_colors/font_color = Color(0.78, 0.74, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0.06, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 14
 text = "Profil 1"
 horizontal_alignment = 1

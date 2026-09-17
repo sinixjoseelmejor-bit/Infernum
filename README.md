@@ -562,6 +562,53 @@ Le menu principal est un hub à quatre entrées :
 Chaque écran est une surcouche `CanvasLayer` sur le menu, pas un changement de
 scène : le retour est instantané.
 
+### L'illustration du titre, et pourquoi elle reste un JPEG
+
+Le menu porte une illustration plein écran, `menu.jpg` — un gouffre en flammes
+vu de dessus — et le titre est composé en **Alagard**, une police pixel.
+
+**Le JPEG a d'abord été suspecté, puis mesuré, puis gardé.** Le réflexe, sur du
+pixel art, est de convertir : le JPEG code par blocs de 8×8 en fréquence, donc il
+pose un halo autour de chaque arête franche, et une image en aplats n'a que des
+arêtes franches. Le même réflexe avait été le bon pour `floor2.png`, tiré d'un
+rendu JPEG par mesure du pas des dalles.
+
+Ici, la mesure dit l'inverse. Le pas a été cherché de 2 à 12 en comparant le
+contraste **sur** les frontières multiples du pas au contraste **ailleurs** : sur
+une image agrandie n fois, tout le contraste se reporte sur les frontières, donc
+le rapport explose au bon pas. Il est resté entre 0,97 et 1,08 pour tous les pas
+essayés — **aucune grille**. L'illustration est déjà à sa résolution native,
+1588 × 656. Il n'y a donc rien à ramener : les artefacts JPEG sont **déjà cuits
+dans l'image**, et réécrire en PNG les aurait conservés à l'identique en doublant
+le poids du fichier (1 302 Ko contre 658). Godot ré-encode de toute façon à
+l'import, en sans perte (`compress/mode=0`).
+
+Ce qui reste du JPEG est mesurable et négligeable : un écart-type de 5,8 sur la
+somme RVB dans une zone d'aplat sombre, soit moins de deux niveaux par canal.
+Invisible à l'écran, et l'outil de conversion a été supprimé plutôt que gardé
+« au cas où » — un outil qui ne sert pas est un outil qui ment sur le procédé.
+
+L'illustration est en **2,42 de rapport**, bien plus large que le 16/9 du jeu.
+Elle est posée en `KEEP_ASPECT_COVERED` : à l'écran large elle tient presque
+entière, en 16/9 elle perd 13 % de chaque bord. La composition étant centrée et
+symétrique, ce sont les coins de dallage qui partent, jamais le gouffre.
+
+Un **voile en dégradé** passe par-dessus, de 12 % d'opacité en haut à 66 % en
+bas. Il ne sert pas à assombrir l'image mais à la faire reculer : les boutons ont
+leur propre fond opaque, et les libellés ont reçu un contour, donc la lisibilité
+était déjà acquise. Le voile est monté à 66 % en bas parce que c'est là que la
+lave est la plus vive et que s'affiche la ligne de profil, la plus petite de
+l'écran.
+
+Le titre est en **112 px**, un multiple de 16 : Alagard est dessinée sur une
+grille de 16 px, et une taille non multiple ferait tomber ses traits entre deux
+pixels. Pour la même raison, son import coupe le **lissage**, le **hinting** et
+le **positionnement sous-pixel** — trois réglages faits pour les polices
+vectorielles, et qui ne savent qu'abîmer une police pixel.
+
+Les quatre sous-écrans posent leur propre voile à 92 %, ce qui laisse deviner le
+gouffre derrière eux sans jamais disputer la lecture.
+
 ### Options
 
 Six réglages, tous **réellement branchés** — aucun contrôle décoratif. Ils
@@ -1671,10 +1718,38 @@ laisse la boutique en pause ; ouvert en pleine action, le refermer relance.
 contraire.** Le jeu tourne sur la machine du joueur : qui sait ouvrir un `.pck`
 trouvera de quoi le contourner, et l'empreinte stockée ne résiste pas à une
 attaque par dictionnaire sur un mot courant. C'est un **verrou contre la
-curiosité**, il empêche d'ouvrir le panneau par accident ou par jeu, ce qui est
-exactement le besoin. Pour que ce soit une vraie protection il faudrait que le
-jeu ne contienne pas le panneau, donc une version séparée — retirer le nœud
-`DevScreen` de [`main.tscn`](scenes/main/main.tscn) suffit.
+curiosité**, il empêche d'ouvrir le panneau par accident ou par jeu.
+
+### La vraie protection, c'est de ne pas livrer le panneau
+
+Depuis la 0.6.4, le build destiné aux joueurs **ne contient pas le panneau** :
+ni son code, ni ses libellés, ni l'empreinte du mot de passe. Il y a trois
+préréglages d'export, et un seul le garde.
+
+| Préréglage | `custom_features` | `dev_screen.gd` |
+|---|---|---|
+| Windows Desktop | — | exclu |
+| Web | — | exclu |
+| Windows Desktop (dev) | `dev_panel` | inclus |
+
+Ça n'a été possible qu'en **retirant le nœud de la scène**. Une référence
+statique dans [`main.tscn`](scenes/main/main.tscn) aurait obligé le script à
+rester dans le paquet de tout le monde : sans lui, la scène de l'arène ne se
+serait plus chargée du tout. Le panneau est donc monté depuis
+[`main.gd`](scripts/main.gd), derrière **deux conditions redondantes** — un
+indicateur d'export `dev_panel`, et l'existence du fichier. Si l'un des deux se
+trompe un jour, un indicateur oublié ou un filtre mal écrit, l'autre empêche le
+plantage ou la fuite. Une troisième condition, `editor`, couvre le jeu lancé
+depuis les sources : on n'exporte pas un build rien que pour vérifier une vague.
+
+**Vérifié en comparant les deux paquets**, et non en le supposant : les deux
+exports diffèrent de **deux fichiers exactement**, `dev_screen.gdc` et
+`dev_screen.gd.remap`, 386 fichiers contre 388. Rien d'autre ne change.
+
+Il reste une trace dans le build joueur, et autant la nommer : le **chemin**
+`res://scripts/ui/dev_screen.gd` figure encore dans l'index d'UID que le moteur
+empaquette. C'est une ligne de table, pas du code — le fichier auquel elle
+renvoie n'est pas là.
 
 C'est une **empreinte SHA-256** qui est stockée, pas le mot : une chaîne en clair
 dans l'exécutable se lit avec n'importe quel éditeur hexadécimal, donc sans même
@@ -1717,13 +1792,19 @@ compris ce qui contourne `take_damage`.
 ## Livrer une version
 
 Les modèles d'export de Godot 4.6.2 sont installés (Windows, Linux, macOS, Web,
-Android, iOS), et [`export_presets.cfg`](export_presets.cfg) déclare deux
+Android, iOS), et [`export_presets.cfg`](export_presets.cfg) déclare trois
 préréglages prêts à l'emploi.
 
 ```bash
 godot --headless --export-release "Windows Desktop" build/windows/Infernum.exe
 godot --headless --export-release "Web" build/web/index.html
+godot --headless --export-release "Windows Desktop (dev)" build/windows-dev/Infernum.exe
 ```
+
+Les deux premiers sont **pour les joueurs** et excluent le panneau de
+développement ; le troisième le garde et porte l'indicateur `dev_panel`. La
+section « Mode développement » dit ce que cette séparation garantit, et comment
+elle a été vérifiée.
 
 Le préréglage Windows **embarque le `.pck` dans l'exécutable** : un seul fichier,
 rien à installer. Poids : 100 Mo, dont **0,3 Mo de jeu** — le reste est le moteur.
