@@ -1591,9 +1591,23 @@ encaisse un coup** et **l'âme ramassée**. Ce sont les deux premiers à ajouter
 
 ## Mode développement
 
-`F12` dans l'arène ouvre un panneau derrière un mot de passe. Il sert à voir du
-contenu sans le mériter : sauter à n'importe quelle vague, faire apparaître un
-boss, s'offrir le catalogue, se rendre invulnérable, régler la vitesse du jeu.
+`F12` **ou** `Ctrl+Shift+D` dans l'arène ouvre un panneau derrière un mot de
+passe. Il sert à voir du contenu sans le mériter : sauter à n'importe quelle
+vague, faire apparaître un boss, s'offrir le catalogue, se rendre invulnérable,
+régler la vitesse du jeu. Deux touches parce que les rangées de F sont
+capricieuses selon les claviers portables, où elles demandent parfois `Fn`.
+
+**Il n'existe que dans l'arène**, pas dans le menu principal : tout ce qu'il
+pilote n'a de sens qu'en partie.
+
+Il s'ouvre **par-dessus n'importe quel autre écran**, et c'est une exception
+assumée. Le menu de pause et la fiche de run refusent de s'ouvrir quand un autre
+écran détient déjà la pause, sinon les refermer relancerait la partie alors que
+la boutique est encore affichée. Ce panneau a d'abord suivi la même règle et
+c'était une erreur : il devenait muet pendant la sélection de malédiction et dans
+la boutique, c'est-à-dire précisément là où l'on veut sauter des vagues. Il rend
+donc la pause telle qu'il l'a trouvée — ouvert depuis la boutique, le refermer
+laisse la boutique en pause ; ouvert en pleine action, le refermer relance.
 
 **Le mot de passe n'est pas une sécurité, et il ne faut pas se raconter le
 contraire.** Le jeu tourne sur la machine du joueur : qui sait ouvrir un `.pck`

@@ -21,9 +21,16 @@ extends CanvasLayer
 ## nulle part ailleurs : tout ce qu'il pilote (vagues, objets, joueur) n'a de
 ## sens qu'en partie.
 ##
-## QUI POSSÈDE LA PAUSE. Même règle que le menu de pause et la fiche de run : si
-## l'arbre est déjà en pause sans que ce panneau soit visible, un autre écran la
-## détient et la touche ne doit rien faire.
+## QUI POSSÈDE LA PAUSE — ET POURQUOI CE PANNEAU FAIT EXCEPTION. Le menu de
+## pause et la fiche de run refusent de s'ouvrir quand un autre écran détient
+## déjà la pause : sinon les refermer relancerait la partie alors que la
+## boutique est encore affichée. Ce panneau a d'abord suivi la même règle, et
+## c'était une erreur — il devenait muet pendant la sélection de malédiction et
+## dans la boutique, c'est-à-dire précisément là où l'on veut sauter des vagues.
+##
+## Il s'ouvre donc par-dessus n'importe quoi, et REND la pause telle qu'il l'a
+## trouvée : ouvert depuis la boutique, le refermer laisse la boutique en pause ;
+## ouvert en pleine action, le refermer relance la partie.
 
 ## SHA-256 du mot de passe. Voir l'en-tête pour le régénérer.
 const EMPREINTE := "dd0bc9804296758bb6bf857d3089e572ea1c5109c4576fbeaa53da446e4e644a"
@@ -48,6 +55,8 @@ var _journal: Label
 var _choix_objet: OptionButton
 var _vague: SpinBox
 var _confirme_reset: bool = false
+## Pause trouvée à l'ouverture, rendue à la fermeture. Voir l'en-tête.
+var _pause_avant: bool = false
 
 
 func _ready() -> void:
@@ -61,12 +70,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if visible:
 		fermer()
-	elif not get_tree().paused:
+	else:
 		ouvrir()
 	get_viewport().set_input_as_handled()
 
 
 func ouvrir() -> void:
+	_pause_avant = get_tree().paused
 	if _fond == null:
 		_construire()
 	_rafraichir()
@@ -81,7 +91,7 @@ func ouvrir() -> void:
 
 func fermer() -> void:
 	visible = false
-	get_tree().paused = false
+	get_tree().paused = _pause_avant
 
 
 # --- Construction ------------------------------------------------------------
