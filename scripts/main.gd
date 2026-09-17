@@ -34,6 +34,36 @@ func _ready() -> void:
 	curse_select.connect(&"confirmed", waves.start)
 	curse_select.call(&"open")
 
+	_monter_panneau_dev()
+
+
+## Monte le panneau de développement, et UNIQUEMENT dans un build qui le porte.
+##
+## Il n'est plus un nœud de `main.tscn` : une référence statique aurait obligé
+## le script à rester dans le `.pck` de tout le monde, sans quoi la scène de
+## l'arène ne se chargerait plus du tout. En le montant ici, le préréglage
+## d'export destiné aux joueurs peut l'exclure pour de bon — script, empreinte
+## du mot de passe et tout le reste partent du paquet.
+##
+## Les deux conditions sont volontairement redondantes. `dev_panel` est un
+## indicateur d'export personnalisé, porté par le seul préréglage de test ;
+## `ResourceLoader.exists` vérifie que le fichier est bien là. Si l'un des deux
+## se trompe un jour — un indicateur oublié, un filtre mal écrit — l'autre
+## empêche le plantage ou la fuite.
+##
+## `editor` couvre le jeu lancé depuis les sources : on n'exporte pas un build
+## rien que pour vérifier une vague, et un panneau qui ne marche qu'une fois
+## empaqueté ne serait utilisé par personne.
+func _monter_panneau_dev() -> void:
+	const CHEMIN := "res://scripts/ui/dev_screen.gd"
+	var autorise := OS.has_feature("dev_panel") or OS.has_feature("editor")
+	if not autorise or not ResourceLoader.exists(CHEMIN):
+		return
+	var panneau := CanvasLayer.new()
+	panneau.name = "DevScreen"
+	panneau.set_script(load(CHEMIN))
+	add_child(panneau)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"restart"):

@@ -26,7 +26,6 @@
 [ext_resource type="Script" path="res://scripts/components/decor_scatter.gd" id="23_decor"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/stats.tscn" id="24_stats"]
-[ext_resource type="Script" path="res://scripts/ui/dev_screen.gd" id="26_dev"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
 
 [sub_resource type="Animation" id="Animation_necax"]
@@ -110,9 +109,6 @@ unique_name_in_owner = true
 
 [node name="StatsScreen" parent="." instance=ExtResource("24_stats")]
 unique_name_in_owner = true
-
-[node name="DevScreen" type="CanvasLayer" parent="."]
-script = ExtResource("26_dev")
 
 [node name="PauseMenu" parent="." unique_id=1906874088 instance=ExtResource("22_pause")]
 unique_name_in_owner = true
