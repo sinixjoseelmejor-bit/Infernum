@@ -2477,6 +2477,67 @@ dans un enfer, dont le texte serait de toute façon illisible à cette échelle.
 
 ## Effets visuels
 
+### L'animation de mort — la même pour les cinq ennemis
+
+Un ennemi tué disparaîssait dans la même image que son dernier éclair de
+dégâts : rien ne distinguait « il est mort » de « il est sorti du champ », et
+dans une mêlée de quarante corps c'est la seule information qui compte. Les
+planches de mort des packs existaient sans être jouées ; celle-ci est **dessinée
+pour le projet** — une âme qui se détache et monte — et sert aux cinq types.
+
+Elle est jouée par [`sprite_effect.gd`](scripts/vfx/sprite_effect.gd), la même
+brique que l'explosion : **8 colonnes sur 5 lignes, 40 cellules dont les 6
+dernières sont vides**, donc les images 0 à 33 à 60 par seconde, soit 0,57 s. Le
+vide de fin est mesuré sur la couverture alpha, pas supposé — les jouer ferait
+vivre le nœud un dixième de seconde de plus sans rien afficher.
+
+L'effet est monté **sur le conteneur** et non sur l'ennemi, qui est libéré dans
+la foulée : enfant de lui, il partirait avec lui sans avoir affiché une seule
+image. Sa position se pose **après** l'entrée dans l'arbre, parce qu'un nœud
+hors arbre n'a pas de parent et que `global_position` n'y veut rien dire de
+fiable. Et il reprend l'échelle du corps qui tombe : une élite (×1,35) meurt
+plus grand qu'un imp, ce qui est gratuit et juste.
+
+#### La planche était agrandie ×4, et ça coûtait 40 Mo de VRAM
+
+Le fichier fait 4096 × 2560 pour **48 Ko sur disque** — il se compresse si bien
+qu'on ne voit rien venir. Mais une texture ne vit pas compressée en mémoire :
+4096 × 2560 × 4 octets font **40 Mo de VRAM**, pour un effet de mort.
+
+La vérification tient en une mesure, et c'est la méthode déjà employée sur
+`menu.jpg` : on cherche le pas du pixel en testant si les blocs de N×N sont
+uniformes.
+
+| Pas testé | 2 | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|
+| Blocs uniformes | 100 % | **100 %** | 93,5 % | 81,5 % | 72,2 % |
+
+C'est net à 4 et ça casse à 8 : la planche est du pixel art **agrandi ×4**, sa
+résolution vraie est 1024 × 640. La réduction est donc **exactement sans perte**,
+chaque bloc de 4×4 ne portant qu'une couleur.
+
+Elle se fait à l'import (`process/size_limit = 1024`) et **non sur le fichier** :
+le PNG reste celui qu'on a dessiné, on peut continuer à l'exporter en 4096
+depuis son outil, et c'est le moteur qui le ramène. Vérifié en mémoire :
+**1024 × 640, 2,5 Mo** au lieu de 40.
+
+La cellule fait alors 128 px et le dessin 55 × 101, et le filtrage au plus
+proche est le bon.
+
+#### Une âme de la taille du corps, pas du double
+
+À l'échelle 1, l'âme faisait **101 px pour un imp qui en mesure 40** : la mort
+était plus grande que ce qui mourait, et deux morts côte à côte se recouvraient.
+À **0,5** elle fait 51 px, soit la taille du corps — 68 px pour une élite, qui
+garde son ×1,35.
+
+**Un demi n'est pas une échelle fractionnaire au sens où le projet l'interdit.**
+Ce qu'on s'interdit ailleurs — 2,5 sur une source de 16 px — donne des pixels de
+largeurs INÉGALES, un sur deux deux fois plus large que son voisin. Un rapport de
+1/2 est régulier : chaque pixel affiché vaut exactement deux pixels source,
+partout dans l'image. Ce qu'on perd est du détail, pas de la régularité — et sur
+une âme qui monte, du détail à 51 px, il n'y en a pas.
+
 ### L'explosion de Braise éternelle
 
 Une planche de 840 × 654, sept colonnes sur six lignes de 120 × 109. Le nom du
@@ -2539,8 +2600,10 @@ de l'échelle : `scale.x = -1` retournerait bien le personnage, en le rapetissan
 à l'échelle 1 au passage. Les ennemis gardent `flip_h`, sans risque : leur
 `offset.x` est nul.
 
-Les planches d'attaque, de blessure et de mort existent dans les packs et ne sont
-pas encore jouées — le jeu signale les coups par un éclair de `modulate`.
+Les planches d'attaque et de blessure existent dans les packs et ne sont pas
+encore jouées — le jeu signale les coups par un éclair de `modulate`. La MORT,
+elle, a la sienne depuis : une planche propre au projet, commune aux cinq types,
+décrite plus haut dans « L'animation de mort ».
 
 ### Le sol
 
