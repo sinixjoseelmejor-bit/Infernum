@@ -1041,7 +1041,7 @@ ligne biblique des boss. Le choix se fait au menu et se mémorise entre les runs
 | Vitesse | 215 | 218 | **288** |
 | Arme | 19 dégâts / 2.9 par s | 10.5 / 3.5 | 9 / **5.2** |
 | Portée | 340 | 355 | 300 |
-| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace |
+| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
 
 ### Équilibrage
 
@@ -1074,6 +1074,101 @@ vague*) sont conditionnels sur le papier et **quasi permanents en pratique** —
 bouge en permanence dans un twin-stick, et 25 éliminations tombent dans les
 quinze premières secondes de n'importe quelle vague. Ils sont donc évalués, et
 équilibrés, comme des bonus permanents.
+
+### La ruée de Loth — un verbe, pas un pourcentage
+
+C'est la conséquence directe du paragraphe ci-dessus. Si les passifs sont des
+bonus plats déguisés, alors les trois personnages se jouent **avec les mêmes
+mains** : mêmes touches, même arme, mêmes déplacements, et seuls les chiffres
+changent. Loth était un Caïn plus rapide. Il **traverse** désormais, ce qu'aucun
+autre ne sait faire — et un verbe de plus vaut dix pourcents de plus.
+
+L'action `dash` était **déclarée dans la table d'entrées depuis le début** (Espace
+/ bouton A) et n'était implémentée nulle part. Ce README la listait lui-même
+comme une liaison morte. Elle ne l'est plus, et elle n'appartient qu'à Loth.
+
+| | Valeur | Pourquoi celle-là |
+|---|---|---|
+| Distance | **240 px** | les zones annoncées font 78 à 135 px de rayon, et la couronne du Calvaire est posée à 155 px : 240 sort de n'importe laquelle. À 137 px — la première valeur essayée — la ruée ne quittait même pas un écrasement de Golgota |
+| Durée | **0,22 s** | au-delà d'un quart de seconde on ne tire plus et on ne corrige plus sa trajectoire : ce n'est plus une esquive, c'est un déplacement |
+| Recharge | **2,2 s** | le vrai bouton d'équilibrage — une quinzaine de ruées par vague de 35 s, assez pour un outil, trop peu pour traverser en permanence |
+
+#### Elle traverse les corps, et rien d'autre
+
+**Aucune invulnérabilité.** Zones annoncées, projectiles et rayons touchent
+pendant la ruée comme avant. Deux raisons, et aucune n'est une précaution de
+principe :
+
+1. Toute la difficulté du jeu est dans le **placement** — « la difficulté vient
+   du nombre et du placement des zones, jamais d'un coup impossible à lire ».
+   Une ruée invulnérable effacerait la lecture qu'elle est censée récompenser :
+   on ne sortirait plus d'une zone, on la traverserait.
+2. Les 0,4 s d'i-frames du joueur sont **déjà** la borne des dégâts entrants, à
+   2,5 coups par seconde. Une seconde source d'invulnérabilité serait un canal
+   parallèle, c'est-à-dire ce que tout le reste de l'équilibrage s'interdit.
+
+La ruée sert à être **ailleurs**, pas à être intouchable.
+
+Traverser demande **deux** garde-fous et non un. Le joueur retire la couche des
+ennemis de son masque le temps du trajet, ce qui l'empêche d'être bloqué — mais
+l'ennemi, lui, continue de le voir : sa collision à lui déclenche toujours les
+dégâts de contact. Sans le second test, dans `enemy.gd`, traverser une mêlée
+coûterait un coup à chaque fois et la ruée cesserait d'être une sortie.
+
+#### Sondes
+
+Chaque promesse est vérifiée en déclenchant la **vraie action d'entrée**, pas la
+fonction qu'elle appelle : c'est la liaison qu'on veut prouver vivante.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Distance d'une ruée | ~240 px | **236 px** |
+| Durée | 0,22 s | **0,22 s** (1 083 px/s) |
+| Ruée redemandée aussitôt | refusée | 0 px |
+| Ruée après 2,4 s | acceptée | 268 px |
+| Mur de 8 imps en travers | traversé, 0 dégât de contact | **traversé, 0 dégât** |
+| Dégât hors contact pendant la ruée | encaissé | **50 encaissés**, `is_invulnerable` = faux |
+| Ruée sur Caïn et sur Job | refusée | 0 px |
+
+**Le banc s'est trompé une fois de plus sur le temps**, et la leçon mérite
+d'être gardée : cumuler `+0,01` à chaque tour d'un `create_timer(0.01)` donnait
+**0,13 s pour une ruée de 0,22**. À 170 images par seconde, un minuteur de 10 ms
+en consomme 17, donc la boucle tourne bien moins souvent qu'elle ne le croit.
+C'est exactement l'erreur que la règle « attendre sur le temps, jamais sur des
+frames » interdit — déguisée en minuteur. La durée se lit sur l'horloge, dans un
+banc lancé en fenêtré où le temps du jeu vaut le temps réel.
+
+#### Deux images, parce qu'un déplacement de 240 px en 0,22 s ne se voit pas
+
+À 60 images par seconde, le personnage n'est dessiné que sur treize images le
+long d'un trajet plus long que l'écran n'est haut : sans rémanence il ne se
+déplace pas, il **disparaît d'un endroit et réapparaît à un autre**. Six copies
+sont donc laissées en route ([`dash_trail.gd`](scripts/vfx/dash_trail.gd)), dans
+le conteneur des projectiles et non sous le joueur — enfants de lui, elles le
+suivraient, c'est-à-dire exactement ce qu'elles doivent ne pas faire.
+
+**La teinte de la traînée a dû passer au-dessus de 1, et c'est la capture qui l'a
+montré.** `modulate` MULTIPLIE la couleur du sprite : un bleu froid à
+(0,72 · 0,88 · 1,0) **assombrit** une planche déjà sombre, et les copies
+disparaissaient dans la pierre de l'arène. Seule la plus récente se voyait, donc
+la ruée lisait encore comme un saut. À (1,30 · 1,70 · 2,20) elles s'en détachent.
+
+La recharge a sa propre jauge ([`dash_gauge.gd`](scripts/vfx/dash_gauge.gd)) :
+une ruée qui répond une fois sur trois sans rien afficher n'est pas difficile,
+elle est illisible. Elle ne se montre que **pendant** la recharge et disparaît
+dès que la ruée est disponible — l'état par défaut du jeu ne doit rien afficher.
+Trois différences délibérées avec l'anneau de la seconde chance, sans quoi deux
+jauges au même endroit se confondraient :
+
+| | Seconde chance | Ruée |
+|---|---|---|
+| Sens | se **vide** | se **remplit** |
+| Rayon | 56 px | 26 px |
+| Teinte | doré | bleu froid |
+
+Elle n'a pas de son : la banque en compte sept, aucun ne dit « traverser », et en
+détourner un dirait autre chose. C'est le premier à ajouter avec le coup encaissé
+et l'âme ramassée.
 
 ## Démarche procédurale
 
@@ -2028,8 +2123,9 @@ Concrètement, on peut fuir vers la gauche en tirant vers la droite.
 `restart` (relance instantanée) reste sur **R au clavier uniquement**. Sur une
 touche de façade, une pression accidentelle détruisait une run sans confirmation.
 
-L'action `dash` est déclarée dans la table d'entrées (Espace / bouton A) mais
-**n'est implémentée nulle part** : c'est une liaison morte, sans effet.
+L'action `dash` (Espace / bouton A) a longtemps été une **liaison morte** :
+déclarée dans la table d'entrées et implémentée nulle part. C'est désormais la
+**ruée de Loth**, et elle n'appartient qu'à lui — voir « La ruée de Loth ».
 
 ## Auto-aim (`scripts/combat/targeting_system.gd`)
 

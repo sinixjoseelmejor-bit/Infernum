@@ -71,9 +71,16 @@ const CHARACTERS: Array[Dictionary] = [
 		# Il ramassait de plus loin ; ça ne rapportait rien (voir Aimant d'âmes).
 		# Le fuyard fait main basse sur ce qu'il trouve : plus d'âmes.
 		"starting_mods": {"soul_gain_pct": 0.10},
+		"dash": true,
 		"passive_name": "Ne pas se retourner",
+		# La fiche doit dire les DEUX moitiés du passif. Une ruée qu'on découvre
+		# en appuyant au hasard sur les touches n'est pas une surprise, c'est une
+		# fonction que la plupart des joueurs n'utiliseront jamais.
 		"passive_desc": "+20 % de cadence de tir tant qu'il se déplace. "
-			+ "Le bonus tombe dès qu'il s'arrête.",
+			+ "Le bonus tombe dès qu'il s'arrête.
+"
+			+ "RUÉE (Espace / A) : il traverse les corps sur 240 px. "
+			+ "Ni les zones ni les tirs ne l'épargnent pour autant.",
 		"special": &"never_look_back",
 	},
 ]
@@ -84,6 +91,26 @@ const MARK_MAX := 0.25
 const PATIENCE_DELAY := 3.0
 const PATIENCE_REGEN := 1.4
 const FLIGHT_FIRE_RATE := 0.20
+
+## LA RUÉE DE LOTH. Trois chiffres, et chacun répond à une question précise.
+##
+## LA DISTANCE se lit sur ce qu'elle doit permettre de quitter, pas sur une
+## impression : les zones annoncées du jeu font 78 à 135 px de rayon, et la
+## couronne du Calvaire de Golgota est posée à 155 px du joueur. 1090 x 0,22 =
+## 240 px sortent de n'importe laquelle d'entre elles, couronne comprise. À
+## 137 px — la première valeur essayée — la ruée ne quittait même pas un
+## écrasement de Golgota, donc elle ne servait à rien contre ce qui tue.
+##
+## LA DURÉE est courte exprès. Une ruée longue est une ruée pendant laquelle on
+## ne tire plus et on ne corrige plus sa trajectoire : au-delà d'un quart de
+## seconde elle cesse d'être une esquive pour devenir un déplacement.
+##
+## LA RECHARGE est le vrai bouton d'équilibrage. À 2,2 s elle donne une
+## quinzaine de ruées par vague de 35 s — assez pour que ce soit un outil et non
+## un événement, trop peu pour traverser en permanence.
+const DASH_SPEED := 1090.0
+const DASH_TIME := 0.22
+const DASH_COOLDOWN := 2.2
 
 var selected_id: StringName = &"cain"
 
@@ -119,6 +146,7 @@ func _ready() -> void:
 		character.passive_name = entry.get("passive_name", "")
 		character.passive_description = entry.get("passive_desc", "")
 		character.special = entry.get("special", &"")
+		character.dash = entry.get("dash", false)
 		character.leftover_ratio = entry.get("leftover_ratio", 0.25)
 		_catalog[character.id] = character
 		_order.append(character.id)

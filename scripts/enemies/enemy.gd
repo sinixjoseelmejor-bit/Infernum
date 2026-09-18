@@ -119,6 +119,15 @@ func _handle_contact_damage() -> void:
 		var body := get_slide_collision(i).get_collider() as Node2D
 		if body == null or not body.is_in_group(Groups.PLAYER):
 			continue
+		# UNE CIBLE EN PLEINE RUÉE TRAVERSE LES CORPS. Le joueur a retiré la
+		# couche des ennemis de son masque le temps du trajet, mais l'ennemi,
+		# lui, continue de le voir : sans ce test, traverser une mêlée coûterait
+		# un coup à chaque fois et la ruée cesserait d'être une sortie.
+		#
+		# Elle ne protège QUE du contact. Zones annoncées, projectiles et rayons
+		# ne passent pas par ici et touchent comme avant — voir `_lancer_ruee`.
+		if body.has_method(&"is_dashing") and body.call(&"is_dashing"):
+			continue
 		if body.has_method(&"apply_damage"):
 			var push: Vector2 = (body.global_position - global_position).normalized() * 220.0
 			body.call(&"apply_damage", contact_damage, self, push)
