@@ -39,11 +39,23 @@ const COST_WAVE_GROWTH := 0.15
 const COST_PER_OWNED_ITEM := 0.062
 const COST_PER_OWNED_ITEM_SQ := 0.0045
 
+## REVENTE : part du prix de BASE rendue, et non du prix payé.
+##
+## C'est la sortie de secours d'une build enfermée — trois objets défensifs
+## achetés tôt, plus assez de dégâts pour gagner les âmes du quatrième. Elle ne
+## crée pas de revenu : le prix payé vaut au moins le prix de base et monte avec
+## la vague et la richesse, donc revendre est toujours une perte sèche. Aucun
+## aller-retour ne rapporte, quel que soit le moment.
+const SELL_RATIO := 0.5
+
 @onready var offer_row: HFlowContainer = %OfferRow
 @onready var pact_row: HFlowContainer = %PactRow
 @onready var pact_status: Label = %PactStatus
 @onready var souls_label: Label = %ShopSoulsLabel
 @onready var wave_label: Label = %ShopWaveLabel
+@onready var sell_separator: HSeparator = %SellSeparator
+@onready var sell_title: Label = %SellTitle
+@onready var sell_row: HFlowContainer = %SellRow
 @onready var reroll_button: Button = %RerollButton
 @onready var continue_button: Button = %ContinueButton
 
@@ -76,8 +88,15 @@ func open() -> void:
 	visible = true
 	get_tree().paused = true
 	wave_label.text = "Vague %d terminée" % RunState.wave
+	# La récolte des survivants est DITE. Des âmes qui arrivent sans explication
+	# ne s'attribuent à rien, et le joueur n'apprendrait jamais que blesser sans
+	# achever rapporte quelque chose.
+	if RunState.leftover_souls > 0:
+		wave_label.text += "  ·  %d âmes arrachées à %d survivants" % [
+			RunState.leftover_souls, RunState.leftover_count]
 	_roll_offer()
 	_roll_pacts()
+	_build_sell()
 	_refresh()
 	GameEvents.shop_opened.emit()
 	continue_button.grab_focus()
@@ -136,6 +155,68 @@ func _roll_offer() -> void:
 		var label := Label.new()
 		label.text = "Plus rien à vendre : vous avez tout pris."
 		offer_row.add_child(label)
+
+
+## Un bouton par objet DISTINCT, avec le nombre d'exemplaires : une liste de
+## 58 lignes pour 24 objets serait illisible, et vendre « un » exemplaire suffit
+## puisqu'ils sont identiques.
+func _build_sell() -> void:
+	# Le bouton pressé disparaît quand on vend le dernier exemplaire : on retient
+	# le focus par NOM pour le rendre au même bouton s'il survit, et au bouton
+	# « Continuer » sinon. Sans ça, vendre à la manette laisse un écran sans
+	# focus, donc sans sortie.
+	var keep := UIUtils.capture_focus(self)
+	UIUtils.clear_children(sell_row)
+	var vus := {}
+	var distincts: Array[ItemData] = []
+	for item in RunState.owned_items:
+		if item == null or vus.has(item.id):
+			continue
+		vus[item.id] = true
+		distincts.append(item)
+
+	var quelque_chose := not distincts.is_empty()
+	sell_separator.visible = quelque_chose
+	sell_title.visible = quelque_chose
+	sell_row.visible = quelque_chose
+	if not quelque_chose:
+		UIUtils.restore_focus(self, keep, continue_button)
+		return
+
+	sell_title.text = "REVENDRE — la moitié du prix de base"
+	for item in distincts:
+		var piles := int(RunState.owned_counts.get(item.id, 0))
+		var button := Button.new()
+		# Nom stable : c'est par lui que le focus se retrouve après reconstruction.
+		button.name = "vendre_%s" % item.id
+		button.theme_type_variation = &"CardButton"
+		button.custom_minimum_size = Vector2(196, 44)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.text = "%s%s
++%d âmes" % [
+			item.display_name, ("  ×%d" % piles) if piles > 1 else "",
+			get_sell_value(item)]
+		button.add_theme_color_override(&"font_color", item.get_rarity_color())
+		button.pressed.connect(func() -> void: _on_sell_pressed(item))
+		sell_row.add_child(button)
+	UIUtils.chain_focus(self)
+	UIUtils.restore_focus(self, keep, continue_button)
+
+
+func get_sell_value(item: ItemData) -> int:
+	return maxi(1, floori(item.get_base_cost() * SELL_RATIO))
+
+
+## Vendre détruit le bouton qui vient d'être pressé : on reconstruit en FIN DE
+## FRAME, jamais depuis l'exécution du signal — le même piège que l'écran de la
+## Forge, et il plante de la même façon.
+func _on_sell_pressed(item: ItemData) -> void:
+	var gain := get_sell_value(item)
+	if not RunState.remove_item(item):
+		return
+	RunState.add_souls(gain)
+	_build_sell.call_deferred()
+	_refresh.call_deferred()
 
 
 func _refresh() -> void:

@@ -9,6 +9,9 @@ extends CanvasLayer
 @onready var branches_row: HBoxContainer = %BranchesRow
 @onready var items_list: VBoxContainer = %ForgeItemsList
 @onready var close_button: Button = %ForgeCloseButton
+@onready var abyss_panel: PanelContainer = %AbyssPanel
+@onready var abyss_button: Button = %AbyssButton
+@onready var abyss_label: Label = %AbyssLabel
 
 var _refresh_queued: bool = false
 
@@ -17,6 +20,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	close_button.pressed.connect(close)
+	abyss_button.toggled.connect(_on_dechainement)
 	SaveGame.keys_changed.connect(func(_t: int) -> void: refresh())
 	Forge.node_unlocked.connect(func(_id: StringName) -> void: refresh())
 
@@ -63,12 +67,19 @@ func _rebuild() -> void:
 	var keep := UIUtils.capture_focus(self)
 	var progress := Forge.get_progress()
 	keys_label.text = "Clés : %d" % SaveGame.banked_keys
-	progress_label.text = "Forge %d / %d nœuds  ·  %d clés pour tout ouvrir" % [
+	# Le personnage est NOMMÉ, et c'est indispensable : chaque personnage a sa
+	# propre Forge, et un joueur qui ouvre cet écran sans savoir lequel il
+	# renforce dépenserait ses clés au mauvais endroit — une dépense
+	# irréversible.
+	progress_label.text = "%s  ·  Forge %d / %d nœuds  ·  %d clés pour tout ouvrir" % [
+		Characters.get_selected().display_name.to_upper(),
 		progress.x, progress.y, Forge.get_total_cost()]
 
 	UIUtils.clear_children(branches_row)
-	for branch in Forge.BRANCHES:
+	for branch in Forge.get_branches():
 		branches_row.add_child(_build_branch(branch))
+
+	_rebuild_abysses()
 
 	UIUtils.clear_children(items_list)
 	var locked := ItemDB.get_locked()
@@ -84,15 +95,67 @@ func _rebuild() -> void:
 	UIUtils.restore_focus(self, keep, close_button)
 
 
+## LE DÉCHAÎNEMENT, armé ici et pas ailleurs.
+##
+## Sa place est à la Forge : c'est l'écran où l'on décide ce que devient un
+## personnage sur la durée, et c'est le seul qui soit déjà propre à chacun. Armé
+## une fois, il vaut pour toutes les runs suivantes de CE personnage — Caïn peut
+## être déchaîné pendant que Job reste bridé.
+##
+## Le panneau est CACHÉ tant que la Clé des Abysses n'a pas été ramassée. Pas
+## grisé : un bouton désactivé qu'on ne peut pas expliquer sans divulgâcher la
+## fin du jeu vaut mieux ne pas exister.
+func _rebuild_abysses() -> void:
+	abyss_panel.visible = SaveGame.abyss_key
+	if not SaveGame.abyss_key:
+		return
+	var personnage := Characters.get_selected()
+	var actif := SaveGame.is_unleashed(personnage.id)
+	# `set_pressed_no_signal` : régler l'état ne doit pas rejouer le signal qui
+	# écrit dans la sauvegarde, sinon reconstruire l'écran réécrit le profil.
+	abyss_button.set_pressed_no_signal(actif)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.16, 0.10, 0.22, 0.96)
+	style.border_color = Color(0.72, 0.42, 1.0) if actif else Color(0.38, 0.28, 0.45)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(5)
+	style.set_content_margin_all(10)
+	abyss_panel.add_theme_stylebox_override(&"panel", style)
+
+	if actif:
+		abyss_button.text = "DÉCHAÎNEMENT  ·  ARMÉ POUR %s" % personnage.display_name.to_upper()
+		abyss_label.text = "Plafonds, taxes et limites de piles levés. En échange," \
+			+ " les ennemis doublent de PV toutes les cinq vagues — la course est" \
+			+ " perdue d'avance, la question est de savoir jusqu'où."
+		abyss_label.add_theme_color_override(&"font_color", Color(0.82, 0.58, 1.0))
+	else:
+		abyss_button.text = "DÉCHAÎNEMENT"
+		abyss_label.text = "La Clé des Abysses lève toutes les limites de %s." \
+			% personnage.display_name + " L'enfer s'endurcit d'autant."
+		abyss_label.add_theme_color_override(&"font_color", Color(0.70, 0.66, 0.72))
+
+
+func _on_dechainement(actif: bool) -> void:
+	SaveGame.set_unleashed(Characters.selected_id, actif)
+	refresh()
+
+
 func _build_branch(branch: String) -> Control:
 	var column := VBoxContainer.new()
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override(&"separation", 6)
 
+	# La branche du personnage est TEINTÉE DE SA COULEUR, et l'écran en compte
+	# quatre : sans marque visuelle, rien ne distinguerait celle qui n'existe que
+	# pour lui des trois que tout le monde possède.
+	var propre: bool = branch == String(Forge.BRANCHES_PERSO.get(Characters.selected_id, ""))
 	var title := Label.new()
 	title.text = branch.to_upper()
 	title.add_theme_font_size_override(&"font_size", 20)
-	title.add_theme_color_override(&"font_color", Color(1, 0.55, 0.3))
+	title.add_theme_color_override(&"font_color",
+		Characters.get_selected().color if propre else Color(1, 0.55, 0.3))
+	if propre:
+		title.text += "  ·  %s" % Characters.get_selected().display_name.to_upper()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 

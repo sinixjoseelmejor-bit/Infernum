@@ -251,10 +251,10 @@ func _construire_outils() -> void:
 	var ligne_p := HBoxContainer.new()
 	ligne_p.add_theme_constant_override(&"separation", 8)
 	_boite.add_child(ligne_p)
-	ligne_p.add_child(_bouton("Débloquer toute la Forge", func() -> void:
-		for noeud: Dictionary in Forge.NODES:
-			SaveGame.unlock_id(noeud["id"])
-		_dire("Forge complète")))
+	ligne_p.add_child(_bouton("Débloquer la Forge du personnage", func() -> void:
+		for id: StringName in Forge.get_ids_for_selected():
+			SaveGame.unlock_forge(Characters.selected_id, id)
+		_dire("Forge complète pour %s" % Characters.get_selected().display_name)))
 	ligne_p.add_child(_bouton("+%d clés au profil" % Forge.get_total_cost(), func() -> void:
 		SaveGame.add_keys(Forge.get_total_cost())
 		_dire("clés versées au profil")))
@@ -332,8 +332,8 @@ func _reinitialiser(bouton: Button) -> void:
 	var ids: Array = []
 	for noeud: Dictionary in Forge.NODES:
 		ids.append(noeud["id"])
-	SaveGame.dev_lock_ids(ids)
-	_dire("Forge remise à zéro")
+	SaveGame.dev_lock_forge(Characters.selected_id, ids)
+	_dire("Forge de %s remise à zéro" % Characters.get_selected().display_name)
 
 
 func _sante() -> Health:

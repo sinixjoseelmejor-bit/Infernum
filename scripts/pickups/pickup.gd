@@ -30,7 +30,7 @@ extends Area2D
 ## fallait aller marcher dessus un par un — 75 % de ramassage sur 90 s de jeu.
 ## À 180 px : 89 %.
 
-enum Kind { SOULS, KEYS, HEAL }
+enum Kind { SOULS, KEYS, HEAL, ABYSS_KEY }
 
 @export var kind: Kind = Kind.SOULS
 @export var value: int = 1
@@ -166,6 +166,15 @@ func collect() -> void:
 			var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 			if player != null and not player.health.is_dead:
 				player.health.heal(maxf(heal_minimum, heal_hits * _hit_damage()))
+		Kind.ABYSS_KEY:
+			# Elle s'écrit dans le PROFIL et non dans la run : c'est la seule
+			# chose que Lucifer laisse et qu'on garde après la mort.
+			if SaveGame.grant_abyss_key():
+				GameEvents.announce.emit("LA CLÉ DES ABYSSES",
+					"Armez le Déchaînement à la Forge, pour le personnage de votre"
+					+ " choix : plus aucune limite, et un enfer qui répond.",
+					Color(0.78, 0.45, 1.0))
+			GameEvents.request_shake(6.0)
 	set_physics_process(false)
 	set_deferred(&"monitoring", false)
 	queue_free()

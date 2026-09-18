@@ -34,6 +34,13 @@ enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 ## le joueur traînant vingt vagues avec 12 PV. C'est un plancher de confort,
 ## pas une régénération : 5 PV ne rattrapent pas une vague mal jouée.
 @export var wave_clear_heal_hits: float = 0.5
+## ÉCHELLE GLOBALE de la moisson des survivants. 0 = l'ancien comportement
+## (les survivants ne rendent rien).
+##
+## Le taux lui-même est PAR PERSONNAGE et vit dans le catalogue
+## (`CharacterData.leftover_ratio`) : Job à 0,5, Caïn et Loth à 0,25. Ce chiffre
+## n'est là que pour désactiver ou atténuer la mécanique d'un coup.
+@export_range(0.0, 2.0, 0.05) var leftover_soul_scale: float = 1.0
 ## Dégâts de référence d'un coup ennemi, avant multiplicateur de vague : entre
 ## le chien (6) et le brute (16). Sert d'unité au soin.
 @export var reference_hit_damage: float = 11.0
@@ -323,8 +330,30 @@ func _start_intermission() -> void:
 	GameEvents.wave_cleared.emit(wave)
 
 
-## Les survivants de la vague sont dissipés — sans récompense, pour ne pas
-## transformer la fin de vague en distributeur d'âmes gratuit.
+## Les survivants de la vague sont dissipés — en rendant CE QU'ON LEUR A PRIS.
+##
+## LE DÉFAUT QUE ÇA CORRIGE. Les âmes ne tombaient que des éliminations, donc
+## les dégâts partiels ne valaient rien : on pouvait enlever 90 % des points de
+## vie de quarante ennemis et rentrer avec zéro. Or c'est exactement la
+## situation d'un joueur dont la build ne tue plus assez vite — et comme les
+## âmes achètent les objets qui font les dégâts, il ne pouvait pas s'en sortir.
+## Moins de dégâts, moins d'âmes, moins d'objets, moins de dégâts.
+##
+## LA MESURE NE CHANGE RIEN QUAND TOUT VA BIEN, et c'est sa qualité principale :
+## un joueur qui tue tout n'a aucun survivant, donc ne touche pas une âme de
+## plus. Aucun recalibrage de l'économie, aucun canal de puissance nouveau en
+## fin de partie. Le filet ne se déclenche que dans le cas qu'il vise.
+##
+## JAMAIS AU PRIX PLEIN, sinon grignoter vaudrait autant qu'achever et
+## l'incitation à finir ses cibles disparaîtrait. Ce n'est pas davantage un
+## distributeur gratuit : on est payé au prorata des dégâts réellement infligés,
+## et seulement d'eux.
+##
+## LE TAUX DÉPEND DU PERSONNAGE (`CharacterData.leftover_ratio`) : Job à 50 %,
+## Caïn et Loth à 25 %. Mesurée à taux uniforme, la moisson profitait le MOINS à
+## celui pour qui elle avait été écrite — elle paie les dégâts répartis sur des
+## cibles qui survivent, donc elle va à qui arrose, pas à qui encaisse. Elle
+## reste une sortie de secours pour les trois, mais c'est à Job qu'elle s'adresse.
 ##
 ## LES TIRS ET LES ZONES AUSSI, et c'est le point important. La boutique met
 ## l'arbre en pause : un trait de cultiste ou une zone de boss encore en l'air
@@ -338,12 +367,58 @@ func _start_intermission() -> void:
 ## Le conteneur ne porte QUE des projectiles et des télégraphes ; les âmes non
 ## ramassées sont enfants du conteneur d'ennemis et survivent, comme il se doit.
 func _clear_leftovers() -> void:
+	# Le reliquat est CUMULÉ d'un ennemi à l'autre avant d'être versé : arrondir
+	# par ennemi ferait disparaître la récolte entière (un imp vaut 3 âmes, donc
+	# 0,75 âme à moitié entamé, donc zéro après arrondi — quarante fois zéro).
+	var reliquat := 0.0
+	var recolte := 0
+	var survivants := 0
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
-		if enemy is Node2D:
-			(enemy as Node2D).queue_free()
+		var noeud := enemy as Node2D
+		if noeud == null:
+			continue
+		var du := _ames_arrachees(noeud)
+		if du > 0.0:
+			survivants += 1
+			reliquat += du
+			if reliquat >= 1.0:
+				var entier := floori(reliquat)
+				reliquat -= float(entier)
+				# Versé SUR PLACE, là où l'ennemi tombe : la phase d'aspiration
+				# qui suit ramène tout au joueur, et les orbes disent d'où elles
+				# viennent au lieu d'apparaître sous ses pieds.
+				DropSystem.spawn_drops(container, noeud.global_position, entier, 0.0, 0.0)
+				recolte += entier
+		noeud.queue_free()
+	RunState.leftover_souls = recolte
+	RunState.leftover_count = survivants
 	for container in get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER):
 		for child in container.get_children():
 			child.queue_free()
+
+
+## Ce qu'un ennemi rend en disparaissant : sa valeur en âmes, au prorata des
+## points de vie qu'il a perdus, et de moitié.
+##
+## Lu sur les PV et non sur un compteur de dégâts tenu à part : c'est la même
+## information, et un compteur parallèle finirait par mentir (soins d'ennemis,
+## remises à l'échelle de vague, élites redimensionnées après coup).
+func _ames_arrachees(enemy: Node2D) -> float:
+	if leftover_soul_scale <= 0.0:
+		return 0.0
+	var personnage := Characters.get_selected()
+	var taux: float = leftover_soul_scale * (personnage.leftover_ratio if personnage != null else 0.25)
+	if taux <= 0.0:
+		return 0.0
+	var brut: Variant = enemy.get(&"soul_value")
+	var vie := enemy.get(&"health") as Health
+	if brut == null or vie == null or vie.max_health <= 0.0:
+		return 0.0
+	var valeur := float(brut)
+	if valeur <= 0.0:
+		return 0.0
+	var part := clampf(1.0 - vie.current / vie.max_health, 0.0, 1.0)
+	return valeur * part * taux
 
 
 # --- Courbes de difficulté (toutes additives) ---
@@ -361,10 +436,44 @@ func get_spawn_rate() -> float:
 	return minf(modded, max_spawns_per_second * 1.5)
 
 
+## DÉCHAÎNEMENT : les PV des ennemis montent en PUISSANCE, et non plus
+## linéairement.
+##
+## Sans ça, le mode ne serait pas un défi mais une promenade. La build du joueur
+## atteint environ ×200 de dégâts contre ×39 aujourd'hui, alors que la courbe
+## normale ajoute 10 % de PV par vague — à la vague 40 les ennemis ont ×4,9 de
+## PV et le joueur ×200 de dégâts. Casser le jeu n'est amusant que s'il reste
+## quelque chose à casser : la courbe déchaînée double les PV toutes les six
+## vagues et finit par rattraper n'importe quelle build.
+##
+## CALIBRÉE SUR LES DPS MESURÉS, pas sur une intuition. En déchaîné, la build
+## vaut ×8 à 20 objets, ×32 à 40, ×190 à 80, ×1 256 à 160 — le mode ne change
+## presque rien avant 40 objets, puisque c'est là que les plafonds commencent à
+## mordre en régime normal. En comptant ~3,5 objets par vague, le joueur passe
+## ×450 vers la vague 30 et ×950 vers la 40.
+##
+## À 1,15 par vague, les ennemis valent ×265 à la vague 30 et ×1 310 à la 40 :
+## le joueur mène largement jusqu'à la trentaine, puis la courbe le rattrape
+## vers la vague 36-38. C'est la forme voulue — on casse le jeu, on en profite
+## longtemps, et l'enfer finit par répondre.
+##
+## PREMIER RÉGLAGE, à bouger après avoir joué : c'est le seul chiffre à toucher
+## pour rendre la course plus longue ou plus courte.
+const PUISSANCE_DECHAINEE := 1.15
+
+## Les dégâts montent aussi, plus doucement. Sans eux la fin de partie serait
+## seulement SPONGIEUSE : des ennemis à ×1 300 de PV qui ne tuent pas ne font pas
+## une run difficile, ils font une run qu'on abandonne d'ennui. Le joueur
+## déchaîné monte jusqu'à 90 % de réduction et un vol de vie sans budget : il
+## faut de quoi passer au travers.
+const DEGATS_DECHAINES := 1.08
+
 func get_health_multiplier() -> float:
 	var base := 1.0 + health_growth * (wave - 1)
 	if wave >= late_wave:
 		base += late_health_growth * (wave - late_wave + 1)
+	if RunState.unleashed:
+		base *= pow(PUISSANCE_DECHAINEE, wave)
 	return base * Curses.get_enemy_health_mult() * WaveMods.get_enemy_health_mult()
 
 
@@ -386,6 +495,8 @@ func get_boss_threat_multiplier(at_wave: int) -> float:
 
 func get_damage_multiplier() -> float:
 	var base := 1.0 + damage_growth * (wave - 1)
+	if RunState.unleashed:
+		base *= pow(DEGATS_DECHAINES, wave)
 	return base * Curses.get_enemy_damage_mult() * WaveMods.get_enemy_damage_mult()
 
 

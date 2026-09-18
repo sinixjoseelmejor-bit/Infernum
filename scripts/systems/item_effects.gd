@@ -39,7 +39,13 @@ func _process(delta: float) -> void:
 
 	# Le budget de vol de vie se recharge dans le temps : les pics de dégâts ne
 	# se convertissent pas intégralement en soin.
+	# DÉCHAÎNEMENT : le budget de soin saute lui aussi. C'est la borne qui
+	# empêchait réellement l'invulnérabilité — la laisser en place aurait vidé le
+	# mode de sa promesse défensive, alors que la réduction d'armure reste, elle,
+	# bornée à 90 % pour qu'une run puisse encore se terminer.
 	var cap := _player.health.max_health * PlayerStats.LIFESTEAL_HEAL_CAP_PER_SEC
+	if RunState.unleashed:
+		cap = _player.health.max_health
 	_lifesteal_budget = minf(_lifesteal_budget + cap * delta, cap)
 
 	var regen := RunState.stats.regen
@@ -55,7 +61,8 @@ func _on_player_spawned(player: Node2D) -> void:
 	_player = player as Player
 
 
-func _on_player_damage_dealt(amount: float, _target: Node2D) -> void:
+func _on_player_damage_dealt(amount: float, target: Node2D) -> void:
+	_achever(target)
 	var ratio := RunState.stats.get_lifesteal()
 	if ratio <= 0.0 or not is_instance_valid(_player):
 		return
@@ -66,17 +73,55 @@ func _on_player_damage_dealt(amount: float, _target: Node2D) -> void:
 	_player.health.heal(heal)
 
 
+## « Errant » (branche de Caïn) : ce qui est presque mort l'est tout à fait.
+##
+## L'intérêt n'est pas le gain de dégâts, il est négligeable — c'est le RYTHME.
+## La Marque monte par élimination : achever raccourcit chaque fin de cible et
+## fait monter la Marque plus vite, qui raccourcit la suivante. C'est la boucle
+## d'emballement de Caïn, et sa réponse à l'économie : plus d'éliminations, donc
+## plus d'âmes.
+##
+## LES BOSS SONT EXCLUS. Ils sont les contrôles de build du jeu, et chacun a ses
+## phases écrites pour une durée : effacer les 12 % derniers pourcents de
+## Lucifer, c'est supprimer la phase pour laquelle il a été dessiné.
+func _achever(cible: Node2D) -> void:
+	# Les tests se suivent du moins cher au plus cher : cette fonction passe a
+	# CHAQUE projectile qui touche, et un build rapide en lance six cents par
+	# seconde. Le parcours des noeuds de Forge vient donc en dernier.
+	if cible == null or not is_instance_valid(cible):
+		return
+	if cible.is_in_group(&"bosses") or not cible.is_in_group(Groups.ENEMIES):
+		return
+	var vie := cible.get(&"health") as Health
+	if vie == null or vie.is_dead or vie.max_health <= 0.0:
+		return
+	var seuil := Forge.get_special_total(&"execute")
+	if seuil <= 0.0 or vie.current > vie.max_health * seuil:
+		return
+	if cible.has_method(&"apply_damage"):
+		cible.call(&"apply_damage", vie.current, _player, Vector2.ZERO)
+
+
+## Épines : l'objet (Manteau d'épines) et le nœud de Job (« Ce qu'on lui rend »)
+## alimentent le MÊME effet et s'additionnent. Deux mécaniques identiques
+## côte-à-côte auraient divergé à la première retouche.
 func _on_player_contact_hit(attacker: Node2D, amount: float) -> void:
-	if not RunState.has_special(&"thorns"):
+	var ratio := Forge.get_special_total(&"thorns_bonus")
+	if RunState.has_special(&"thorns"):
+		ratio += thorns_ratio
+	if ratio <= 0.0:
 		return
 	if attacker == null or not is_instance_valid(attacker):
 		return
 	if attacker.has_method(&"apply_damage"):
-		attacker.call(&"apply_damage", amount * thorns_ratio, _player, Vector2.ZERO)
+		attacker.call(&"apply_damage", amount * ratio, _player, Vector2.ZERO)
 
 
+## L'explosion à la mort vient de l'objet (Braise éternelle) ou du nœud de Loth
+## (« Sodome brûle »). La garde anti-chaîne vaut pour les deux : sans elle, une
+## explosion qui tue en déclenche une autre et un seul kill nettoie l'écran.
 func _on_enemy_died(_enemy: Node2D, death_position: Vector2) -> void:
-	if not RunState.has_special(&"explode_on_kill"):
+	if not RunState.has_special(&"explode_on_kill") 			and Forge.get_special_total(&"blast_on_kill") <= 0.0:
 		return
 	# Garde anti-chaîne : une explosion qui tue ne déclenche pas d'explosion.
 	if _explosion_active:

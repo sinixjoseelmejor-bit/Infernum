@@ -51,6 +51,10 @@ const CHARACTERS: Array[Dictionary] = [
 		"passive_desc": "Régénère 1.4 PV par seconde, mais uniquement après "
 			+ "3 secondes sans avoir été touché.",
 		"special": &"patience",
+		# Le seul a toucher la moisson des survivants a taux PLEIN : user une
+		# foule sans l'achever est ce qu'il fait, et c'est ce que la moisson
+		# paie. Les deux autres restent a 0,25.
+		"leftover_ratio": 0.5,
 	},
 	{
 		"id": &"loth", "name": "Loth", "title": "Le Fuyard",
@@ -115,6 +119,7 @@ func _ready() -> void:
 		character.passive_name = entry.get("passive_name", "")
 		character.passive_description = entry.get("passive_desc", "")
 		character.special = entry.get("special", &"")
+		character.leftover_ratio = entry.get("leftover_ratio", 0.25)
 		_catalog[character.id] = character
 		_order.append(character.id)
 

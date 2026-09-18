@@ -19,6 +19,21 @@ extends RefCounted
 ## DPS théorique maximum, tous plafonds atteints (~30 objets parfaits) :
 ## 3.0 (dégâts) × 2.5 (cadence) × 2.08 (multishot) × 2.5 (crit) ≈ ×39.
 ## Les PV des ennemis montent linéairement : la run reste jouable, pas triviale.
+##
+## LE DÉCHAÎNEMENT lève les quatre règles d'un coup, et uniquement pour les
+## joueurs qui ont abattu Lucifer. Voir `uncapped`.
+##
+## Mesuré avant de l'écrire, parce que « on enlève les plafonds » ne voulait pas
+## dire ce qu'on croyait : en additionnant TOUT le catalogue au maximum de piles
+## plus les 21 nœuds de Forge, **sept plafonds sur treize restent hors
+## d'atteinte** — cadence (+153 % pour un plafond à +150 %), projectiles (+4 pour
+## 4), perforation (+3 pour 3), armure (106 pour 160), vol de vie (+4 % pour
+## +8 %), chance (+1 pour +3), dégâts critiques (+1,20 pour +1,50). Les lever
+## seuls n'aurait donné qu'environ ×1,5 de dégâts.
+##
+## Ce qui bride vraiment, ce ne sont pas les plafonds mais les DEUX TAXES et le
+## budget de soin : les lever vaut ×4,1 à lui seul. C'est pourquoi le
+## déchaînement les emporte aussi — sans quoi la promesse ne serait pas tenue.
 
 const CAP_DAMAGE_PCT := 2.0        ## +200 %
 const CAP_FIRE_RATE_PCT := 1.5     ## +150 %
@@ -73,6 +88,14 @@ var luck: float = 0.0
 
 var specials: Dictionary = {}
 
+## DÉCHAÎNEMENT : les accesseurs rendent la valeur BRUTE.
+##
+## Ce drapeau vit sur l'objet et non dans un autoload interrogé au vol, parce
+## que la fiche de run fabrique des `PlayerStats` jetables, un par source, pour
+## afficher les contributions. S'ils lisaient un état global, ces objets de
+## calcul se croiraient déchaînés et la fiche mentirait.
+var uncapped: bool = false
+
 
 func clear() -> void:
 	damage_flat = 0.0
@@ -119,65 +142,91 @@ func add_mod(key: String, value: float) -> void:
 # --- Accès plafonnés (toujours passer par ces getters) ---
 
 func get_damage_pct() -> float:
-	return minf(damage_pct, CAP_DAMAGE_PCT)
+	return damage_pct if uncapped else minf(damage_pct, CAP_DAMAGE_PCT)
 
 
 func get_fire_rate_pct() -> float:
-	return minf(fire_rate_pct, CAP_FIRE_RATE_PCT)
+	return fire_rate_pct if uncapped else minf(fire_rate_pct, CAP_FIRE_RATE_PCT)
 
 
 func get_projectile_bonus() -> int:
-	return mini(projectile_bonus, CAP_PROJECTILE_BONUS)
+	return projectile_bonus if uncapped else mini(projectile_bonus, CAP_PROJECTILE_BONUS)
 
 
 func get_pierce() -> int:
-	return mini(pierce, CAP_PIERCE)
+	return pierce if uncapped else mini(pierce, CAP_PIERCE)
 
 
 func get_crit_chance() -> float:
-	return clampf(crit_chance, 0.0, CAP_CRIT_CHANCE)
+	# Le plancher à zéro reste : une chance de critique négative n'a pas de sens,
+	# déchaîné ou non. Le déchaînement lève des PLAFONDS, il n'invente pas de
+	# valeurs absurdes.
+	return maxf(crit_chance, 0.0) if uncapped else clampf(crit_chance, 0.0, CAP_CRIT_CHANCE)
 
 
 func get_crit_damage_pct() -> float:
-	return minf(crit_damage_pct, CAP_CRIT_DAMAGE_PCT)
+	return crit_damage_pct if uncapped else minf(crit_damage_pct, CAP_CRIT_DAMAGE_PCT)
 
 
 func get_move_speed_pct() -> float:
-	return clampf(move_speed_pct, -0.5, CAP_MOVE_SPEED_PCT)
+	# Le plancher tient aussi : sous -0.5 le joueur reculerait.
+	return maxf(move_speed_pct, -0.5) if uncapped \
+		else clampf(move_speed_pct, -0.5, CAP_MOVE_SPEED_PCT)
 
 
 func get_range_pct() -> float:
-	return clampf(range_pct, -0.5, CAP_RANGE_PCT)
+	return maxf(range_pct, -0.5) if uncapped else clampf(range_pct, -0.5, CAP_RANGE_PCT)
 
 
 func get_lifesteal() -> float:
-	return clampf(lifesteal_pct, 0.0, CAP_LIFESTEAL)
+	return maxf(lifesteal_pct, 0.0) if uncapped else clampf(lifesteal_pct, 0.0, CAP_LIFESTEAL)
 
 
 func get_pickup_radius_pct() -> float:
-	return clampf(pickup_radius_pct, 0.0, CAP_PICKUP_PCT)
+	return maxf(pickup_radius_pct, 0.0) if uncapped \
+		else clampf(pickup_radius_pct, 0.0, CAP_PICKUP_PCT)
 
 
 func get_soul_gain_pct() -> float:
-	return clampf(soul_gain_pct, -0.5, CAP_SOUL_PCT)
+	return maxf(soul_gain_pct, -0.5) if uncapped \
+		else clampf(soul_gain_pct, -0.5, CAP_SOUL_PCT)
 
 
 func get_armor() -> float:
-	return clampf(armor, 0.0, CAP_ARMOR)
+	return maxf(armor, 0.0) if uncapped else clampf(armor, 0.0, CAP_ARMOR)
 
 
 func get_luck() -> float:
-	return clampf(luck, 0.0, CAP_LUCK)
+	return maxf(luck, 0.0) if uncapped else clampf(luck, 0.0, CAP_LUCK)
 
 
-## Réduction de dégâts avec rendements décroissants ET plafonnée :
-## 100 armure = 50 %, 160 (plafond) = 61,5 %. Jamais au-delà.
+## Réduction de dégâts avec rendements décroissants : 100 armure = 50 %,
+## 160 (plafond) = 61,5 %.
+##
+## LA SEULE BORNE QUE LE DÉCHAÎNEMENT NE LÈVE PAS, et c'est délibéré : la
+## formule tend vers 100 % sans jamais l'atteindre, donc elle ne plafonne pas la
+## réduction — elle plafonne le TEMPS DE JEU. À 99 % de réduction le joueur
+## n'est pas cassé, il est simplement immortel, et une run immortelle ne finit
+## jamais : elle n'a plus de fin, plus de score, plus rien à raconter. Casser le
+## jeu doit rester quelque chose qu'on regarde, pas un écran qu'on abandonne.
+##
+## 90 % laisse une marge énorme (contre 61,5 %) tout en gardant une mort
+## possible.
+const REDUCTION_MAX_DECHAINE := 0.90
+
 func get_damage_reduction() -> float:
-	return get_armor() / (get_armor() + 100.0)
+	var brute := get_armor() / (get_armor() + 100.0)
+	return minf(brute, REDUCTION_MAX_DECHAINE) if uncapped else brute
 
 
 ## Taxe multishot : 2 projectiles = ×1.48 de DPS, 5 = ×2.08. Sous-linéaire.
-static func get_projectile_damage_penalty(count: int) -> float:
+##
+## Déchaînée, elle disparaît : 5 projectiles valent alors ×5. C'est de LOIN le
+## plus gros levier du mode — mesuré à ×2,40 sur le seul multishot, contre ×1,76
+## pour le plafond de dégâts.
+static func get_projectile_damage_penalty(count: int, sans_taxe: bool = false) -> float:
+	if sans_taxe:
+		return 1.0
 	return 1.0 / (1.0 + PROJECTILE_DAMAGE_TAX * maxf(0.0, count - 1.0))
 
 

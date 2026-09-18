@@ -48,6 +48,10 @@ var pierce_bonus: int = 0
 var flat_damage_bonus: float = 0.0
 var crit_chance_bonus: float = 0.0
 var crit_damage_bonus: float = 0.0
+## DÉCHAÎNEMENT : les deux taxes tombent. Recopié depuis les statistiques à
+## chaque objet ramassé plutôt que lu sur un autoload à chaque tir — l'arme tire
+## plusieurs fois par seconde et ne doit pas interroger le monde pour ça.
+var untaxed: bool = false
 
 var targeting: TargetingSystem
 ## Direction visée fournie par le porteur (déplacement du joueur en général).
@@ -94,7 +98,7 @@ func get_projectile_count() -> int:
 ## Dégâts d'UN projectile, taxe multishot comprise : le gain total du multishot
 ## est volontairement sous-linéaire (voir PlayerStats).
 func get_projectile_damage() -> float:
-	var penalty := PlayerStats.get_projectile_damage_penalty(get_projectile_count())
+	var penalty := PlayerStats.get_projectile_damage_penalty(get_projectile_count(), untaxed)
 	return maxf(1.0, (damage + flat_damage_bonus) * damage_multiplier * penalty)
 
 
@@ -115,6 +119,7 @@ func apply_stats(stats: PlayerStats) -> void:
 	pierce_bonus = stats.get_pierce()
 	crit_chance_bonus = stats.get_crit_chance()
 	crit_damage_bonus = stats.get_crit_damage_pct()
+	untaxed = stats.uncapped
 
 
 func fire(target: Node2D) -> void:
@@ -156,7 +161,9 @@ func fire(target: Node2D) -> void:
 		projectile.knockback = knockback
 		projectile.homing_speed_deg = projectile_homing_deg
 		projectile.pierce = pierce + pierce_bonus
-		projectile.pierce_falloff = PlayerStats.PIERCE_DAMAGE_TAX
+		# Déchaînée, la décote par corps traversé disparaît : perforation 3 vaut
+		# alors ×4 de dégâts sur une file, au lieu de ×2,34.
+		projectile.pierce_falloff = 0.0 if untaxed else PlayerStats.PIERCE_DAMAGE_TAX
 		projectile.target = target
 		projectile.source = owner if owner != null else self
 		parent.add_child(projectile)

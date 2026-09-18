@@ -76,6 +76,9 @@ const MODIFIERS: Array[Dictionary] = [
 	},
 ]
 
+const TELEGRAPHE := preload("res://scenes/combat/telegraph.tscn")
+const EXPLOSION := preload("res://scenes/vfx/explosion.tscn")
+
 ## Dégâts de l'explosion des chairs volatiles, en fraction des PV max du joueur.
 const VOLATILE_DAMAGE_RATIO := 0.12
 const VOLATILE_RADIUS := 110.0
@@ -181,19 +184,40 @@ func _on_enemy_died(_enemy: Node2D, death_position: Vector2) -> void:
 	_detonate.call_deferred(death_position)
 
 
+## La mèche était ANNONCÉE PAR UN COMMENTAIRE, et par rien d'autre : le code
+## attendait le délai en silence puis frappait. Le joueur ne pouvait pas sortir
+## du rayon puisque rien ne lui disait où il était.
+##
+## C'est maintenant une vraie zone annoncée, la même brique que les boss, qui
+## porte la mèche, le cercle qui se remplit, le test de distance et le recul.
+## Elle emporte aussi l'effet d'explosion, sans quoi un ennemi qui détone au
+## milieu d'une mêlée ne se distingue pas d'un ennemi qui meurt.
 func _detonate(at: Vector2) -> void:
 	var tree := get_tree()
 	if tree == null:
 		return
-	# Mèche : l'explosion est télégraphiée, le joueur peut sortir du rayon.
-	await tree.create_timer(VOLATILE_FUSE).timeout
 	var player := tree.get_first_node_in_group(Groups.PLAYER)
 	if player == null or not is_instance_valid(player):
 		return
-	GameEvents.request_shake(3.0)
-	if player.global_position.distance_to(at) > VOLATILE_RADIUS:
+
+	var zone := TELEGRAPHE.instantiate() as Telegraph
+	if zone == null:
 		return
-	if player.has_method(&"apply_damage"):
-		var damage: float = player.health.max_health * VOLATILE_DAMAGE_RATIO
-		var push: Vector2 = (player.global_position - at).normalized() * 260.0
-		player.call(&"apply_damage", damage, null, push)
+	zone.global_position = at
+	zone.radius = VOLATILE_RADIUS
+	zone.delay = VOLATILE_FUSE
+	# Les dégâts se calculent ici, à l'allumage : ils dépendent des PV MAX du
+	# joueur, que la zone n'a aucune raison de connaître.
+	zone.damage = player.health.max_health * VOLATILE_DAMAGE_RATIO
+	zone.knockback = 260.0
+	zone.color = Color(1.0, 0.55, 0.2)
+	zone.impact_scene = EXPLOSION
+	_hote().add_child(zone)
+
+
+## Les zones vivent avec les projectiles : ce conteneur est vidé entre deux
+## vagues, donc une explosion en cours ne survit pas à la fin de la vague qui
+## l'a produite.
+func _hote() -> Node:
+	var conteneurs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	return conteneurs[0] if not conteneurs.is_empty() else get_tree().current_scene

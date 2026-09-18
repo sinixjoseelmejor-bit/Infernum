@@ -270,6 +270,77 @@ dégâts réels. Sans cette ligne, la Braise ardente affichait un tiret partout
 tout en augmentant les dégâts — exactement la fiche qui ment contre laquelle
 tout le reste a été écrit.
 
+### Deux effets de jeu ne se voyaient pas du tout
+
+Un effet qui déplace le joueur ou lui retire des PV sans rien afficher n'est pas
+un effet difficile : c'est un effet injuste. Deux en étaient là.
+
+**La chaîne d'Asmodée** tirait le joueur vers le boss, lui infligeait des dégâts
+et secouait la caméra — et **rien n'était dessiné entre les deux**. C'est le seul
+effet du jeu à modifier la position du joueur, et c'était le seul à ne montrer
+aucune image. Elle est maintenant dessinée par
+[`chain_lash.gd`](scripts/combat/chain_lash.gd) : elle part en arc, se tend, et
+suit ses deux extrémités image par image — les deux bougent, le boss dérive et le
+joueur est tiré.
+
+Dessinée par code et non par une planche d'images, pour trois raisons mesurables
+plutôt que par goût : sa longueur va de 170 à plus de 900 px selon la distance,
+le nombre de maillons doit suivre, et ses deux bouts se déplacent pendant
+l'animation. Un sprite étiré donnerait des maillons ovales, un sprite répété
+demanderait exactement la logique qui est ici.
+
+Deux essais ont été jetés en route. Des maillons **espacés** de 5 px lisaient
+comme un pointillé, pas comme une chaîne — ils sont contigus, et l'entrelacement
+se lit au contraste entre un maillon de face et un maillon de profil. Un maillon
+sur deux en **brun sombre** se confondait avec le sol : il est resté clair, et
+c'est un cerne noir sous toute la chaîne qui la détache du fond, y compris quand
+elle traverse un rocher — ce qu'elle fait forcément.
+
+**Le pacte des Chairs volatiles** annonçait sa mèche *dans un commentaire*, et
+par rien d'autre : le code attendait 0,55 seconde en silence puis frappait dans
+un rayon de 110 px. Le joueur ne pouvait pas sortir du rayon puisque rien ne lui
+disait où il était. C'est maintenant une vraie zone annoncée, la même brique que
+les boss, et elle emporte l'effet d'explosion — sans quoi un ennemi qui détone au
+milieu d'une mêlée ne se distingue pas d'un ennemi qui meurt.
+
+La planche d'explosion **existait déjà** et servait à la Braise éternelle. Ce
+n'était pas un asset qui manquait, c'était un appel.
+
+### Les objets achetés tournent autour du joueur
+
+L'inventaire n'existait qu'à l'écran de pause : en pleine vague, le joueur ne
+voyait rien de ce qu'il avait acheté. Une run se construit pourtant objet par
+objet, et ne rien montrer de cette construction pendant qu'elle a lieu revient à
+cacher le sujet du jeu.
+
+**Une icône par objet DISTINCT, jamais par exemplaire.** La Braise ardente se
+cumule cinq fois : cinq braises identiques sur le même cercle seraient un bruit
+qui n'apprend rien, et rempliraient l'orbite avant que le joueur ait fait le tour
+du catalogue. Le nombre d'exemplaires se lit dans la fiche, qui est faite pour ça.
+
+Un anneau régulier a été écarté : N icônes équidistantes tournant d'un bloc lit
+comme un engrenage. Chaque icône a donc son rayon, sa vitesse et son balancement,
+tirés **de son identifiant** et non au hasard — un grain retiré à chaque image
+ferait vibrer les icônes sur place, et un grain tiré de l'indice déplacerait tous
+les objets dès qu'un nouveau s'ajoute. Mesuré en jeu : sur quatre icônes, entre
+2,7 et 4,5 px de déplacement en une demi-seconde, donc aucune ne suit sa voisine.
+
+L'orbite est **aplatie de moitié** en vertical, comme tout le reste du jeu : un
+cercle vu de dessus en vue 3/4 est une ellipse, et un cercle parfait flotterait à
+la verticale du joueur. Chaque icône passe **derrière** lui sur la moitié arrière
+de sa course, sans quoi elle glisserait sur lui sans profondeur.
+
+Aucun effet de jeu : les icônes ne blessent pas, ne bloquent pas, ne ramassent
+rien.
+
+**Le vidage de l'inventaire s'écoute, il ne se suppose pas.** Recharger la scène
+au moment de rejouer reconstruit bien le joueur, mais `_ready()` d'un ENFANT
+tourne AVANT celui de son parent : l'orbite se construisait sur l'inventaire de
+la run précédente, que `main.gd` vidait juste après, en silence. Les objets de
+la partie d'avant restaient à tourner jusqu'au prochain achat, qui remettait
+tout d'aplomb — ce qui rendait le défaut d'autant plus déroutant. `item_gained`
+n'annonçait que les ajouts ; `RunState` émet maintenant `run_reset`.
+
 #### L'Œil sanctionne l'immobilité
 
 C'est ce qu'aucun des quatre autres ne faisait. Le cultiste tire des traits : ils
@@ -516,6 +587,96 @@ vague 10 contre ×0.73 pour la run de référence, c'est-à-dire que le mode « 
 difficile » était le seul à tenir la cadence. Le revenu montait ×6 pendant que la
 difficulté montait ×1.6. Elle reste la plus puissante — c'est sa raison d'être —
 mais elle ne dispense plus d'esquiver.
+
+### La spirale de la build enfermée, et les deux sorties
+
+Les âmes ne tombaient que des **éliminations**. Un joueur qui ne tue plus assez
+vite ne gagne donc plus d'âmes, donc n'achète plus les objets qui font les
+dégâts, donc tue encore moins vite. La boucle se referme et la run est condamnée
+sans être finie.
+
+Ce n'est pas un problème de courbe de fin de partie — les PV ennemis montent de
+façon additive (×3,4 à la vague 20, ×4,9 à la vague 40) contre un plafond de
+dégâts joueur à ×39. Une build complète n'est jamais rattrapée. Ce qui se fait
+rattraper, c'est une build **moyenne ou défensive**, parce qu'au milieu de partie
+les deux courbes sont à parité. Il fallait donc un filet pour une build mal
+partie, et surtout **pas** une nouvelle source de revenu : elle serait devenue le
+canal dominant en fin de partie.
+
+#### 1. Les survivants rendent ce qu'on leur a pris
+
+À la fin d'une vague, les ennemis encore debout étaient effacés **sans rien
+lâcher** : on pouvait enlever 90 % des points de vie de quarante ennemis et
+rentrer avec zéro. Ils rendent désormais leur valeur en âmes au prorata des
+dégâts encaissés, **à moitié prix** (`leftover_soul_ratio`).
+
+La qualité de la mesure est de **ne rien changer quand tout va bien** — et c'est
+vérifié, pas supposé :
+
+| Build | v1 | v2 | v3 | v4 | v5 | v6 | v7 | v8 |
+|---|---|---|---|---|---|---|---|---|
+| Écrasante *(+3000 % dégâts)* | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 6 |
+| De base, aucun objet | 0 | 0 | 3 | 12 | 7 | 19 | 10 | 10 |
+
+Un joueur qui tue tout n'a aucun survivant, donc ne touche pas une âme de plus :
+aucun recalibrage de l'économie, aucun canal de puissance nouveau. La récolte
+grandit avec la taille de l'échec, ce qui est exactement la forme voulue — et
+elle pèse 10 à 25 % du revenu d'une vague dans le cas le plus défavorable.
+
+#### Le taux dépend du personnage : Job 50 %, Caïn et Loth 25 %
+
+La première version payait tout le monde au même taux, et la mesure a montré
+qu'elle allait au mauvais endroit. Build de base, aucun achat, joueur
+invincible, même trajectoire — la seule variable est le personnage :
+
+| | À taux uniforme (0,5) | Taux séparés (Job 0,5 / autres 0,25) |
+|---|---|---|
+| **Job** | 78 âmes | **82** *(66 à 133 sur 6 runs)* |
+| Loth | 100 | 63 |
+| Caïn | 87 | 48 |
+
+À taux uniforme, **c'est Loth qui moissonnait le plus et Job le moins** — soit
+exactement l'inverse de ce pour quoi le filet avait été écrit. L'intuition
+inverse était la mienne, sur une run unique, et elle était fausse : la récolte
+paie les dégâts **répartis sur des cibles qui survivent**, donc elle va à qui
+arrose, pas à qui encaisse. Loth tire vite et l'auto-visée change de cible sans
+arrêt.
+
+Le taux est donc porté par le personnage (`CharacterData.leftover_ratio`) et
+non par le `WaveManager`, qui ne garde qu'une échelle globale pour désactiver la
+mécanique d'un coup. Job est à taux plein parce qu'**user une foule sans
+l'achever est littéralement son registre** ; les deux autres à moitié, ce qui
+leur laisse une sortie de secours sans en faire un revenu.
+
+La variance est grande — 66 à 133 âmes sur 6 runs pour Job — parce que le
+nombre de survivants dépend de la composition de la vague. Les médianes se
+comparent, les runs individuelles non.
+
+Aucun des deux taux n'est le plein tarif, et c'est voulu : à 100 %, grignoter
+quarante ennemis rapporterait autant que les tuer et achever ses cibles n'aurait
+plus d'intérêt.
+Vérifié sur des valeurs connues — dix ennemis intacts rendent **0**, dix ennemis
+à moitié entamés **7**, dix ennemis à 10 % de leurs PV **13**. Le reliquat est
+cumulé d'un ennemi au suivant avant d'être versé, sinon l'arrondi mangerait
+tout : un imp vaut 3 âmes, donc 0,75 âme à moitié entamé, donc zéro — quarante
+fois zéro.
+
+#### 2. La boutique rachète
+
+Le second cas de build enfermée n'est pas un manque de revenu mais un revenu
+**mal dépensé** : trois objets défensifs achetés tôt, et plus assez de dégâts
+pour gagner les âmes du quatrième. La boutique rachète donc un exemplaire pour
+**la moitié de son prix de base**.
+
+La moitié du prix **de base**, jamais du prix payé. Le prix payé vaut au moins le
+prix de base et monte avec la vague et la richesse : à la vague 1 sans aucun
+objet, un percuteur s'achète 25 âmes et se revend 12. Revendre est donc toujours
+une perte sèche, et aucun aller-retour ne rapporte, à aucun moment de la run.
+C'est une sortie de secours, pas un robinet.
+
+La vente retire un exemplaire, recalcule tout depuis l'inventaire — donc vendre
+le dernier exemplaire d'un objet à effet scripté retire bien son effet — et
+prévient l'orbite, qui sinon continuerait d'afficher un objet vendu.
 
 ### Relancer la boutique
 
@@ -1047,10 +1208,180 @@ détoner. La difficulté vient du nombre et du placement des zones, jamais d'un 
 impossible à lire. Les charges (Asmodée, Lucifer) sont annoncées par une zone au
 point d'arrivée, et le boss s'immobilise pendant l'armement.
 
+### Baal était le seul à se laisser jouer sans regarder l'écran
+
+Sa phase 1 posait **une** zone toutes les 1,5 seconde, annoncée 0,8 seconde à
+l'avance, large de 95 px. Le joueur se déplace à 288 px/s : il en couvrait 230
+pendant le préavis, donc il sortait du cercle en marchant, sans le regarder. Et
+rien d'autre n'occupait l'espace — pas un projectile entre deux frappes. Le
+combat n'avait pas d'autre difficulté que sa longueur.
+
+Pire, la seule zone était posée à la position **anticipée** du joueur, ce qui
+récompensait paradoxalement l'immobilité : sans vitesse, la prédiction retombe
+sur la position courante et il suffisait d'un pas au dernier moment.
+
+Ce qui a changé est de la **densité** et de la **lecture**, jamais du dégât par
+coup ni du préavis. La règle du jeu est qu'un boss ne touche pas sans préavis :
+durcir Baal en raccourcissant sa mèche l'aurait cassée.
+
+| | Avant | Après |
+|---|---|---|
+| Zones par frappe | 1 | **2** (doublet) ou **3** (saccade) |
+| Intervalle, phase 1 | 1,5 s | 1,2 s |
+| Préavis | 0,8 s | 0,62 s |
+| Projectiles, phase 1 | aucun | anneau de 8 toutes les 4,5 s |
+| Anneaux, phase 2 | 1 | **2 contrarotatifs** |
+| Déluge | 8 zones, quelle que soit la distance | **9 à 16**, selon la distance |
+
+Le **doublet** pose une zone là où le joueur va et une là où il est : rester
+immobile est puni par la seconde, courir tout droit par la première. Il faut
+changer de direction, ce qui n'était pas demandé avant.
+
+La **saccade**, une frappe sur trois, aligne trois zones sur son axe de course
+avec 0,14 s d'écart entre elles, et ferme la fuite en ligne droite. S'il est
+immobile, elle part vers le boss : elle ferme la retraite au lieu de tomber trois
+fois au même endroit.
+
+Le **Déluge** compte ses zones selon la distance, comme l'Aube brûlante de
+Lucifer. La couronne était de huit zones quoi qu'il arrive, donc elle s'espaçait
+à mesure que le joueur reculait : la sanction anti-kite s'affaiblissait
+précisément quand on kitait le plus. Mesuré : **9 zones à 300 px, 16 à 700**.
+
+**Le plafond des i-frames n'est pas franchi**, et c'est ce qui rend le
+durcissement honnête. Les 0,4 s d'invulnérabilité du joueur bornent les dégâts
+entrants à 2,5 coups par seconde. Baal produisait 0,67 zone par seconde : le
+plafond n'était jamais atteint, les zones étaient la seule limite. Il en produit
+maintenant 1,94 en moyenne — toujours **sous** le plafond. La pression à se
+déplacer augmente ; le mur de dégâts inévitables, non.
+
+## Le Déchaînement — la récompense d'avoir tué Lucifer
+
+Lucifer ne déverrouille rien en mourant : il **laisse tomber la Clé des
+Abysses**, et il faut aller la prendre. La différence n'est pas décorative — un
+déverrouillage accordé dans le noir pendant l'écran de fin de run ne se fête
+pas, le joueur lit une ligne de texte après coup s'il la lit. Un objet qui tombe
+du corps du boss, qu'on voit traverser l'arène et qu'on ramasse, est la
+récompense elle-même.
+
+La clé **ne tombe qu'une fois** : rejouer Lucifer dans la boucle rapporte ses
+clés normales, pas une seconde clé sans objet. Elle est aussi **impossible à
+rater** — son rayon d'accroche est celui de l'arène entière. Mesuré : lâchée à
+762 px du joueur, elle le rejoint en 1,16 seconde.
+
+### Elle s'arme à la Forge, personnage par personnage
+
+Une fois la clé ramassée, un panneau apparaît à la Forge — l'écran où l'on
+décide ce que devient un personnage sur la durée, et le seul qui soit déjà
+propre à chacun. Armé une fois, le Déchaînement vaut pour toutes les runs
+suivantes de CE personnage : Caïn peut être déchaîné pendant que Job reste bridé.
+
+Le panneau est **caché** tant que la clé n'a pas été prise, pas grisé : un bouton
+désactivé qu'on ne peut pas expliquer sans divulgâcher la fin du jeu vaut mieux
+ne pas exister. Et la sélection de personnage porte un **témoin** juste au-dessus
+du bouton qui lance la partie — c'est le dernier moment pour s'apercevoir qu'on
+part en déchaîné sans l'avoir voulu.
+
+### « Enlever les plafonds » ne voulait pas dire ce qu'on croyait
+
+C'est la mesure qui a dicté le contenu du mode. En additionnant **tout** le
+catalogue au maximum de piles plus les 21 nœuds de Forge, **sept plafonds sur
+treize restent hors d'atteinte** :
+
+| Pool | Maximum atteignable | Plafond | Effet de sa levée |
+|---|---|---|---|
+| Cadence de tir | +153 % | +150 % | **aucun** |
+| Projectiles | +4 | +4 | **aucun** |
+| Perforation | +3 | +3 | **aucun** |
+| Armure | 106 | 160 | **aucun** |
+| Vol de vie | +4 % | +8 % | **aucun** |
+| Chance | +1,0 | +3,0 | **aucun** |
+| Dégâts critiques | +1,20 | +1,50 | **aucun** |
+| Chance de critique | +120 % | +60 % | ×2 |
+| Dégâts | +352 % | +200 % | ×1,76 |
+| Gain d'âmes | +113 % | +75 % | ×1,51 |
+| Vitesse | +86 % | +60 % | ×1,43 |
+| Portée | +100 % | +80 % | ×1,25 |
+
+*(Mesuré sur le tronc commun des 21 nœuds. Les branches propres ajoutées depuis
+valent 20 à 45 % sur un ou deux axes selon le personnage — assez pour dépasser
+le plafond de cadence, pas pour rapprocher les sept autres.)*
+
+Lever les seuls plafonds aurait donné **environ ×1,5 de dégâts** — une
+augmentation, pas une build cassée. Ce qui bride vraiment, ce ne sont pas les
+plafonds : ce sont les **deux taxes** (multishot et perforation), le **budget de
+soin** du vol de vie, et le **nombre de piles**. Le mode les emporte donc tous,
+sinon il ne tiendrait pas sa promesse.
+
+### Ce que ça donne, mesuré
+
+| Objets possédés | DPS normal | DPS déchaîné |
+|---|---|---|
+| 20 | ×6,1 | ×8,3 |
+| 40 | ×18,7 | ×31,8 |
+| 80 | ×35,8 *(plafonné)* | **×190** |
+| 160 | ×35,8 | **×1 256** |
+| 299 | ×35,8 | **×11 166** |
+
+Les deux régimes sont presque identiques jusqu'à 40 objets, et c'est exactement
+la forme voulue : le mode ne trivialise pas le début de run, il enlève le
+plafond là où le régime normal s'arrête de monter.
+
+### Une seule borne survit, et ce n'est pas un oubli
+
+La **réduction de dégâts de l'armure** reste bornée à 90 % (contre 61,5 % en
+temps normal). La formule tend vers 100 % sans jamais l'atteindre, donc elle ne
+plafonne pas la puissance : elle plafonne le TEMPS DE JEU. À 99 % de réduction
+le joueur n'est pas cassé, il est immortel, et une run immortelle ne finit
+jamais — plus de fin, plus de score, plus rien à raconter. Casser le jeu doit
+rester quelque chose qu'on regarde, pas un écran qu'on abandonne.
+
+Pour la même raison, les objets à **effet scripté** restent uniques même
+déchaînés : ils sont écrits pour un exemplaire, et les empiler ne les
+renforcerait pas — ça déclencherait le même effet plusieurs fois sur le même
+événement.
+
+### L'enfer répond : les ennemis passent en exponentielle
+
+Casser le jeu n'est amusant que s'il reste quelque chose à casser. En régime
+normal les PV montent de 10 % par vague — linéaire, et largement dépassé par un
+×1 256. En déchaîné, ils sont multipliés par **1,15 par vague** et les dégâts
+par **1,08**.
+
+| Vague | PV ennemis | Dégâts ennemis | DPS joueur estimé |
+|---|---|---|---|
+| 10 | ×8 | ×4 | ×25 |
+| 20 | ×49 | ×13 | ×150 |
+| 30 | ×324 | ×38 | ×450 |
+| 40 | ×1 819 | ×102 | ×950 |
+
+Le joueur domine largement jusqu'à la trentaine, puis la courbe le rattrape vers
+la vague 36-38. **Premier réglage**, à bouger après avoir joué : `PUISSANCE_DECHAINEE`
+et `DEGATS_DECHAINES` dans [`wave_manager.gd`](scripts/systems/wave_manager.gd)
+sont les deux seuls chiffres à toucher pour allonger ou raccourcir la course.
+
+Les dégâts montent aussi, et pas seulement les PV : des ennemis à ×1 800 de PV
+qui ne tuent pas ne font pas une run difficile, ils font une run qu'on abandonne
+d'ennui.
+
+### Le débit de projectiles a été mesuré, et il ne pose pas de problème
+
+C'était le risque annoncé : 299 objets déchaînés donnent 17 projectiles par tir
+à 6,9 tirs par seconde, soit **608 projectiles lancés par seconde** et ~670
+vivants en permanence. Vsync coupée, le coût par image passe de **0,93 ms à
+1,48 ms** — 676 images par seconde, pour un budget de 16,7 ms à 60 fps. Le
+risque n'existe pas ; il fallait le vérifier plutôt que borner à l'aveugle.
+
+La clé est **revérifiée à chaque lecture** du réglage : un profil dont le fichier
+serait modifié à la main pour armer le Déchaînement sans posséder la clé se
+retrouve bridé quand même. Effacer le réglage ne suffirait pas, la condition est
+la clé.
+
 ## Forge Éternelle — méta-progression permanente
 
-Arbre de **15 nœuds** en 3 branches, débloqués avec des clés et conservés entre les
-runs. Accessible depuis l'écran de fin de run.
+Arbre de **26 nœuds par personnage** — 21 communs sur trois branches de 7, plus
+une quatrième branche qui n'existe que pour lui. Débloqués avec des clés et
+conservés entre les runs. Accessible depuis l'écran de fin de run et depuis la
+sélection de personnage.
 
 | Branche | Nœuds | Effets |
 |---|---|---|
@@ -1058,7 +1389,207 @@ runs. Accessible depuis l'écran de fin de run.
 | **Chair** | Cuir cousu → Plaques rivetées / Souffle lent → Carcasse épaisse → Écaille de forge | +18 PV, +16 armure, +0.3 PV/s |
 | **Cendre** | Braises tièdes → Pas léger / Appel des âmes → Augure → Coffre de forge | +8 % âmes, +4 % vitesse, +40 % ramassage, +1 chance, 60 âmes au départ |
 
-Chaque nœud a des prérequis ; **42 clés** au total, soit ~8 à 10 runs.
+Chaque nœud a des prérequis ; **66 clés** pour ouvrir le tronc commun, **82**
+avec la branche du personnage.
+
+### La quatrième branche — ce qui rend une Forge dédiée utile
+
+Les trois branches ci-dessus sont **identiques pour tout le monde**, et doivent
+le rester : c'est le tronc comparable, celui qui dit ce qu'un nœud vaut. Sans
+autre chose, « chaque personnage a sa Forge » n'était qu'un coût triplé.
+
+Chacun a donc une branche de 5 nœuds (16 clés) qui n'a aucun sens sur un autre :
+elle ne contient que des nœuds qui touchent **son passif** ou **sa façon de
+jouer**.
+
+| Caïn — **Marque** | |
+|---|---|
+| Marque vive | la Marque monte de 1,5 % par élimination au lieu de 1 % |
+| Marque profonde | elle plafonne à +45 % au lieu de +25 % |
+| Le sang ne sèche pas | elle ne retombe qu'à moitié entre deux vagues |
+| Fratricide | elle donne aussi la moitié de sa valeur en cadence |
+| Errant | les ennemis sous 12 % de vie meurent sur le coup (**hors boss**) |
+
+| Job — **Épreuve** | |
+|---|---|
+| Dîme de l'éprouvé | chaque coup encaissé rend 1 âme pour 5 points de dégâts |
+| Chair marquée | +20 armure |
+| Vieilles blessures | +0,8 % de dégâts par point d'armure |
+| Œil pour œil | qui vous touche encaisse exactement ce qu'il vous a fait |
+| Il n'a pas plié | la Patience repart après 1,5 s au lieu de 3, et régénère le double |
+
+| Loth — **Exode** | |
+|---|---|
+| Pieds brûlés | +5 % de vitesse |
+| Ne jamais s'arrêter | le bonus de cadence en mouvement double : +20 % → +40 % |
+| Main basse | +12 % d'âmes |
+| Fuite en avant | +20 % de dégâts tant qu'il se déplace |
+| Sodome brûle | les ennemis que vous tuez explosent |
+
+Les nœuds de statistiques alimentent **les mêmes pools plafonnés** que le reste :
+la branche accélère la montée sur un axe, elle n'ouvre aucun canal parallèle.
+« Errant » épargne les boss — ils sont les contrôles de build du jeu, et effacer
+les 12 derniers pourcents de Lucifer supprimerait la phase pour laquelle il a
+été dessiné.
+
+#### Le vrai problème d'un personnage qui encaisse
+
+Les âmes tombent des éliminations, donc **le revenu suit les dégâts**. Un
+personnage bâti pour survivre s'équipe moins bien, donc frappe encore moins
+fort, donc s'équipe encore moins bien : l'écart se creuse tout seul. Mesuré sur
+12 vagues, sans aucun objet acheté, même trajectoire pour les trois :
+
+| | Âmes gagnées | Éliminations | Dégâts subis |
+|---|---|---|---|
+| Caïn | **825** | 239 | 1 595 |
+| Loth | 610 *(74 %)* | 141 | 848 |
+| Job | **513** *(62 %)* | 156 | 3 366 |
+
+Job gagne 38 % d'âmes en moins que Caïn et encaisse deux fois plus. Le déficit
+n'est pas une impression : c'est la même monnaie qui paie les objets, donc le
+retard se compose à chaque vague.
+
+**Chaque branche porte donc un nœud d'économie, branché sur ce que le personnage
+sait faire** — et c'est la partie qu'il fallait équilibrer :
+
+- **Caïn** est payé pour la chaîne : « Errant » raccourcit chaque fin de cible,
+  ce qui fait monter la Marque plus vite, ce qui raccourcit la suivante.
+- **Loth** est payé pour le ramassage : +12 % d'âmes, en plus des +10 % qu'il a
+  déjà.
+- **Job** est payé pour ce qu'il encaisse : 1 âme pour 5 points de dégâts subis.
+
+La Dîme est le **premier nœud de sa branche, à une seule clé**, et c'est une
+correction : en second nœud elle coûtait 3 clés, donc trois runs, et Job est le
+personnage le plus pauvre du jeu tant qu'il ne l'a pas — 156 âmes par run contre
+189 à Caïn et 210 à Loth, mesuré sans branche. Comme un boss ATTEINT rapporte
+une clé garantie et qu'il atteint Golgota 4 fois sur 4, il l'a désormais dès sa
+première run. Le coût total de la branche ne change pas : 1 + 2 + 3 + 4 + 6 = 16.
+
+La Dîme a **trois bornes, et aucune n'est arbitraire** : les i-frames limitent
+l'encaisse à deux coups par seconde ; l'armure réduit les dégâts reçus, donc
+réduit la dîme (s'empiler en défense coûte des âmes — c'est la tension qu'on
+voulait) ; et le débit soutenable est celui de ses soins, pas celui des ennemis,
+parce qu'au-delà il paie en points de vie et que mourir termine la run.
+
+C'est aussi pourquoi le chiffre n'a pas été calibré sur un banc immortel : un
+joueur qu'on remet à plein toutes les frames encaisse 3 366 points en 12 vagues,
+ce qui vaudrait 673 âmes et ferait de Job le personnage le plus riche du jeu. Un
+Job qui survit réellement en encaisse 180 à 380 par run, soit **10 à 17 % de son
+revenu** — un rattrapage, pas une source principale.
+
+#### Ce que les branches changent, mesuré
+
+Runs complètes jusqu'à la mort, avec achats aux prix réels, même trajectoire
+pour les trois (cercle de rayon constant), 2 à 3 runs par cas :
+
+| | Sans la branche | Avec la branche |
+|---|---|---|
+| Caïn | 189 âmes, vague 4 | **410 âmes, vague 6** |
+| Job | 156 âmes, vague 4 | **435 âmes, vague 6** |
+| Loth | 210 âmes, vague 4 | **376 âmes, vague 5** |
+
+Le résultat qui compte n'est pas le doublement — c'est le **resserrement**. Sans
+branche, les trois vont de 156 à 210 âmes ; avec, de 376 à 435, soit 68 à 75
+âmes par vague pour les trois. La branche ne creuse pas l'écart entre les
+personnages, elle le comble.
+
+Les valeurs de Loth ont été **relevées après cette mesure** : sa branche ne
+valait que +28 % de DPS là où celle de Caïn en valait +45 et celle de Job +20
+plus les épines et la Dîme. C'est la seule dont tout l'intérêt est conditionnel
+au déplacement, elle doit payer davantage à conditions égales.
+
+*(Ce tableau de revenus a été mesuré avant les deux renforts de Job décrits
+ci-dessous — conversion d'armure doublée et armure du premier nœud doublée.)*
+
+#### Le chronomètre des boss ne price que les dégâts
+
+Le défaut de fond, trouvé en mesurant et pas en lisant : `enrage_time` est un
+**contrôle de DPS pur**. Passé le délai, le boss gagne ×1,6 en dégâts et ×2 en
+pression, et c'est ce qui tue. Or Job fait 44 DPS contre 60 à Caïn, et les
+pourcentages de dégâts multiplient l'arme de base — le rapport de 73 % ne bouge
+donc **jamais**, quoi qu'il achète. Son échange « 27 % de dégâts contre 1,7× de
+PV effectifs » est bon contre une horde et mauvais contre un chronomètre.
+
+Mesuré, joueur **invincible** pour isoler ses dégâts de sa capacité à esquiver,
+6 runs par valeur, achats aux prix réels :
+
+| Job | Golgota *(enrage 60 s)* | Lilith *(enrage 50 s)* |
+|---|---|---|
+| Conversion 0,4 %, armure 10 | 100 s | 204 s |
+| Conversion 0,8 %, armure 10 | 82 s | 208 s |
+| Conversion 0,8 %, armure 20 | **80 s** | **164 s** |
+| Caïn, pour référence | 50 s | 80 s |
+
+Deux enseignements. La conversion doublée gagne 18 % sur Golgota mais rien sur
+Lilith ; avancer l'armure gagne 21 % sur Lilith mais rien sur Golgota — parce
+qu'à la vague 5 les objets lui en ont déjà donné autant, alors qu'à la vague 10
+le nœud a composé. Les deux leviers ne visent donc pas la même vague, et il
+fallait les deux.
+
+**Pourquoi pas simplement monter ses dégâts de base**, qui aurait marché aussi :
+à DPS égal il garderait 2× les PV effectifs de Caïn, donc il serait strictement
+le meilleur personnage et l'axe qui les distingue disparaîtrait. Ici la puissance
+se paie en armure — il ne peut pas être à la fois tank maximal et dégâts
+maximaux. Et l'armure réduit les dégâts reçus, donc réduit sa Dîme : s'équiper
+en défense coûte des âmes.
+
+Il reste **1,6× plus lent que Caïn sur Golgota et 2× sur Lilith**, pour 2× ses
+PV effectifs. C'est un personnage cohérent et distinct — le broyeur lent — et
+non un personnage réparé. Le rendre aussi rapide demanderait de doubler son
+arme, donc de faire de lui un bruiser ; ça reste possible, mais il faudrait
+alors lui reprendre des points de vie pour qu'il reste sur son axe au lieu d'en
+sortir.
+
+**Ce que le banc ne sait pas mesurer :** il décrit un cercle et n'esquive
+jamais. Il sous-estime donc structurellement Loth, dont tout l'intérêt est de ne
+pas se faire toucher, et il surestime le temps que Job passe au contact. Les
+trois nœuds à effet — achever, épines, explosion — ont donc été vérifiés un par
+un en déclenchant leur événement à la main, plutôt que déduits d'un total de
+run :
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Achever, cible à 8/100 PV | meurt | **achevée** |
+| Achever, cible à 50/100 PV | survit | vivante |
+| Marque, 21 éliminations | +31,5 % | +31,5 % *(+1 % sans le nœud)* |
+| Marque, vague suivante | moitié reportée | 21 → 10 éliminations |
+| Fratricide | moitié en cadence | +22,5 % pour +45 % de dégâts |
+| Dîme, coup de 50 | +10 âmes | **+10 âmes** *(0 sans le nœud)* |
+| Œil pour œil, coup de 20 | 20 rendus | 20 rendus *(0 sans le nœud)* |
+| Patience accélérée, 4 s | ~7 PV | **+7 PV** *(+1 sans le nœud)* |
+| Vieilles blessures, 22 armure | armure × taux | +8,8 % au taux d'alors |
+| Sodome brûle | le voisin encaisse | 7 PV *(0 sans le nœud)* |
+
+### Chaque personnage a SA Forge
+
+Un nœud de Forge modifie les statistiques de celui qui le porte : l'investir
+dans Caïn doit donc être un choix, pas une case à cocher une fois pour toutes
+qui profiterait aux trois. Les clés, elles, restent communes au profil — c'est
+ce qui rend le choix coûteux : chaque clé dépensée sur l'un est une clé de moins
+pour les autres, et les 82 clés d'une Forge complète deviennent 246 pour tout
+ouvrir partout.
+
+**Les objets ne suivent PAS la même règle,** et ce n'est pas une incohérence :
+un objet débloqué avec des clés entre au CATALOGUE de la boutique, et un
+catalogue qui dépendrait du personnage rendrait les tirages incompréhensibles.
+La Forge modifie un personnage, le catalogue appartient au profil.
+
+L'écran de Forge **nomme le personnage** qu'on renforce, en tête. Sans ça, un
+joueur qui l'ouvre depuis la fin de run dépenserait ses clés au mauvais endroit
+— une dépense irréversible.
+
+#### La migration ne retire rien
+
+Les profils existants portaient leurs nœuds dans le registre commun, mêlés aux
+objets. Ils sont **donnés à tous les personnages** à la première ouverture du
+jeu. Les clés dépensées l'ont été avant que la règle change, et le joueur n'a
+pas à en faire les frais : donner trois fois est l'erreur généreuse, reprendre
+est celle qu'on ne pardonne pas.
+
+Le tri ne peut pas se faire au préfixe, et c'est le genre de raccourci qui
+corrompt une sauvegarde en silence : l'objet **Cœur de forge** a pour
+identifiant `forge_heart` et se serait retrouvé classé comme un nœud de Forge.
+C'est la liste `Forge.NODES` qui fait foi.
 
 ### Pourquoi ça ne trivialise pas le début de partie
 

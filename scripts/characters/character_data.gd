@@ -49,6 +49,18 @@ extends Resource
 @export var passive_description: String = ""
 ## Identifiant lu par `character_effects.gd`. Vide = pas de passif scripté.
 @export var special: StringName = &""
+## Part de sa valeur en âmes qu'un ennemi SURVIVANT lui rend à la fin de la
+## vague, au prorata des dégâts encaissés (voir `wave_manager.gd`).
+##
+## C'EST UNE DIFFÉRENCE DE PERSONNAGE, et non un réglage global, parce que la
+## moisson était le seul filet du jeu à profiter également à tout le monde — et
+## mesurée, elle profitait même le MOINS à celui pour qui elle avait été écrite
+## (Loth 100 âmes sur 10 vagues, Caïn 87, Job 78 : elle paie les dégâts répartis
+## sur des cibles qui survivent, donc elle va à qui arrose). Job la touche au
+## taux plein parce qu'user sans achever est littéralement son registre ; les
+## deux autres à moitié, pour qui reste une sortie de secours sans devenir un
+## revenu.
+@export_range(0.0, 1.0, 0.05) var leftover_ratio: float = 0.25
 
 
 ## DPS théorique de départ, pour l'affichage comparatif du menu.

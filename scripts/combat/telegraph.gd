@@ -18,6 +18,14 @@ extends Node2D
 @export var shake: float = 3.0
 ## Durée d'affichage du flash après l'impact.
 @export var flash_time: float = 0.22
+## Effet joué à la détonation, mis à l'échelle du rayon. Facultatif : le flash
+## dessiné suffit pour les zones de boss, qui partent par grappes de huit et
+## n'ont pas besoin qu'on en rajoute. Une détonation ISOLÉE, elle, se remarque
+## mal — c'est le cas des chairs volatiles.
+@export var impact_scene: PackedScene
+## Largeur utile du dessin dans l'effet, en pixels, pour que la mise à l'échelle
+## corresponde vraiment au rayon annoncé.
+@export var impact_content_width: float = 111.0
 
 var _elapsed: float = 0.0
 var _fired: bool = false
@@ -39,6 +47,7 @@ func _process(delta: float) -> void:
 
 func _detonate() -> void:
 	GameEvents.request_shake(shake)
+	_spawn_impact()
 	var player := get_tree().get_first_node_in_group(Groups.PLAYER)
 	if player == null or not is_instance_valid(player):
 		return
@@ -47,6 +56,22 @@ func _detonate() -> void:
 		return
 	if player.has_method(&"apply_damage"):
 		player.call(&"apply_damage", damage, null, offset.normalized() * knockback)
+
+
+## L'effet est monté sur le PARENT et non sur la zone : la zone se libère
+## `flash_time` après la détonation, ce qui couperait l'animation en plein vol.
+func _spawn_impact() -> void:
+	if impact_scene == null:
+		return
+	var effet := impact_scene.instantiate() as Node2D
+	if effet == null:
+		return
+	var hote := get_parent()
+	if hote == null:
+		return
+	hote.add_child(effet)
+	effet.global_position = global_position
+	effet.scale = Vector2.ONE * (radius * 2.0 / maxf(1.0, impact_content_width))
 
 
 func _draw() -> void:

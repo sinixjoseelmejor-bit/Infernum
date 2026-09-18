@@ -72,6 +72,25 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
+[node name="AbyssPanel" type="PanelContainer" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
+
+[node name="AbyssBox" type="VBoxContainer" parent="Center/Panel/Layout/AbyssPanel"]
+theme_override_constants/separation = 6
+
+[node name="AbyssButton" type="Button" parent="Center/Panel/Layout/AbyssPanel/AbyssBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+toggle_mode = true
+text = "DÉCHAÎNEMENT"
+
+[node name="AbyssLabel" type="Label" parent="Center/Panel/Layout/AbyssPanel/AbyssBox"]
+unique_name_in_owner = true
+theme_override_font_sizes/font_size = 14
+text = "Déchaînement"
+horizontal_alignment = 1
+autowrap_mode = 3
+
 [node name="ItemsTitle" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)

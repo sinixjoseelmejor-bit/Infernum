@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/pickups/pickup.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/pickups/key/key.svg" id="2_sprite"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_abyss"]
+radius = 22.0
+
+[node name="AbyssKey" type="Area2D" groups=["pickups"]]
+collision_layer = 32
+collision_mask = 2
+script = ExtResource("1_script")
+kind = 3
+value = 1
+base_magnet_radius = 6000.0
+min_magnet_speed = 420.0
+max_magnet_speed = 1500.0
+capture_radius = 30.0
+settle_time = 0.45
+spawn_impulse = 210.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+modulate = Color(0.72, 0.42, 1, 1)
+scale = Vector2(2, 2)
+
+[node name="Halo" type="Sprite2D" parent="."]
+z_index = -1
+texture = ExtResource("2_sprite")
+modulate = Color(0.55, 0.2, 0.95, 0.45)
+scale = Vector2(3.4, 3.4)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_abyss")
