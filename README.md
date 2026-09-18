@@ -270,10 +270,11 @@ dégâts réels. Sans cette ligne, la Braise ardente affichait un tiret partout
 tout en augmentant les dégâts — exactement la fiche qui ment contre laquelle
 tout le reste a été écrit.
 
-### Deux effets de jeu ne se voyaient pas du tout
+### Trois effets de jeu ne se voyaient pas du tout
 
-Un effet qui déplace le joueur ou lui retire des PV sans rien afficher n'est pas
-un effet difficile : c'est un effet injuste. Deux en étaient là.
+Un effet qui déplace le joueur, lui retire des PV ou lui SAUVE la vie sans rien
+afficher n'est pas un effet difficile : c'est un effet injuste. Trois en étaient
+là.
 
 **La chaîne d'Asmodée** tirait le joueur vers le boss, lui infligeait des dégâts
 et secouait la caméra — et **rien n'était dessiné entre les deux**. C'est le seul
@@ -305,6 +306,48 @@ milieu d'une mêlée ne se distingue pas d'un ennemi qui meurt.
 
 La planche d'explosion **existait déjà** et servait à la Braise éternelle. Ce
 n'était pas un asset qui manquait, c'était un appel.
+
+#### La seconde chance ressemblait à un coup encaissé
+
+Le nœud de Forge **Seconde chance** intercepte le coup fatal, relève le joueur à
+mi-vie et le rend intouchable 1,5 seconde. Le seul événement du jeu qui **annule
+une mort** rejouait l'éclair ROUGE de n'importe quel coup encaissé, avec une
+secousse deux fois plus forte, et rien d'autre. Il se lisait donc comme un gros
+dégât, c'est-à-dire exactement comme son contraire — et surtout, rien ne disait
+au joueur qu'il disposait d'une fenêtre pour s'extraire de ce qui venait de le
+tuer. C'est la partie qui coûte des runs : la protection existait, elle était
+invisible.
+
+[`revive_burst.gd`](scripts/vfx/revive_burst.gd) la dessine en **deux temps**, et
+c'est le second qui porte l'information :
+
+| Temps | Ce que ça dit |
+|---|---|
+| **Éclat**, 0,45 s | une onde dorée part du corps, des rais s'en échappent : il vient de se passer quelque chose, et ce n'est pas un dégât |
+| **Compte**, 1,5 s | un anneau se vide comme un cadran autour des pieds, et disparaît **exactement** quand l'invulnérabilité s'arrête |
+
+L'anneau n'est pas une décoration qui dure à peu près aussi longtemps : c'est la
+**mesure** de la protection restante. `Player.REVIVE_INVULNERABILITE` sert à la
+fois à `Health.revive` et à la durée de l'anneau — deux valeurs séparées
+auraient dérivé au premier réglage, et un anneau qui ment sur la protection est
+pire qu'un anneau absent. Vérifié : à 1,20 s l'anneau est là et
+`is_invulnerable()` répond vrai ; à 1,75 s les deux sont tombés ensemble.
+
+Trois détails viennent de la capture d'écran et pas du code :
+
+- **L'anneau était à 34 px, il est à 56.** À 34 il tombait SUR le personnage et
+  l'arc restant se lisait comme une rayure au-dessus de sa tête. Il reste
+  néanmoins sous la taille d'une zone de boss (78 à 135 px), qu'il ne doit jamais
+  imiter : celles-là annoncent un dégât.
+- **Il fallait une piste sous l'arc.** Un arc seul ne dit pas sur quelle course
+  il se vide, donc il ne dit pas combien il reste — seulement qu'il rétrécit.
+- **Il est posé aux pieds**, 34 px sous l'origine du nœud. Les planches sont des
+  images de 100 px où le dessin flotte au milieu : un cercle au sol centré sur
+  l'origine coupe le personnage en deux.
+
+Le son est celui des objets obtenus, `chooseUpgradeSound` — celui de la banque
+qui dit « quelque chose vient de vous être donné », ce qui est littéralement le
+cas. Aucun fichier à ajouter.
 
 ### Les objets achetés tournent autour du joueur
 
