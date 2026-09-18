@@ -97,9 +97,50 @@ enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 ## moitié du DPS du joueur et le combat de boss durait le double. Ils restent
 ## présents — ils ne sont pas là pour faire des dégâts mais pour occuper le sol.
 @export var boss_add_spawn_ratio: float = 0.25
-## Au-delà du dernier boss, on reboucle en renforçant (PV et dégâts).
+## AU-DELÀ DU DERNIER BOSS, LE CYCLE REBOUCLE — et c'était la partie ratée.
+##
+## Le renforcement s'appliquait aux PV PROPRES de chaque boss, or le roster va
+## de 3 800 (Golgota) à 10 000 (Lucifer), soit un écart de ×2,6. Chaque tour de
+## boucle rejouait donc cette dent de scie depuis le bas : le boss qui suivait
+## Lucifer était le plus faible du jeu depuis quinze vagues. Mesuré, build de
+## fin de partie, en morts présentées au joueur (169 PV) :
+##
+##   Lucifer vague 25   28 000 PV    9,1 s   0,52 mort
+##   Golgota vague 30   17 908 PV    5,9 s   0,31 mort  ← moins menaçant
+##   Lilith  vague 35   30 044 PV   10,5 s   0,74 mort  ← toujours moins
+##   ...
+##   Lucifer vague 50   73 225 PV   26,3 s   3,60 morts
+##   Golgota vague 55   39 710 PV   14,5 s   0,92 mort  ← divisé par quatre
+##
+## EN BOUCLE, AUCUN BOSS NE DESCEND SOUS LE RÉSERVOIR DU DERNIER. C'est un
+## PLANCHER, pas un remplacement : les boss déjà au-dessus gardent le leur.
+## La première version remplaçait la base par celle du dernier et supprimait
+## bien la dent de scie — mais elle ABAISSAIT les vagues 40 à 50, dont les bases
+## propres (7 900 à 10 000) étaient supérieures. Mesuré, un durcissement qui
+## rendait la moitié de la boucle plus facile :
+##
+##   Baal vague 40    47 538 → 41 500 PV    18,9 → 13,3 s
+##   Lucifer vague 50 73 225 → 50 500 PV    26,3 → 17,9 s
+##
+## Leur identité reste la leur — patterns, phases, sanction anti-kite : seul le
+## réservoir est relevé.
+##
+## Les PV ne sont pas le bon levier au-delà : ils allongent le combat, ils ne le
+## rendent pas plus dur. Le renforcement par tour porte donc AUSSI sur ce qui
+## MENACE — les dégâts et la cadence d'attaque.
 @export var boss_repeat_health_growth: float = 0.45
 @export var boss_repeat_damage_growth: float = 0.20
+## Cadence d'attaque des rencontres répétées : les intervalles se resserrent,
+## le préavis des zones annoncées ne bouge pas.
+##
+## LE PLAFOND EST CALCULÉ, PAS CHOISI. Les 0,4 s d'invulnérabilité du joueur
+## bornent les dégâts entrants à 2,5 coups par seconde, et Baal — le boss le
+## plus dense du jeu — produit déjà 1,94 zone par seconde. 1,94 × 1,25 = 2,43 :
+## on reste sous le plafond. À ×1,30 on passait à 2,52 et le combat cessait
+## d'être esquivable, ce qui est la seule règle que les boss n'ont pas le droit
+## d'enfreindre.
+@export var boss_repeat_attack_growth: float = 0.15
+@export var boss_repeat_attack_max: float = 1.25
 ## Les PV des boss étaient FIXES alors que le DPS du joueur grandit à chaque
 ## vague : Asmodée tombait sans jamais atteindre sa phase 2 (45 % de PV) ni son
 ## enragement (100 s). Cette courbe rend au combat la durée pour laquelle les
@@ -146,6 +187,7 @@ var time_left: float = 0.0
 
 var _spawn_accumulator: float = 0.0
 var _boss: Node2D = null
+var _last_boss_health: float = 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -262,18 +304,44 @@ func _spawn_boss() -> void:
 		return
 	boss.target = target
 	var elapsed := float(wave - boss_wave_interval)
-	boss.max_health *= 1.0 + boss_wave_health_growth * elapsed
+	# Premier tour : chaque boss porte son propre réservoir, c'est lui qui le
+	# situe dans l'échelle. Rencontre répétée : il ne peut plus passer sous celui
+	# du dernier boss du roster, sinon la boucle rejoue la dent de scie depuis
+	# son point le plus bas.
+	var base_health := boss.max_health
+	if loops > 0:
+		base_health = maxf(base_health, _last_boss_base_health())
+	boss.max_health = base_health * (1.0 + boss_wave_health_growth * elapsed)
+	boss.max_health *= get_unleashed_health_factor(wave)
 	var threat := get_boss_threat_multiplier(wave)
 	boss.contact_damage *= threat
 	boss.attack_damage_multiplier = threat
 	if loops > 0:
-		# Rencontre répétée : on renforce, sans toucher aux patterns.
 		boss.max_health *= 1.0 + boss_repeat_health_growth * loops
 		boss.contact_damage *= 1.0 + boss_repeat_damage_growth * loops
 		boss.attack_damage_multiplier *= 1.0 + boss_repeat_damage_growth * loops
+		boss.attack_speed_multiplier = minf(
+			1.0 + boss_repeat_attack_growth * loops, boss_repeat_attack_max)
 	boss.global_position = _random_ring_position()
 	container.add_child(boss)
 	_boss = boss
+
+
+## PV de scène du DERNIER boss du roster, lus une fois puis retenus.
+##
+## Lus sur la scène et non écrits en dur : réordonner `boss_scenes` ou en ajouter
+## un sixième doit suffire, sans qu'un nombre recopié ici parte à la dérive en
+## silence. Une instance nue ne déclenche aucun `_ready` — elle n'entre jamais
+## dans l'arbre.
+func _last_boss_base_health() -> float:
+	if _last_boss_health > 0.0:
+		return _last_boss_health
+	var probe := boss_scenes[boss_scenes.size() - 1].instantiate() as Boss
+	if probe == null:
+		return 0.0
+	_last_boss_health = probe.max_health
+	probe.free()
+	return _last_boss_health
 
 
 ## La vague tombe : on nettoie, on verse la clé, puis on ASPIRE le butin. La
@@ -490,7 +558,44 @@ func get_health_multiplier() -> float:
 ## était le moins dangereux du jeu.
 func get_boss_threat_multiplier(at_wave: int) -> float:
 	var reference := 1.0 + damage_growth * (boss_wave_interval - 1)
-	return (1.0 + damage_growth * maxf(0.0, at_wave - 1.0)) / reference
+	var base := (1.0 + damage_growth * maxf(0.0, at_wave - 1.0)) / reference
+	return base * get_unleashed_damage_factor(at_wave)
+
+
+## LE DÉCHAÎNEMENT S'APPLIQUE AUSSI AUX BOSS, et il ne s'appliquait pas.
+##
+## Les boss ont leur propre courbe et ne passent jamais par
+## `get_health_multiplier()` / `get_damage_multiplier()` : c'est voulu, leur
+## difficulté est celle de leur palier et non celle de la vague. Mais
+## l'exponentielle du Déchaînement n'est pas un palier, c'est la réponse de
+## l'enfer à un joueur sans plafond — et les boss en étaient exemptés par
+## accident. Leurs PV montaient linéairement pendant que ceux d'une brute
+## étaient multipliés par 1,15 à chaque vague. Mesuré, avant correction :
+##
+##   vague 30   Golgota  47 125 PV   une brute     31 285 PV
+##   vague 40   Baal     60 175 PV   une brute    172 370 PV
+##   vague 55   Golgota 104 500 PV   une brute  1 961 660 PV   ← x19
+##
+## À partir de la trentaine, le boss était la chose la MOINS solide de l'écran,
+## dans le mode dont c'est précisément le terrain de jeu : le Déchaînement est
+## un défi de classement, on y pousse aussi loin que possible, et une vague de
+## boss y était devenue un repos.
+##
+## Le facteur appliqué est EXACTEMENT celui de la piétaille. Ce n'est pas une
+## valeur choisie : multiplier les deux par la même chose laisse le rapport
+## boss/piétaille identique à ce qu'il est en régime normal, à chaque vague. Un
+## chiffre propre aux boss aurait redessiné ce rapport sans que personne ne
+## l'ait décidé.
+##
+## Les deux prennent la vague en ARGUMENT : `get_boss_threat_multiplier` en
+## accepte une, et retomber en douce sur la vague courante ferait mentir tout
+## appel qui interroge une autre vague que celle qui tourne.
+func get_unleashed_health_factor(at_wave: int) -> float:
+	return pow(PUISSANCE_DECHAINEE, at_wave) if RunState.unleashed else 1.0
+
+
+func get_unleashed_damage_factor(at_wave: int) -> float:
+	return pow(DEGATS_DECHAINES, at_wave) if RunState.unleashed else 1.0
 
 
 func get_damage_multiplier() -> float:

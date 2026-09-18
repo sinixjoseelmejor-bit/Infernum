@@ -23,6 +23,12 @@ extends CharacterBody2D
 @export var max_health: float = 100.0
 @export var hit_shake: float = 6.0
 
+## Durée d'invulnérabilité accordée par la seconde chance. Écrite ici et non en
+## littéral dans `apply_damage` parce que l'anneau de [ReviveBurst] se vide
+## dessus : deux valeurs séparées dériveraient, et l'anneau mentirait sur la
+## protection qui reste.
+const REVIVE_INVULNERABILITE := 1.5
+
 @onready var targeting: TargetingSystem = %Targeting
 @onready var weapons: Node2D = %Weapons
 @onready var health: Health = %Health
@@ -164,11 +170,11 @@ func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2
 	if reduced >= health.current and RunState.consume_revive():
 		# Seconde chance (Forge) : le coup fatal relève à mi-vie, hors d'atteinte
 		# le temps de s'écarter. Une fois par run.
-		health.revive(0.5, 1.5)
+		health.revive(0.5, REVIVE_INVULNERABILITE)
 		_knockback = (_knockback + impulse).limit_length(max_knockback)
 		GameEvents.player_revived.emit(self)
 		GameEvents.request_shake(hit_shake * 2.0)
-		_flash()
+		_montrer_seconde_chance()
 		return
 	if not health.take_damage(reduced, source):
 		return
@@ -186,6 +192,32 @@ func _flash() -> void:
 	var tween := create_tween()
 	sprite.modulate = Color(2.0, 0.6, 0.6)
 	tween.tween_property(sprite, ^"modulate", Color.WHITE, 0.18)
+
+
+## Être sauvé ne doit pas ressembler à être touché.
+##
+## La seconde chance rejouait `_flash()` — le même éclair ROUGE que n'importe
+## quel coup encaissé — avec une secousse deux fois plus forte, et rien d'autre.
+## Le seul événement du jeu qui annule une mort se lisait donc comme un gros
+## dégât, c'est-à-dire exactement comme son contraire.
+##
+## Trois signaux, tous distincts de ceux d'un coup : un éclair DORÉ sur le
+## personnage, l'anneau de [ReviveBurst] qui décompte l'invulnérabilité, et le
+## son des objets obtenus — celui de la banque qui dit « quelque chose vient de
+## vous être donné », ce qui est littéralement le cas.
+##
+## L'effet est monté SUR LE JOUEUR et non sur le conteneur de projectiles : il
+## doit le suivre pendant la seconde et demie où il s'extrait, et ce conteneur
+## est vidé en fin de vague — une seconde chance consommée sur le dernier coup
+## d'une vague perdrait son anneau au pire moment.
+func _montrer_seconde_chance() -> void:
+	var tween := create_tween()
+	sprite.modulate = Color(2.2, 1.9, 0.9)
+	tween.tween_property(sprite, ^"modulate", Color.WHITE, 0.45)
+	var eclat := ReviveBurst.new()
+	eclat.duree = REVIVE_INVULNERABILITE
+	add_child(eclat)
+	Audio.play(&"objet")
 
 
 func _on_stats_recomputed(stats: PlayerStats) -> void:
