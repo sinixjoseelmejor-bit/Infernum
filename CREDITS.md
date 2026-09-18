@@ -89,8 +89,27 @@ seul lot d'assets tiers **versionné ici**, parce que sa licence l'autorise :
   ne nomme pas son auteur — la mention est restée à l'état de gabarit —, on ne
   peut donc créditer personne nommément.
 
-Deux musiques (menus, arène) et cinq effets : tir, mort d'un ennemi, apparition
-d'un boss, objet obtenu, clic d'interface.
+Trois musiques (menus, arène ×2) et cinq effets : tir, mort d'un ennemi,
+apparition d'un boss, objet obtenu, clic d'interface.
+
+**`MusicGameplay2.ogg` est à rattacher.** La seconde musique d'arène a été
+déposée dans le même dossier que les autres, mais on ne sait pas si elle vient
+du même lot — donc si le `LICENSE.txt` ci-dessus la couvre. À confirmer avant
+toute diffusion publique, au même titre que la police Alagard et `menu.jpg`. Si
+elle vient d'ailleurs, sa licence peut être plus étroite que celle qui autorise
+le versionnement de ce dossier.
+
+## Art propre au projet
+
+Versionné, contrairement aux planches tirées des packs : il n'appartient à
+personne d'autre.
+
+| Fichier | Rôle |
+|---|---|
+| `assets/sprites/arena/floor/` | les deux carreaux de sol |
+| `assets/sprites/characters/cain/` | le sprite de Caïn, fait main |
+| `assets/sprites/bosses/Morts/MortAll.png` | l'animation de mort, commune aux cinq ennemis |
+| `assets/sprites/LogoStudio.png` | le logo **RootStudio**, affiché au lancement |
 
 ### Effet d'explosion
 

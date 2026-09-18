@@ -94,9 +94,10 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 
 ## Points ouverts
 
-- **Deux licences à confirmer avant toute diffusion publique** : la police
-  **Alagard** (créditée « Pix3M », sans licence vérifiée) et l'illustration
-  **menu.jpg**. Les deux sont déjà distribuées dans la release v0.7.1.
+- **Trois licences à confirmer avant toute diffusion publique** : la police
+  **Alagard** (créditée « Pix3M », sans licence vérifiée), l'illustration
+  **menu.jpg**, et **MusicGameplay2.ogg**, déposée dans le dossier audio sans
+  qu'on sache si le `LICENSE.txt` du lot la couvre.
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.

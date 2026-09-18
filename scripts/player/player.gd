@@ -54,6 +54,14 @@ var _base_range: float = 0.0
 var _move_velocity: Vector2 = Vector2.ZERO
 var _knockback: Vector2 = Vector2.ZERO
 
+## Ruée : réservée aux personnages qui la portent (`CharacterData.dash`).
+var _peut_foncer: bool = false
+var _dash_direction: Vector2 = Vector2.RIGHT
+var _dash_restant: float = 0.0
+var _dash_recharge: float = 0.0
+var _trace_restante: float = 0.0
+var _jauge: DashGauge = null
+
 
 func _ready() -> void:
 	add_to_group(Groups.PLAYER)
@@ -85,16 +93,28 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	move_input = PlayerInput.get_move_vector(Settings.eight_way)
-
 	if move_input != Vector2.ZERO:
 		facing = move_input.normalized()
-		_move_velocity = _move_velocity.move_toward(move_input * move_speed, acceleration * delta)
-	else:
-		_move_velocity = _move_velocity.move_toward(Vector2.ZERO, friction * delta)
 
-	_knockback = _knockback.move_toward(Vector2.ZERO, knockback_friction * delta)
-	velocity = _move_velocity + _knockback
-	move_and_slide()
+	_dash_recharge = maxf(0.0, _dash_recharge - delta)
+	if _ruee_disponible() and Input.is_action_just_pressed(&"dash"):
+		_lancer_ruee()
+
+	if _dash_restant > 0.0:
+		_avancer_ruee(delta)
+	else:
+		if move_input != Vector2.ZERO:
+			_move_velocity = _move_velocity.move_toward(
+				move_input * move_speed, acceleration * delta)
+		else:
+			_move_velocity = _move_velocity.move_toward(Vector2.ZERO, friction * delta)
+		_knockback = _knockback.move_toward(Vector2.ZERO, knockback_friction * delta)
+		velocity = _move_velocity + _knockback
+		move_and_slide()
+
+	if _jauge != null:
+		var reste := _dash_recharge / maxf(0.01, Characters.DASH_COOLDOWN)
+		_jauge.remplissage = clampf(1.0 - reste, 0.0, 1.0)
 
 	# Le stick droit prime s'il est poussé ; sinon les armes visent dans la
 	# direction du déplacement — sur mobile le pouce sert aux deux à la fois.
@@ -113,7 +133,95 @@ func _physics_process(delta: float) -> void:
 	# La démarche suit la vitesse RÉELLE : poussé par un recul ou ralenti contre
 	# un mur, le pas ralentit avec le personnage au lieu de pédaler dans le vide.
 	var ratio := _move_velocity.length() / maxf(1.0, move_speed) if move_input != Vector2.ZERO else 0.0
-	waddle.advance(delta, ratio)
+	# Pendant la ruée, la démarche est figée : à 1090 px/s elle battrait quatre
+	# fois plus vite qu'au pas de course et le personnage vibrerait sur place.
+	waddle.advance(delta, 0.0 if _dash_restant > 0.0 else ratio)
+
+
+## LA RUÉE — le seul verbe que le jeu ajoute à « se déplacer » et « tirer ».
+##
+## L'action `dash` était déclarée dans la table d'entrées depuis le début et
+## n'était implémentée nulle part : une liaison morte. Elle ne sert qu'à Loth,
+## et c'est là tout son intérêt — les trois personnages se jouaient avec les
+## mêmes mains et ne différaient que par des chiffres.
+##
+## SUR RAIL, comme la charge d'un boss : ni accélération, ni frottement, ni
+## recul. Le recul est remis à zéro au départ, sans quoi une ruée prise juste
+## après un coup partirait de travers — c'est-à-dire exactement au moment où on
+## en a besoin et où l'on a le plus besoin qu'elle aille où on l'envoie.
+##
+## ELLE TRAVERSE LES CORPS, ET RIEN D'AUTRE. `collision_mask` perd la couche des
+## ennemis le temps du trajet, et `enemy.gd` s'abstient d'infliger ses dégâts de
+## contact à une cible en pleine ruée : sans ce second garde-fou, traverser une
+## mêlée coûterait un coup à chaque fois, puisque l'ennemi, lui, continue de
+## voir le joueur.
+##
+## ELLE NE DONNE AUCUNE INVULNÉRABILITÉ, et c'est la décision structurante.
+## Zones annoncées, projectiles et rayons touchent pendant la ruée comme avant.
+## Deux raisons, et aucune n'est une précaution de principe :
+##
+##   1. Toute la difficulté du jeu est dans le PLACEMENT — « la difficulté
+##      vient du nombre et du placement des zones, jamais d'un coup impossible à
+##      lire ». Une ruée invulnérable effacerait la lecture qu'elle est censée
+##      récompenser : on ne sortirait plus d'une zone, on la traverserait.
+##   2. Les 0,4 s d'i-frames du joueur sont DÉJÀ la borne des dégâts entrants,
+##      à 2,5 coups par seconde. Une seconde source d'invulnérabilité serait un
+##      canal parallèle, c'est-à-dire ce que tout le reste de l'équilibrage
+##      s'interdit.
+##
+## La ruée sert donc à être AILLEURS, pas à être intouchable.
+func _ruee_disponible() -> bool:
+	return _peut_foncer and _dash_restant <= 0.0 and _dash_recharge <= 0.0 \
+		and not health.is_dead
+
+
+func _lancer_ruee() -> void:
+	_dash_direction = move_input.normalized() if move_input != Vector2.ZERO else facing
+	if _dash_direction == Vector2.ZERO:
+		_dash_direction = Vector2.RIGHT
+	_dash_restant = Characters.DASH_TIME
+	_dash_recharge = Characters.DASH_COOLDOWN
+	_knockback = Vector2.ZERO
+	collision_mask &= ~Layers.ENEMY
+	_trace_restante = 0.0
+	_poser_trace()
+
+
+func _avancer_ruee(delta: float) -> void:
+	_dash_restant = maxf(0.0, _dash_restant - delta)
+	velocity = _dash_direction * Characters.DASH_SPEED
+	move_and_slide()
+	_trace_restante -= delta
+	if _trace_restante <= 0.0:
+		_trace_restante = Characters.DASH_TIME / 6.0
+		_poser_trace()
+	if _dash_restant <= 0.0:
+		collision_mask |= Layers.ENEMY
+		# On ne s'arrête pas net : la course repart à pleine vitesse dans l'axe,
+		# sinon la ruée se termine par un temps mort, ce qui est le contraire de
+		# ce qu'on lui demande.
+		_move_velocity = _dash_direction * move_speed
+
+
+func is_dashing() -> bool:
+	return _dash_restant > 0.0
+
+
+## Copie figée du sprite, posée dans le conteneur des projectiles pour qu'elle
+## RESTE où elle tombe. Enfant du joueur, elle le suivrait.
+func _poser_trace() -> void:
+	var trace := DashTrail.new()
+	trace.texture = sprite.texture
+	trace.hframes = sprite.hframes
+	trace.vframes = sprite.vframes
+	trace.frame = sprite.frame
+	trace.offset = sprite.offset
+	trace.scale = sprite.scale
+	trace.global_position = sprite.global_position
+	var bacs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	var bac: Node = bacs[0] if not bacs.is_empty() else get_parent()
+	bac.add_child(trace)
+	trace.global_position = sprite.global_position
 
 
 func get_weapons() -> Array[Weapon]:
@@ -131,6 +239,10 @@ func _apply_character(character: CharacterData) -> void:
 		return
 	max_health = character.max_health
 	move_speed = character.move_speed
+	_peut_foncer = character.dash
+	if _peut_foncer and _jauge == null:
+		_jauge = DashGauge.new()
+		add_child(_jauge)
 	targeting.range_radius = character.targeting_range
 	animator.set_sheets(character.sprite_idle, character.sprite_walk)
 	sprite.offset = character.sprite_offset

@@ -19,6 +19,28 @@ extends CharacterBody2D
 @export var contact_cooldown: float = 0.7
 @export var max_health: float = 30.0
 
+@export_group("Mort")
+## Planche de mort, commune aux cinq types d'ennemis.
+const DEATH_VFX := preload("res://scenes/vfx/mort.tscn")
+## Échelle de l'effet, multipliée par celle du corps.
+##
+## La planche est du pixel art AGRANDI ×4 dans le fichier — vérifié, 100 % des
+## blocs de 4×4 y sont uniformes et ça casse à 8 — donc elle est ramenée à sa
+## résolution native (1024 × 640) à l'import. Le dessin fait alors 55 × 101 px
+## dans une cellule de 128.
+##
+## À L'ÉCHELLE 1 L'ÂME FAISAIT 101 px pour un imp qui en mesure 40 : la mort
+## était plus grande que ce qui mourait, et deux morts côte à côte se
+## recouvraient. À 0,5 elle fait 50 px, soit la taille du corps.
+##
+## UN DEMI N'EST PAS UNE ÉCHELLE FRACTIONNAIRE AU SENS OÙ LE PROJET L'INTERDIT.
+## Ce qu'on s'interdit ailleurs — 2,5 sur une source de 16 px — donne des pixels
+## de largeurs INÉGALES, un sur deux deux fois plus large que son voisin. Un
+## rapport de 1/2 est régulier : chaque pixel affiché vaut exactement deux
+## pixels source, partout dans l'image. Ce qu'on perd est du détail, pas de la
+## régularité — et sur une âme qui monte, du détail à 50 px, il n'y en a pas.
+@export var death_vfx_scale: float = 0.5
+
 @export_group("Récompenses")
 @export var soul_value: int = 3
 ## Chance de lâcher une clé. Réservé aux élites : 0 sur les ennemis normaux.
@@ -119,6 +141,15 @@ func _handle_contact_damage() -> void:
 		var body := get_slide_collision(i).get_collider() as Node2D
 		if body == null or not body.is_in_group(Groups.PLAYER):
 			continue
+		# UNE CIBLE EN PLEINE RUÉE TRAVERSE LES CORPS. Le joueur a retiré la
+		# couche des ennemis de son masque le temps du trajet, mais l'ennemi,
+		# lui, continue de le voir : sans ce test, traverser une mêlée coûterait
+		# un coup à chaque fois et la ruée cesserait d'être une sortie.
+		#
+		# Elle ne protège QUE du contact. Zones annoncées, projectiles et rayons
+		# ne passent pas par ici et touchent comme avant — voir `_lancer_ruee`.
+		if body.has_method(&"is_dashing") and body.call(&"is_dashing"):
+			continue
 		if body.has_method(&"apply_damage"):
 			var push: Vector2 = (body.global_position - global_position).normalized() * 220.0
 			body.call(&"apply_damage", contact_damage, self, push)
@@ -140,7 +171,37 @@ func _flash() -> void:
 	tween.tween_property(sprite, ^"modulate", elite_tint if is_elite else Color.WHITE, 0.12)
 
 
+## L'ANIMATION DE MORT, la même pour tous les ennemis.
+##
+## Jusqu'ici un ennemi tué disparaissait dans la même image que son dernier
+## éclair de dégâts : rien ne distinguait « il est mort » de « il est sorti du
+## champ », et dans une mêlée de quarante corps c'est la seule information qui
+## compte. Les planches de mort des packs existaient sans être jouées ; celle-ci
+## est dessinée pour le projet et vaut pour les cinq types.
+##
+## L'EFFET EST MONTÉ SUR LE CONTENEUR et non sur l'ennemi, qui est libéré dans
+## la foulée : enfant de lui, il partirait avec lui sans avoir affiché une seule
+## image.
+##
+## Il reprend l'échelle du corps qui tombe, donc une élite (×1,35) meurt plus
+## grand qu'un imp. C'est gratuit et c'est juste : ce qui était gros laisse une
+## grosse trace.
+func _spawn_death_effect() -> void:
+	var effet := DEATH_VFX.instantiate() as Node2D
+	if effet == null:
+		return
+	effet.scale = scale * death_vfx_scale
+	var conteneur := get_parent()
+	if conteneur == null or not is_instance_valid(conteneur):
+		return
+	conteneur.add_child(effet)
+	# La position se pose APRÈS l'entrée dans l'arbre : hors de l'arbre, un nœud
+	# n'a pas de parent, donc `global_position` n'y veut rien dire de fiable.
+	effet.global_position = global_position
+
+
 func _on_died(_source: Node) -> void:
+	_spawn_death_effect()
 	DropSystem.spawn_drops(get_parent(), global_position, soul_value, key_chance, heal_chance)
 	GameEvents.enemy_died.emit(self, global_position)
 	queue_free()

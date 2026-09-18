@@ -754,6 +754,48 @@ La vente retire un exemplaire, recalcule tout depuis l'inventaire — donc vendr
 le dernier exemplaire d'un objet à effet scripté retire bien son effet — et
 prévient l'orbite, qui sinon continuerait d'afficher un objet vendu.
 
+##### L'inventaire est une colonne à part, à côté de la boutique
+
+La revente vivait au FOND du corps de la boutique, sous l'offre et sous les
+pactes, donc dans la même zone de défilement qu'eux. Au-delà de quelques objets
+elle passait sous le bord, et il fallait faire défiler pour SAVOIR ce qu'on
+possédait. Or ce n'est pas la même question que « qu'est-ce que j'achète » :
+l'une se lit d'un coup d'œil, et elle sert à décider de l'autre. Deux questions
+dans le même défilement, c'est une question qu'on ne se pose plus.
+
+Elle a donc sa **colonne**, à gauche, avec son propre défilement. Quatre
+décisions valent d'être retenues :
+
+- **Une liste verticale, pas un flux.** Dans une colonne de 330 px, un
+  `HFlowContainer` se replie sur une ou deux cases par ligne — c'est-à-dire une
+  liste, mais irrégulière. Les boutons prennent toute la largeur, sinon le bord
+  droit part en dents de scie.
+- **Les icônes, les mêmes que sur les cartes de l'offre.** Une liste de noms
+  demande de LIRE pour retrouver un objet ; avec son icône elle se parcourt des
+  yeux, ce qui est exactement ce qu'on fait quand on cherche quoi revendre. Et
+  c'est la même image que celle qu'on a vue en l'achetant.
+- **32 px, et il a fallu DEUX réglages.** Un `Button` dessine son icône à sa
+  taille native, soit 16 px — deux fois trop petite, et `icon_max_width` seul ne
+  fait que réduire. Il faut `expand_icon` pour qu'elle grandisse ET
+  `icon_max_width` pour qu'elle s'arrête à 32, facteur **entier** sur une source
+  de 16 comme partout ailleurs dans le jeu.
+- **Le panneau entier disparaît quand on ne possède rien**, et pas seulement son
+  contenu : une colonne vide de 330 px à gauche de la boutique décentrerait
+  l'écran de la première vague sans rien apprendre à personne.
+
+La colonne prend la **hauteur de la boutique** et pas celle de l'écran. Essayée
+en pleine hauteur : elle touchait les deux bords, la boutique restait centrée et
+plus courte, et l'écran penchait à gauche. Elle défile dès une dizaine d'objets,
+et c'est assumé — une run complète en possède une vingtaine de distincts, aucune
+colonne ne les montrera tous.
+
+**Le corps de la boutique a dû être remesuré**, et c'est la règle du projet :
+ces minima se reprennent dès qu'on touche à l'habillage. En perdant la section
+de revente il est passé de 480 à 560 px de place — non pas parce qu'il a grandi,
+mais parce qu'il défilait déjà avant : mesuré de 445 à 514 px selon le tirage,
+contre 480 disponibles. Les pactes étaient rognés en bas de la boutique depuis
+un moment, sous la section de revente qui cachait le problème.
+
 ### Relancer la boutique
 
 Le coût repart de zéro à chaque ouverture, et monte vite :
@@ -784,6 +826,40 @@ La run est donc **conçue pour se terminer**, vers la vague 15-20 pour un bon jo
 (le DPS requis est une borne haute : on peut esquiver au lieu de tout tuer).
 Pour allonger ou raccourcir les runs, les leviers sont
 `spawns_per_second_growth` (0.22) et `health_growth` (0.14) dans `wave_manager.gd`.
+
+## Le logo du studio, au lancement
+
+La **première** scène du jeu n'est plus le menu : `run/main_scene` pointe sur
+[`splash.tscn`](scenes/ui/splash.tscn), qui montre le logo **RootStudio** sur
+fond noir, puis passe la main. Trois temps — 0,45 s d'apparition, 1,10 s de
+tenue, 0,70 s de fondu — et la tenue est ce qui donne au logo le temps d'être
+LU : à 0,6 s il passe pour un défaut d'affichage, au-delà de 2 s il se fait
+attendre.
+
+**Pourquoi pas l'écran de démarrage de Godot** (`boot_splash`), qui existe déjà :
+il affiche une image fixe pendant le chargement du moteur, sans fondu, sans
+durée réglable et sans moyen de la passer. Une scène coûte trois nœuds et donne
+les trois.
+
+**Elle se passe**, et ce n'est pas un détail : n'importe quelle touche, n'importe
+quel bouton de manette, n'importe quel clic l'abrège. Au deuxième lancement de
+la journée c'est la seule chose qu'on demande à un logo — sans ça, ce qui
+accueille le joueur devient ce qui le retarde. Seules les PRESSIONS comptent :
+sans ce test, la touche qui a lancé le jeu depuis un terminal passerait le logo
+avant qu'il ne s'affiche.
+
+Le logo est mesuré avant d'être posé, comme le reste : son fond est un noir
+**opaque** (0, 0, 0, 255) jusque dans les coins, donc il se fond dans l'écran
+sans qu'on ait à le découper. Et il n'a **aucune grille de pixels** — 93,5 % de
+blocs uniformes au pas 2, en baisse ensuite, contre 100 % pour une vraie planche
+de pixel art. C'est une image redimensionnée, pas du pixel art : elle se met à
+l'échelle librement, en filtrage **linéaire**, là où tout le reste du jeu est au
+plus proche.
+
+Rien n'y est préchargé : le menu est chargé au changement de scène et non
+pendant le fondu. Le jeu pèse 0,3 Mo de contenu et s'ouvre instantanément ; un
+préchargement n'achèterait rien et masquerait le vrai coût s'il augmentait un
+jour.
 
 ## Menu et options
 
@@ -986,7 +1062,8 @@ relevées écran par écran après coup.
 
 | Écran | Panneau | Contenu / place |
 |---|---|---|
-| Boutique | 880 × 656 | 422 à 445 / 480 |
+| Boutique | 880 × 706 | 445 à 514 / **560** |
+| Objets (colonne de gauche) | 330 × 706 | 642 pour 9 objets / 632 — elle défile, et c'est normal |
 | Malédictions | 760 × 668 | 380 / **396** |
 | Choix du personnage | 860 × 599 | 288 / 300 |
 | Forge Éternelle | 940 × 946 | 538 / **552**  ·  127 / **142** |
@@ -1041,7 +1118,7 @@ ligne biblique des boss. Le choix se fait au menu et se mémorise entre les runs
 | Vitesse | 215 | 218 | **288** |
 | Arme | 19 dégâts / 2.9 par s | 10.5 / 3.5 | 9 / **5.2** |
 | Portée | 340 | 355 | 300 |
-| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace |
+| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
 
 ### Équilibrage
 
@@ -1074,6 +1151,101 @@ vague*) sont conditionnels sur le papier et **quasi permanents en pratique** —
 bouge en permanence dans un twin-stick, et 25 éliminations tombent dans les
 quinze premières secondes de n'importe quelle vague. Ils sont donc évalués, et
 équilibrés, comme des bonus permanents.
+
+### La ruée de Loth — un verbe, pas un pourcentage
+
+C'est la conséquence directe du paragraphe ci-dessus. Si les passifs sont des
+bonus plats déguisés, alors les trois personnages se jouent **avec les mêmes
+mains** : mêmes touches, même arme, mêmes déplacements, et seuls les chiffres
+changent. Loth était un Caïn plus rapide. Il **traverse** désormais, ce qu'aucun
+autre ne sait faire — et un verbe de plus vaut dix pourcents de plus.
+
+L'action `dash` était **déclarée dans la table d'entrées depuis le début** (Espace
+/ bouton A) et n'était implémentée nulle part. Ce README la listait lui-même
+comme une liaison morte. Elle ne l'est plus, et elle n'appartient qu'à Loth.
+
+| | Valeur | Pourquoi celle-là |
+|---|---|---|
+| Distance | **240 px** | les zones annoncées font 78 à 135 px de rayon, et la couronne du Calvaire est posée à 155 px : 240 sort de n'importe laquelle. À 137 px — la première valeur essayée — la ruée ne quittait même pas un écrasement de Golgota |
+| Durée | **0,22 s** | au-delà d'un quart de seconde on ne tire plus et on ne corrige plus sa trajectoire : ce n'est plus une esquive, c'est un déplacement |
+| Recharge | **2,2 s** | le vrai bouton d'équilibrage — une quinzaine de ruées par vague de 35 s, assez pour un outil, trop peu pour traverser en permanence |
+
+#### Elle traverse les corps, et rien d'autre
+
+**Aucune invulnérabilité.** Zones annoncées, projectiles et rayons touchent
+pendant la ruée comme avant. Deux raisons, et aucune n'est une précaution de
+principe :
+
+1. Toute la difficulté du jeu est dans le **placement** — « la difficulté vient
+   du nombre et du placement des zones, jamais d'un coup impossible à lire ».
+   Une ruée invulnérable effacerait la lecture qu'elle est censée récompenser :
+   on ne sortirait plus d'une zone, on la traverserait.
+2. Les 0,4 s d'i-frames du joueur sont **déjà** la borne des dégâts entrants, à
+   2,5 coups par seconde. Une seconde source d'invulnérabilité serait un canal
+   parallèle, c'est-à-dire ce que tout le reste de l'équilibrage s'interdit.
+
+La ruée sert à être **ailleurs**, pas à être intouchable.
+
+Traverser demande **deux** garde-fous et non un. Le joueur retire la couche des
+ennemis de son masque le temps du trajet, ce qui l'empêche d'être bloqué — mais
+l'ennemi, lui, continue de le voir : sa collision à lui déclenche toujours les
+dégâts de contact. Sans le second test, dans `enemy.gd`, traverser une mêlée
+coûterait un coup à chaque fois et la ruée cesserait d'être une sortie.
+
+#### Sondes
+
+Chaque promesse est vérifiée en déclenchant la **vraie action d'entrée**, pas la
+fonction qu'elle appelle : c'est la liaison qu'on veut prouver vivante.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Distance d'une ruée | ~240 px | **236 px** |
+| Durée | 0,22 s | **0,22 s** (1 083 px/s) |
+| Ruée redemandée aussitôt | refusée | 0 px |
+| Ruée après 2,4 s | acceptée | 268 px |
+| Mur de 8 imps en travers | traversé, 0 dégât de contact | **traversé, 0 dégât** |
+| Dégât hors contact pendant la ruée | encaissé | **50 encaissés**, `is_invulnerable` = faux |
+| Ruée sur Caïn et sur Job | refusée | 0 px |
+
+**Le banc s'est trompé une fois de plus sur le temps**, et la leçon mérite
+d'être gardée : cumuler `+0,01` à chaque tour d'un `create_timer(0.01)` donnait
+**0,13 s pour une ruée de 0,22**. À 170 images par seconde, un minuteur de 10 ms
+en consomme 17, donc la boucle tourne bien moins souvent qu'elle ne le croit.
+C'est exactement l'erreur que la règle « attendre sur le temps, jamais sur des
+frames » interdit — déguisée en minuteur. La durée se lit sur l'horloge, dans un
+banc lancé en fenêtré où le temps du jeu vaut le temps réel.
+
+#### Deux images, parce qu'un déplacement de 240 px en 0,22 s ne se voit pas
+
+À 60 images par seconde, le personnage n'est dessiné que sur treize images le
+long d'un trajet plus long que l'écran n'est haut : sans rémanence il ne se
+déplace pas, il **disparaît d'un endroit et réapparaît à un autre**. Six copies
+sont donc laissées en route ([`dash_trail.gd`](scripts/vfx/dash_trail.gd)), dans
+le conteneur des projectiles et non sous le joueur — enfants de lui, elles le
+suivraient, c'est-à-dire exactement ce qu'elles doivent ne pas faire.
+
+**La teinte de la traînée a dû passer au-dessus de 1, et c'est la capture qui l'a
+montré.** `modulate` MULTIPLIE la couleur du sprite : un bleu froid à
+(0,72 · 0,88 · 1,0) **assombrit** une planche déjà sombre, et les copies
+disparaissaient dans la pierre de l'arène. Seule la plus récente se voyait, donc
+la ruée lisait encore comme un saut. À (1,30 · 1,70 · 2,20) elles s'en détachent.
+
+La recharge a sa propre jauge ([`dash_gauge.gd`](scripts/vfx/dash_gauge.gd)) :
+une ruée qui répond une fois sur trois sans rien afficher n'est pas difficile,
+elle est illisible. Elle ne se montre que **pendant** la recharge et disparaît
+dès que la ruée est disponible — l'état par défaut du jeu ne doit rien afficher.
+Trois différences délibérées avec l'anneau de la seconde chance, sans quoi deux
+jauges au même endroit se confondraient :
+
+| | Seconde chance | Ruée |
+|---|---|---|
+| Sens | se **vide** | se **remplit** |
+| Rayon | 56 px | 26 px |
+| Teinte | doré | bleu froid |
+
+Elle n'a pas de son : la banque en compte sept, aucun ne dit « traverser », et en
+détourner un dirait autre chose. C'est le premier à ajouter avec le coup encaissé
+et l'âme ramassée.
 
 ## Démarche procédurale
 
@@ -1937,19 +2109,54 @@ la run de référence analysée plus haut.
 
 Les bonus de chance de clé des malédictions et des pactes **s'additionnent** au
 lieu de se composer. Avec l'ancien produit et 6 % par élite, une run allant à la
-vague 20 rapportait **40 clés** — presque les 42 que coûte l'arbre entier — et
+vague 20 rapportait **40 clés** — la moitié d'une Forge complète — et
 jusqu'à **270** en cumulant *Œil du vide*, *Marée montante* et *Nuée d'élites*,
 soit six fois toute la méta-progression en une seule partie.
 
-| Configuration | Clés à la vague 15 | Forge complète en |
+| Configuration | Clés à la vague 15 | à la vague 25 |
 |---|---|---|
-| Référence | 11 | ~4,7 runs |
-| Œil du vide | 16 | ~3,4 runs |
-| Œil du vide + Marée montante + Nuée d'élites | 21 | ~2,6 runs |
+| Référence | 9 à 10 | 24 à 27 |
+| Œil du vide + Marée montante + Nuée d'élites à chaque vague | 15 à 24 | 40 à 47 |
 
-L'écart entre la meilleure configuration de farm et la run normale passe ainsi de
-×8 à ×1,9 : accepter des malédictions accélère toujours la Forge, mais ne la
-saute plus.
+Mesuré sur des runs complètes, joueur increvable et catalogue complet — donc
+**la borne haute** : un élite dissipé en fin de vague ne rend aucune clé, et un
+joueur qui ne tue pas tout en récolte moins. L'écart entre la meilleure
+configuration de farm et la run normale est de **×1,7** : accepter des
+malédictions accélère toujours la Forge, mais ne la saute plus.
+
+Le revenu se lit en deux parts, et une seule est aléatoire :
+
+- **La part garantie**, qui ne dépend que de la vague atteinte : une clé par
+  palier de boss **atteint**, plus 1 à 3 clés par boss **abattu** (Golgota 1,
+  Lilith 1, Baal 2, Asmodée 2, Lucifer 3). Soit **14 clés** pour une run qui va
+  au bout de Lucifer, quoi qu'il arrive.
+- **La part aléatoire**, 2 % par élite tué, multipliée par les bonus de
+  malédiction et de pacte. C'est elle qui porte toute la variance : 628 élites
+  apparus à la vague 25 en run de référence, pour une douzaine de clés.
+
+### Ce que coûte la Forge
+
+**82 clés pour la Forge complète d'un personnage**, et **246 pour les trois**.
+Relevé sur `Forge.NODES`, pas estimé :
+
+| | Coût | Détail |
+|---|---|---|
+| Branche **Fer** | 23 | 1+2+2+3+4+5+6 |
+| Branche **Chair** | 23 | 1+2+2+3+4+4+7 |
+| Branche **Cendre** | 20 | 1+2+2+3+3+4+5 |
+| **Tronc commun** | **66** | les 21 nœuds partagés |
+| Branche propre | 16 | 1+2+3+4+6, même coût pour les trois |
+| **Une Forge complète** | **82** | tronc + branche |
+| **Les trois Forges** | **246** | 66×3 + 16×3 |
+
+Le tronc commun se paie **une fois par personnage** : c'est ce qui rend le choix
+coûteux, chaque clé dépensée sur l'un étant une clé de moins pour les autres.
+Les clés, elles, sont communes au profil.
+
+*(Ce paragraphe annonçait « 42 clés pour l'arbre entier », chiffre d'avant les
+Forges dédiées de la 0.7.1 — la section Forge disait déjà 66 et 82. Deux nombres
+pour la même chose dans le même document, c'est exactement ce qu'une mesure non
+remesurée devient.)*
 
 Les âmes ne sont volontairement pas capitalisées : une épargne inter-runs
 trivialiserait les premières vagues de la partie suivante.
@@ -1993,8 +2200,9 @@ Concrètement, on peut fuir vers la gauche en tirant vers la droite.
 `restart` (relance instantanée) reste sur **R au clavier uniquement**. Sur une
 touche de façade, une pression accidentelle détruisait une run sans confirmation.
 
-L'action `dash` est déclarée dans la table d'entrées (Espace / bouton A) mais
-**n'est implémentée nulle part** : c'est une liaison morte, sans effet.
+L'action `dash` (Espace / bouton A) a longtemps été une **liaison morte** :
+déclarée dans la table d'entrées et implémentée nulle part. C'est désormais la
+**ruée de Loth**, et elle n'appartient qu'à lui — voir « La ruée de Loth ».
 
 ## Auto-aim (`scripts/combat/targeting_system.gd`)
 
@@ -2026,7 +2234,8 @@ scenes/
   pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
   combat/                     telegraph
-  ui/                         main_menu · character_select · options · profiles
+  ui/                         splash (logo du studio) · main_menu
+                              character_select · options · profiles
                               hud · shop · game_over · forge · curse_select
                               pause
 scripts/
@@ -2303,6 +2512,67 @@ dans un enfer, dont le texte serait de toute façon illisible à cette échelle.
 
 ## Effets visuels
 
+### L'animation de mort — la même pour les cinq ennemis
+
+Un ennemi tué disparaîssait dans la même image que son dernier éclair de
+dégâts : rien ne distinguait « il est mort » de « il est sorti du champ », et
+dans une mêlée de quarante corps c'est la seule information qui compte. Les
+planches de mort des packs existaient sans être jouées ; celle-ci est **dessinée
+pour le projet** — une âme qui se détache et monte — et sert aux cinq types.
+
+Elle est jouée par [`sprite_effect.gd`](scripts/vfx/sprite_effect.gd), la même
+brique que l'explosion : **8 colonnes sur 5 lignes, 40 cellules dont les 6
+dernières sont vides**, donc les images 0 à 33 à 60 par seconde, soit 0,57 s. Le
+vide de fin est mesuré sur la couverture alpha, pas supposé — les jouer ferait
+vivre le nœud un dixième de seconde de plus sans rien afficher.
+
+L'effet est monté **sur le conteneur** et non sur l'ennemi, qui est libéré dans
+la foulée : enfant de lui, il partirait avec lui sans avoir affiché une seule
+image. Sa position se pose **après** l'entrée dans l'arbre, parce qu'un nœud
+hors arbre n'a pas de parent et que `global_position` n'y veut rien dire de
+fiable. Et il reprend l'échelle du corps qui tombe : une élite (×1,35) meurt
+plus grand qu'un imp, ce qui est gratuit et juste.
+
+#### La planche était agrandie ×4, et ça coûtait 40 Mo de VRAM
+
+Le fichier fait 4096 × 2560 pour **48 Ko sur disque** — il se compresse si bien
+qu'on ne voit rien venir. Mais une texture ne vit pas compressée en mémoire :
+4096 × 2560 × 4 octets font **40 Mo de VRAM**, pour un effet de mort.
+
+La vérification tient en une mesure, et c'est la méthode déjà employée sur
+`menu.jpg` : on cherche le pas du pixel en testant si les blocs de N×N sont
+uniformes.
+
+| Pas testé | 2 | 4 | 8 | 16 | 32 |
+|---|---|---|---|---|---|
+| Blocs uniformes | 100 % | **100 %** | 93,5 % | 81,5 % | 72,2 % |
+
+C'est net à 4 et ça casse à 8 : la planche est du pixel art **agrandi ×4**, sa
+résolution vraie est 1024 × 640. La réduction est donc **exactement sans perte**,
+chaque bloc de 4×4 ne portant qu'une couleur.
+
+Elle se fait à l'import (`process/size_limit = 1024`) et **non sur le fichier** :
+le PNG reste celui qu'on a dessiné, on peut continuer à l'exporter en 4096
+depuis son outil, et c'est le moteur qui le ramène. Vérifié en mémoire :
+**1024 × 640, 2,5 Mo** au lieu de 40.
+
+La cellule fait alors 128 px et le dessin 55 × 101, et le filtrage au plus
+proche est le bon.
+
+#### Une âme de la taille du corps, pas du double
+
+À l'échelle 1, l'âme faisait **101 px pour un imp qui en mesure 40** : la mort
+était plus grande que ce qui mourait, et deux morts côte à côte se recouvraient.
+À **0,5** elle fait 51 px, soit la taille du corps — 68 px pour une élite, qui
+garde son ×1,35.
+
+**Un demi n'est pas une échelle fractionnaire au sens où le projet l'interdit.**
+Ce qu'on s'interdit ailleurs — 2,5 sur une source de 16 px — donne des pixels de
+largeurs INÉGALES, un sur deux deux fois plus large que son voisin. Un rapport de
+1/2 est régulier : chaque pixel affiché vaut exactement deux pixels source,
+partout dans l'image. Ce qu'on perd est du détail, pas de la régularité — et sur
+une âme qui monte, du détail à 51 px, il n'y en a pas.
+
 ### L'explosion de Braise éternelle
 
 Une planche de 840 × 654, sept colonnes sur six lignes de 120 × 109. Le nom du
@@ -2365,8 +2635,10 @@ de l'échelle : `scale.x = -1` retournerait bien le personnage, en le rapetissan
 à l'échelle 1 au passage. Les ennemis gardent `flip_h`, sans risque : leur
 `offset.x` est nul.
 
-Les planches d'attaque, de blessure et de mort existent dans les packs et ne sont
-pas encore jouées — le jeu signale les coups par un éclair de `modulate`.
+Les planches d'attaque et de blessure existent dans les packs et ne sont pas
+encore jouées — le jeu signale les coups par un éclair de `modulate`. La MORT,
+elle, a la sienne depuis : une planche propre au projet, commune aux cinq types,
+décrite plus haut dans « L'animation de mort ».
 
 ### Le sol
 
@@ -2386,7 +2658,7 @@ faute de quoi la répétition se verrait ; le détail est dans
 
 ## Son
 
-Sept fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
+Huit fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
 format qui reboucle sans trou : le MP3 porte dans sa définition un silence
 d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
 
@@ -2395,6 +2667,46 @@ n'interdit la mise à disposition que sous forme de banque de sons ou de pack
 autonome (voir [`CREDITS.md`](CREDITS.md)). Un clone suffit donc pour avoir le
 son. S'ils venaient à manquer, le jeu démarre quand même, muet, avec un
 avertissement par fichier et aucune erreur.
+
+### L'arène a deux pistes, et elles s'enchaînent
+
+Une run qui va loin dure plus de vingt minutes. Avec une seule piste de 4 min 26,
+on l'entend donc quatre ou cinq fois — et on finit par l'entendre au sens où on
+ne l'écoute plus. La seconde piste (2 min 05) porte le total à **6 min 31 avant
+la première répétition**.
+
+Elles s'**enchaînent** au lieu d'être tirées au sort à l'ouverture : un tirage par
+run laisserait encore une seule piste tourner en boucle pendant toute la partie,
+c'est-à-dire exactement le problème qu'on voulait régler. Seule la piste de
+DÉPART est tirée au sort, parce que deux runs de suite qui commencent sur la
+même musique s'entendent et que c'est gratuit à éviter.
+
+**Le bouclage dépend du nombre de pistes, et il le faut.** Une liste à une seule
+piste boucle nativement, sans trou — indispensable au menu, dont la piste ne dure
+que 15,5 s et dont la reprise s'entendrait quatre fois par minute. Une liste à
+plusieurs pistes ne boucle **pas** : c'est le signal `finished` qui enchaîne, et
+il ne se déclenche jamais sur un flux bouclé. Le réglage est posé dans le code et
+non dans le fichier `.import`, donc il ne peut pas être perdu par un réimport.
+
+Deux détails qui décident du fonctionnement :
+
+- **Sans fondu entre deux pistes**, et ce n'est pas une économie : les deux se
+  terminent sur une résolution, donc l'enchaînement est une fin suivie d'un
+  début. Un fondu superposerait une fin et un début, ce qui s'entend beaucoup
+  plus qu'une jointure nette.
+- **C'est le lecteur ACTIF qui enchaîne**, et lui seul. Il y en a deux, pour le
+  fondu enchané entre musiques ; celui qui vient d'être coupé émet lui aussi
+  `finished`, et sans ce test il relancerait la musique d'arène par-dessus celle
+  du menu. Vérifié : appeler l'enchaînement sur le lecteur dormant ne change
+  rien.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Pistes d'arène chargées | 2 | **2** (266 s et 125 s) |
+| Bouclage des pistes d'arène | non | `loop = false` |
+| Bouclage du menu | oui | `loop = true` |
+| Fin de piste | passe à l'autre et joue | piste 1 → 0, flux changé, en lecture |
+| Fin sur le lecteur coupé | ignorée | flux inchangé |
 
 ### Deux bus, deux curseurs
 
@@ -2481,7 +2793,8 @@ temps.
 
 | Fichier | Durée | Rôle |
 |---|---|---|
-| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, en boucle |
+| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, 1re piste |
+| `MusicGameplay2.ogg` | 2 min 05 | musique d'arène, 2e piste |
 | `MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
 | `Fireball.ogg` | 8,04 s | tir du joueur, coupé à 0,5 s |
 | `BigRoar.ogg` | 5,09 s | apparition d'un boss |
@@ -2662,7 +2975,7 @@ standard.
 Le choix du sprite n'est pas arbitraire : l'imp a été essayé et rejeté, son épée
 pâle occupe la moitié de la masse et brouille la silhouette à 32 px. Golgota n'a
 qu'un accent de couleur, et il survit à la réduction.
-- **Version.** `config/version` est à `0.7.2`, repris dans les métadonnées de
+- **Version.** `config/version` est à `0.8.0`, repris dans les métadonnées de
   l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.

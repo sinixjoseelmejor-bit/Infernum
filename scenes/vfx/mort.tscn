@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/vfx/sprite_effect.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/Morts/MortAll.png" id="2_tex"]
+
+[node name="Mort" type="Sprite2D"]
+z_index = 40
+texture_filter = 1
+texture = ExtResource("2_tex")
+hframes = 8
+vframes = 5
+script = ExtResource("1_script")
+first_frame = 0
+last_frame = 33
+fps = 60.0

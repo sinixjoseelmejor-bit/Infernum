@@ -23,9 +23,22 @@ const MUSIC_FADE := 0.7
 const CUT_FADE := 0.12
 const SILENCE_DB := -60.0
 
+## UNE PISTE OU PLUSIEURS, et c'est la taille de la liste qui décide du reste.
+##
+## L'arène en a deux : une run qui va loin dure plus de vingt minutes, donc une
+## seule piste de 4 min 26 se répète quatre fois. Elles s'ENCHAÎNENT au lieu
+## d'être tirées au sort à l'ouverture : un tirage par run laisserait encore une
+## seule piste tourner en boucle pendant toute la partie, ce qui est exactement
+## le problème qu'on voulait régler.
+##
+## LE BOUCLAGE DÉPEND DU NOMBRE. Une liste à une piste boucle nativement, sans
+## trou — c'est indispensable au menu, dont la piste ne dure que 15,5 s et dont
+## la reprise s'entendrait quatre fois par minute. Une liste à plusieurs pistes
+## ne boucle PAS : c'est `finished` qui enchâine, et il ne se déclenche jamais
+## sur un flux bouclé.
 const MUSIC := {
-	&"menu": "MenuSoundMusic.ogg",
-	&"arene": "MusicGameplay.ogg",
+	&"menu": ["MenuSoundMusic.ogg"],
+	&"arene": ["MusicGameplay.ogg", "MusicGameplay2.ogg"],
 }
 
 ## Un son = un fichier plus la façon de le jouer.
@@ -69,6 +82,8 @@ var _voice_left: Array[float] = []
 var _voice_db: Array[float] = []
 var _last_played: Dictionary = {}
 
+var _playlists: Dictionary = {}
+var _piste: int = 0
 var _music: Array[AudioStreamPlayer] = []
 var _music_active: int = 0
 var _music_track: StringName = &""
@@ -83,7 +98,13 @@ func _ready() -> void:
 	_rng.randomize()
 
 	for key in MUSIC:
-		_load(key, MUSIC[key], true)
+		var pistes: Array = MUSIC[key]
+		var flux: Array[AudioStream] = []
+		for fichier in pistes:
+			var stream := _charger(fichier, pistes.size() == 1)
+			if stream != null:
+				flux.append(stream)
+		_playlists[key] = flux
 	for key in SFX:
 		_load(key, (SFX[key] as Dictionary)["file"], false)
 
@@ -104,6 +125,7 @@ func _ready() -> void:
 		player.process_mode = Node.PROCESS_MODE_ALWAYS
 		player.volume_db = SILENCE_DB
 		add_child(player)
+		player.finished.connect(_piste_suivante.bind(i))
 		_music.append(player)
 
 	GameEvents.enemy_died.connect(func(_e: Node2D, _p: Vector2) -> void: play(&"mort"))
@@ -121,18 +143,24 @@ func _ready() -> void:
 
 
 func _load(key: StringName, file: String, looping: bool) -> void:
+	var stream := _charger(file, looping)
+	if stream != null:
+		_streams[key] = stream
+
+
+func _charger(file: String, looping: bool) -> AudioStream:
 	var path := DIR + file
 	if not ResourceLoader.exists(path):
 		push_warning("Audio : fichier manquant, son ignoré — " + path)
-		return
+		return null
 	var stream: AudioStream = load(path)
 	if stream == null:
-		return
+		return null
 	# La boucle se règle ici plutôt que dans le fichier `.import` : le réglage
 	# suit le code, il ne peut pas être perdu par un réimport.
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = looping
-	_streams[key] = stream
+	return stream
 
 
 # --- Effets ------------------------------------------------------------------
@@ -215,7 +243,11 @@ func play_music(track: StringName) -> void:
 	if track == _music_track:
 		return
 	_music_track = track
-	var stream: AudioStream = _streams.get(track)
+	# On n'entre pas toujours par la même porte : deux runs de suite qui
+	# commencent sur la même piste s'entendent, et c'est gratuit à éviter.
+	var flux: Array = _playlists.get(track, [])
+	_piste = _rng.randi() % maxi(1, flux.size())
+	var stream: AudioStream = flux[_piste] if _piste < flux.size() else null
 	var outgoing := _music[_music_active]
 	_music_active = 1 - _music_active
 	var incoming := _music[_music_active]
@@ -232,6 +264,28 @@ func play_music(track: StringName) -> void:
 	if outgoing.playing:
 		_music_tween.tween_property(outgoing, ^"volume_db", SILENCE_DB, MUSIC_FADE)
 		_music_tween.chain().tween_callback(outgoing.stop)
+
+
+## FIN DE PISTE : on enchâine sur la suivante de la liste.
+##
+## Sans fondu, et ce n'est pas une économie : les deux pistes se terminent sur
+## une résolution, donc l'enchaînement est une fin suivie d'un début. Un fondu
+## là-dessus superposerait une fin et un début, ce qui s'entend beaucoup plus.
+##
+## Le lecteur qui a fini doit être le lecteur ACTIF : l'autre vient d'être coupé
+## par un fondu de changement de musique, et son `finished` relancerait la piste
+## d'arène par-dessus celle du menu.
+func _piste_suivante(index: int) -> void:
+	if index != _music_active:
+		return
+	var flux: Array = _playlists.get(_music_track, [])
+	if flux.size() < 2:
+		return
+	_piste = (_piste + 1) % flux.size()
+	var player := _music[_music_active]
+	player.stream = flux[_piste]
+	player.volume_db = 0.0
+	player.play()
 
 
 func stop_music() -> void:

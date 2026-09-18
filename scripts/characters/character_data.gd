@@ -2,10 +2,17 @@ class_name CharacterData
 extends Resource
 ## Définition d'un personnage jouable.
 ##
-## Un personnage change les VALEURS DE BASE (PV, vitesse, portée, arme), pas les
-## règles. Ses éventuels modificateurs de départ tombent dans les mêmes pools
-## plafonnés que les objets : un personnage ne peut donc pas dépasser les
-## plafonds d'équilibrage, il choisit seulement d'où l'on part.
+## Un personnage change les VALEURS DE BASE (PV, vitesse, portée, arme), et ses
+## modificateurs de départ tombent dans les mêmes pools plafonnés que les
+## objets : il ne peut donc pas dépasser les plafonds d'équilibrage, il choisit
+## seulement d'où l'on part.
+##
+## UNE SEULE EXCEPTION, ET ELLE EST ASSUMÉE : `dash`. Les trois personnages se
+## jouaient avec les mêmes mains — mêmes touches, même arme, mêmes déplacements
+## — et ne différaient que par des chiffres. Le README l'admettait déjà pour les
+## passifs, « quasi permanents en pratique », donc équilibrés comme des bonus
+## plats. Un verbe de plus vaut dix pourcents de plus : Loth ne court pas plus
+## vite qu'avant, il TRAVERSE, ce qu'aucun autre ne sait faire.
 
 @export var id: StringName = &""
 @export var display_name: String = ""
@@ -41,6 +48,13 @@ extends Resource
 @export var weapon_projectile_speed: float = 720.0
 @export var weapon_crit_chance: float = 0.05
 @export var weapon_crit_multiplier: float = 2.0
+
+@export_group("Déplacement")
+## Donne à ce personnage la ruée (touche `dash`). Un booléen et non un
+## `special` : `special` est lu par `character_effects.gd`, qui n'agit que sur
+## des statistiques ; la ruée vit dans `player.gd` parce qu'elle touche au
+## déplacement, et rien d'autre du jeu n'y touche.
+@export var dash: bool = false
 
 @export_group("Départ et passif")
 ## Modificateurs injectés dans PlayerStats au début de la run (mêmes plafonds).
