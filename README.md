@@ -2662,8 +2662,10 @@ standard.
 Le choix du sprite n'est pas arbitraire : l'imp a été essayé et rejeté, son épée
 pâle occupe la moitié de la masse et brouille la silhouette à 32 px. Golgota n'a
 qu'un accent de couleur, et il survit à la réduction.
-- **Version.** `config/version` est à `0.1.0`, repris dans les métadonnées de
-  l'exécutable. À incrémenter à chaque livraison.
+- **Version.** `config/version` est à `0.7.2`, repris dans les métadonnées de
+  l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
+  ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
+  incrémenter » finit par devenir si personne ne la relit.
 
 ## Étendre
 
