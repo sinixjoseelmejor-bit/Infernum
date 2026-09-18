@@ -39,24 +39,53 @@ extends Node2D
 @export var shake: float = 4.0
 
 ## Émetteur. Le trait part de lui tant qu'il vit : un œil qu'on repousse
-## pendant sa charge emmène son rayon avec lui.
+## pendant sa charge emmène son rayon avec lui — et un œil qu'on TUE emporte son
+## rayon dans sa chute, voir `_process`.
 var source: Node2D
 
 var _direction: Vector2 = Vector2.RIGHT
 var _elapsed: float = 0.0
 var _fired: bool = false
+## Vrai si un émetteur a été posé à la création. Sans ce drapeau, un rayon tiré
+## sans source s'annulerait immédiatement.
+var _a_un_emetteur: bool = false
 
 
 func _ready() -> void:
 	# Au-dessus du décor et du sol, sous les créatures : un rayon ne doit pas
 	# masquer ce qu'il menace.
 	z_index = -1
+	# `source` est posé par l'émetteur AVANT l'entrée dans l'arbre, donc la
+	# question a déjà une réponse ici.
+	_a_un_emetteur = source != null
 	var player := get_tree().get_first_node_in_group(Groups.PLAYER)
 	if player != null and is_instance_valid(player):
 		_direction = (player.global_position - global_position).normalized()
 
 
+## TUER L'ÉMETTEUR ANNULE LE RAYON, entièrement.
+##
+## Le rayon vit dans le conteneur des projectiles, pas sous l'œil : il lui
+## survivait donc, et frappait au nom d'un mort. C'était faux deux fois. Faux
+## pour le jeu d'abord — toute la faiblesse de l'œil est son immobilité pendant
+## la charge, et le README la formule ainsi : « un œil qu'on charge meurt sans
+## avoir fini de viser ». Si le trait part quand même, la récompense de l'avoir
+## vu venir n'existe plus.
+##
+## Faux pour le code ensuite : `_tirer` passait `source` à `apply_damage` sans
+## vérifier sa validité. Une fois l'œil libéré, l'appel entier échouait sur une
+## erreur de type, et le rayon ne blessait donc personne — le bon résultat,
+## obtenu par accident, avec une erreur en console et sans que rien ne disparaisse
+## à l'écran. Le joueur voyait le trait le traverser sans effet.
+##
+## `is_queued_for_deletion` compte autant que `is_instance_valid` : `queue_free`
+## ne libère qu'en fin d'image, donc sans ce test le rayon tirerait encore une
+## fois au nom d'un œil déjà mort.
 func _process(delta: float) -> void:
+	if _a_un_emetteur and (not is_instance_valid(source) or source.is_queued_for_deletion()):
+		queue_free()
+		return
+
 	_elapsed += delta
 	if is_instance_valid(source):
 		global_position = source.global_position

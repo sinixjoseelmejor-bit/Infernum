@@ -420,6 +420,39 @@ asset ni collision : au moment du tir on mesure la distance du joueur au segment
 C'est un test exact, là où une zone de collision allongée demanderait un corps et
 une couche de physique.
 
+##### Tuer l'Œil annule le rayon — il ne l'annulait pas
+
+Le rayon vit dans le conteneur des projectiles et non sous l'Œil : il lui
+**survivait** donc, et frappait au nom d'un mort. C'était faux deux fois.
+
+Faux pour le jeu d'abord. Toute la faiblesse de l'Œil est son immobilité pendant
+la charge — c'est la phrase du paragraphe précédent, « un Œil qu'on charge meurt
+sans avoir fini de viser ». Si le trait part quand même, la récompense de l'avoir
+vu venir n'existe plus, et la seule contrepartie du seul ennemi qui sanctionne
+l'immobilité disparaît.
+
+Faux pour le code ensuite, et de façon instructive : `_tirer` passait `source` à
+`apply_damage` **sans vérifier sa validité**. Une fois l'Œil libéré, l'appel
+entier échouait sur une erreur de type. Le rayon ne blessait donc personne — le
+bon résultat, **obtenu par accident**, avec une erreur en console et sans que
+rien ne disparaisse à l'écran : le joueur voyait le trait le traverser sans
+effet. Le garde-fou existait déjà dans
+[`projectile.gd`](scripts/combat/projectile.gd), il manquait ici.
+
+`is_queued_for_deletion()` compte autant que `is_instance_valid()` : `queue_free`
+ne libère qu'en fin d'image, donc sans ce test le rayon tirerait encore une fois
+au nom d'un Œil déjà mort.
+
+Vérifié en posant un Œil face à un joueur immobile, donc sur la ligne de visée,
+et en attendant l'apparition réelle du rayon plutôt qu'un délai supposé — le
+premier tir arrive entre 1,0 et 1,7 s selon le déphasage aléatoire, et une
+première mesure à 0,5 s n'avait rien prouvé du tout :
+
+| | Rayons en vol | Dégâts au joueur |
+|---|---|---|
+| Œil vivant | 1, puis le tir part | **15** |
+| Œil tué pendant la charge | 1 → **0** en moins de 0,05 s | **0** |
+
 ### Objets — 21 objets, 4 raretés
 
 6 communes · 6 rares · 6 épiques · 3 légendaires, plus **3 objets à débloquer aux clés**.
