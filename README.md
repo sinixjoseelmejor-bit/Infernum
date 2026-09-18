@@ -1937,19 +1937,54 @@ la run de référence analysée plus haut.
 
 Les bonus de chance de clé des malédictions et des pactes **s'additionnent** au
 lieu de se composer. Avec l'ancien produit et 6 % par élite, une run allant à la
-vague 20 rapportait **40 clés** — presque les 42 que coûte l'arbre entier — et
+vague 20 rapportait **40 clés** — la moitié d'une Forge complète — et
 jusqu'à **270** en cumulant *Œil du vide*, *Marée montante* et *Nuée d'élites*,
 soit six fois toute la méta-progression en une seule partie.
 
-| Configuration | Clés à la vague 15 | Forge complète en |
+| Configuration | Clés à la vague 15 | à la vague 25 |
 |---|---|---|
-| Référence | 11 | ~4,7 runs |
-| Œil du vide | 16 | ~3,4 runs |
-| Œil du vide + Marée montante + Nuée d'élites | 21 | ~2,6 runs |
+| Référence | 9 à 10 | 24 à 27 |
+| Œil du vide + Marée montante + Nuée d'élites à chaque vague | 15 à 24 | 40 à 47 |
 
-L'écart entre la meilleure configuration de farm et la run normale passe ainsi de
-×8 à ×1,9 : accepter des malédictions accélère toujours la Forge, mais ne la
-saute plus.
+Mesuré sur des runs complètes, joueur increvable et catalogue complet — donc
+**la borne haute** : un élite dissipé en fin de vague ne rend aucune clé, et un
+joueur qui ne tue pas tout en récolte moins. L'écart entre la meilleure
+configuration de farm et la run normale est de **×1,7** : accepter des
+malédictions accélère toujours la Forge, mais ne la saute plus.
+
+Le revenu se lit en deux parts, et une seule est aléatoire :
+
+- **La part garantie**, qui ne dépend que de la vague atteinte : une clé par
+  palier de boss **atteint**, plus 1 à 3 clés par boss **abattu** (Golgota 1,
+  Lilith 1, Baal 2, Asmodée 2, Lucifer 3). Soit **14 clés** pour une run qui va
+  au bout de Lucifer, quoi qu'il arrive.
+- **La part aléatoire**, 2 % par élite tué, multipliée par les bonus de
+  malédiction et de pacte. C'est elle qui porte toute la variance : 628 élites
+  apparus à la vague 25 en run de référence, pour une douzaine de clés.
+
+### Ce que coûte la Forge
+
+**82 clés pour la Forge complète d'un personnage**, et **246 pour les trois**.
+Relevé sur `Forge.NODES`, pas estimé :
+
+| | Coût | Détail |
+|---|---|---|
+| Branche **Fer** | 23 | 1+2+2+3+4+5+6 |
+| Branche **Chair** | 23 | 1+2+2+3+4+4+7 |
+| Branche **Cendre** | 20 | 1+2+2+3+3+4+5 |
+| **Tronc commun** | **66** | les 21 nœuds partagés |
+| Branche propre | 16 | 1+2+3+4+6, même coût pour les trois |
+| **Une Forge complète** | **82** | tronc + branche |
+| **Les trois Forges** | **246** | 66×3 + 16×3 |
+
+Le tronc commun se paie **une fois par personnage** : c'est ce qui rend le choix
+coûteux, chaque clé dépensée sur l'un étant une clé de moins pour les autres.
+Les clés, elles, sont communes au profil.
+
+*(Ce paragraphe annonçait « 42 clés pour l'arbre entier », chiffre d'avant les
+Forges dédiées de la 0.7.1 — la section Forge disait déjà 66 et 82. Deux nombres
+pour la même chose dans le même document, c'est exactement ce qu'une mesure non
+remesurée devient.)*
 
 Les âmes ne sont volontairement pas capitalisées : une épargne inter-runs
 trivialiserait les premières vagues de la partie suivante.
