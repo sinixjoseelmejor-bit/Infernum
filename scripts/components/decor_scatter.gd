@@ -163,12 +163,15 @@ const POIDS_TAILLE := [58, 32, 10]
 ## planches à pleine luminosité, soit deux fois le sol : elles devenaient la
 ## chose la plus contrastée de l'écran, devant le joueur, ce qui inverse la
 ## lecture d'un jeu où l'on suit une petite silhouette sombre.
-@export var teinte: Color = Color(0.88, 0.76, 0.66)
-## Le second étage est une pierre froide : le décor s'y refroidit avec elle,
-## sinon la pierre beige y flotte. Il y est aussi un peu plus sombre qu'en
-## surface (1,3 fois le sol contre 1,5) : le carreau froid a ses propres joints
-## très marqués, et le décor n'a pas à rivaliser avec eux en plus du joueur.
-@export var teinte_profonde: Color = Color(0.59, 0.66, 0.75)
+## La SURFACE est une pierre froide : le décor s'y refroidit avec elle, sinon
+## la pierre beige y flotte. Il y est aussi un peu plus sombre qu'en profondeur
+## (1,3 fois le sol contre 1,5) : le carreau froid a ses propres joints très
+## marqués, et le décor n'a pas à rivaliser avec eux en plus du joueur.
+@export var teinte: Color = Color(0.59, 0.66, 0.75)
+## Le second étage est la pierre chaude, celle vers laquelle on descend. Le
+## décor s'y réchauffe avec elle — il suit le sol, toujours, sans quoi il
+## flotte au-dessus comme un calque d'un autre jeu.
+@export var teinte_profonde: Color = Color(0.88, 0.76, 0.66)
 
 @export_group("Lisibilité")
 ## Opacité d'une pièce derrière laquelle se tient le joueur. À 0 elle disparaît

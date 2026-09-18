@@ -15,13 +15,22 @@ extends Sprite2D
 ## DEUX ÉTAGES. Passé `deep_from_wave`, le carreau change : on descend. C'est la
 ## seule récompense purement visuelle du jeu, et elle tombe là où la plupart des
 ## runs s'arrêtent — voir le commentaire de ce réglage.
+##
+## LE SENS DE LA DESCENTE. On part sur la PIERRE FROIDE et on descend vers la
+## pierre rouge, et pas l'inverse : mesurées, les deux planches valent 100/93/85
+## et 52/73/89 en moyenne RGB, soit +15 et −38 d'écart rouge-bleu. Commencer par
+## la chaude, c'était s'enfoncer vers quelque chose de plus calme — le décor
+## racontait le contraire du jeu. Les deux teintes gardent la même luminance
+## perçue (49 contre 53) : ce qui change est la couleur, pas la lisibilité, et
+## les ennemis se lisent aussi bien aux deux étages.
 
 @export_group("Profondeur")
 ## Le carreau du second étage. Vide = un seul sol, le premier.
 @export var deep_texture: Texture2D
-## Teinte appliquée au second carreau. La pierre bleue du second étage, passée
-## sous la teinte chaude du premier, tournerait au mauve : elle a la sienne.
-@export var deep_modulate: Color = Color(0.88, 0.68, 0.6)
+## Teinte appliquée au second carreau. Chaque planche garde la sienne : la
+## pierre froide passée sous la teinte chaude tournerait au mauve, et la pierre
+## chaude sous la teinte froide perdrait exactement ce qu'on descend chercher.
+@export var deep_modulate: Color = Color(0.66, 0.52, 0.5)
 ## Vague à partir de laquelle on change d'étage. Onze, soit juste après Lilith :
 ## c'est le mur où s'arrêtent la plupart des premières runs, donc le passage se
 ## mérite et se remarque.

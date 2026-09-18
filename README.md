@@ -1874,11 +1874,11 @@ invisible.
 | `floor.png` après recadrage | 348 × 362 | 7,3 | 2,6 | 2,3 |
 | `floor2.png` | 528 × 576 | 4,6 | 5,8 | 5,2 |
 
-Le premier carreau **portait une couture visible** : une ligne franche traversait
+`floor.png` **portait une couture visible** : une ligne franche traversait
 l'arène tous les 420 px. Un recadrage interne en (68, 52) la supprime, au prix de
 17 % de la surface.
 
-Le second étage part d'un rendu de 1408 × 768 qui ne pouvait pas se répéter tel
+`floor2.png` part d'un rendu de 1408 × 768 qui ne pouvait pas se répéter tel
 quel : il est **vignetté** (bords et coins plus sombres), ce qui aurait dessiné
 une grille sombre à l'infini. La tuile en est tirée en mesurant d'abord le pas
 des dalles par autocorrélation (88 px en x, 96 en y), en découpant un nombre
@@ -1890,6 +1890,26 @@ brut effacerait les joints entre dalles.
 Le changement d'étage tombe à la **vague 11**, juste après Lilith : là où
 s'arrêtent la plupart des premières runs, donc le passage se mérite et se
 remarque.
+
+#### On part de la pierre froide et on descend vers le rouge
+
+C'était l'inverse, et le décor racontait donc le contraire du jeu : on commençait
+dans le chaud pour s'enfoncer vers quelque chose de plus calme. Les deux planches
+mesurées valent 100/93/85 et 52/73/89 en moyenne RGB, soit **+15 et −38** d'écart
+rouge-bleu ; la froide est maintenant la surface, la chaude la profondeur.
+
+Vérifié à l'écran et pas seulement dans les valeurs — quart central de l'image,
+écran de malédictions fermé, arène vidée :
+
+| Étage | RGB à l'écran | Écart rouge-bleu | Luminance perçue |
+|---|---|---|---|
+| Surface, vague 1 | 48 / 52 / 55 | **−7** | 51 |
+| Profondeur, vague 11 | 68 / 50 / 43 | **+24** | 55 |
+
+La luminance perçue ne bouge pas (51 contre 55) : **ce qui change est la teinte,
+pas la lisibilité**, et les ennemis se lisent aussi bien aux deux étages. Le
+décor suit le sol dans les deux cas — sans quoi la pierre beige flotte au-dessus
+d'un sol froid comme un calque d'un autre jeu.
 
 ### Le décor de l'arène
 

@@ -51,17 +51,18 @@ grow_vertical = 2
 color = Color(0.17, 0.16, 0.15, 1)
 
 [node name="Floor" type="Sprite2D" parent="." unique_id=1395687943]
-modulate = Color(0.66, 0.52, 0.5, 1)
+modulate = Color(0.88, 0.68, 0.6, 1)
 z_index = -100
 texture_filter = 2
 texture_repeat = 2
-texture = ExtResource("20_floor")
+texture = ExtResource("22_floor2")
 centered = false
 offset = Vector2(-3072, -3072)
 region_enabled = true
 region_rect = Rect2(0, 0, 6144, 6144)
 script = ExtResource("21_tiler")
-deep_texture = ExtResource("22_floor2")
+deep_texture = ExtResource("20_floor")
+deep_modulate = Color(0.66, 0.52, 0.5, 1)
 
 [node name="Entities" type="Node2D" parent="." unique_id=543909541]
 y_sort_enabled = true
