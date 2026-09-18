@@ -1184,8 +1184,8 @@ condition, un projectile ennemi perforant partirait chasser les ennemis.
 
 Cinq boss, dans l'ordre. Une vague de boss **ne se termine pas au chronomètre** :
 elle se termine quand le boss tombe. Les ennemis normaux continuent d'arriver,
-mais au quart de la cadence. Au-delà du cinquième, le cycle reboucle avec +45 %
-de PV et +20 % de dégâts par tour.
+mais au quart de la cadence. Au-delà du cinquième, le cycle reboucle en
+renforçant les boss — voir « La boucle repartait du boss le plus faible ».
 
 ### Les renforts volaient le combat
 
@@ -1227,18 +1227,23 @@ donc ni l'un ni l'autre n'atteignait jamais sa phase 2 (déclenchée à 50 % de 
 et la jauge de pression se déclenchait au plus une fois. Tout le travail de
 pattern était invisible.
 
-| Boss | Vague | PV | Temps de mise à mort |
-|---|---|---|---|
-| Golgota | 5 | 2 200 | 17,6 s |
-| Lilith | 10 | 5 220 | 20,7 s |
-| Baal | 15 | 9 880 | ~21 s |
-| Asmodée | 20 | 16 450 | ~18 s |
-| Lucifer | 25 | 26 600 | ~20 s |
+| Boss | Vague | PV de scène | PV à sa vague | Temps de mise à mort |
+|---|---|---|---|---|
+| Golgota | 5 | 3 800 | 3 800 | 17,6 s |
+| Lilith | 10 | 5 600 | 8 120 | 20,7 s |
+| Baal | 15 | 7 900 | 15 010 | ~21 s |
+| Asmodée | 20 | 8 900 | 20 915 | ~18 s |
+| Lucifer | 25 | 10 000 | 28 000 | ~20 s |
 
 Les cinq combats tiennent maintenant dans une fourchette de 17 à 21 s : les deux
 phases et plusieurs décharges de la jauge de pression sont garanties. L'enragement
 à 100 s reste ce qu'il doit être — un filet contre le joueur qui traîne, pas une
 phase attendue.
+
+*(Les temps datent de ce calibrage, mesurés sur une build qui progresse
+normalement. La colonne « PV de scène » est relue sur les scènes : c'est elle qui
+fait foi, et c'est son écart de ×2,6 entre Golgota et Lucifer qui a cassé la
+boucle — voir ci-dessous.)*
 
 | Vague | Boss | Identité | Phases | Anti-immobilisation |
 |---|---|---|---|---|
@@ -1247,6 +1252,163 @@ phase attendue.
 | 15 | **Baal** — *Le Seigneur de l'Orage* | divinité cananéenne de l'orage, culte par le feu | Orage (foudre télégraphiée) → Fournaise (sillage de braise, anneaux) | **Le Déluge** : huit éclairs tombent d'un coup en couronne |
 | 20 | **Asmodée** — *Les Trois Têtes* | roi des démons du Livre de Tobie, trois têtes : taureau, homme, bélier | Deux têtes → Trois têtes | **La Chaîne de Salomon** : le lien se referme et *tire le joueur vers lui* |
 | 25 | **Lucifer** — *L'Étoile du Matin* | *lucifer*, « porteur de lumière », nom de l'étoile du matin devenu celui de l'ange déchu | Porteur de lumière → La Chute → L'Abîme | **L'Aube brûlante** : la couronne de feu s'embrase *à la distance où se tient le joueur* |
+
+### La boucle repartait du boss le plus faible
+
+Passé Lucifer, le cycle reprend à Golgota. Le renforcement de boucle — +45 % de
+PV et +20 % de dégâts par tour — s'appliquait aux PV **propres** de chaque boss,
+or le roster va de 3 800 à 10 000 : un écart de **×2,6** que +45 % ne rattrape
+pas. Chaque tour rejouait donc la dent de scie **depuis son point le plus bas**,
+et le boss qui suivait Lucifer était le plus faible du jeu depuis quinze vagues.
+
+Mesuré sur les vraies classes, Caïn, catalogue complet au maximum de piles
+(77 exemplaires, 169 PV) — la build qu'une run qui atteint la vague 25 possède
+déjà. Le joueur orbite le boss à 320 px, quatre répétitions par palier, et il est
+rendu increvable pour que la mesure porte sur ses dégâts et non sur son esquive.
+« Morts » = dégâts présentés rapportés à ses points de vie.
+
+| Vague | Boss | PV avant | Mise à mort avant | Morts avant |
+|---|---|---|---|---|
+| 25 | Lucifer | 28 000 | 9,1 s | 0,52 |
+| 30 | Golgota | 17 908 | **5,9 s** | **0,31** |
+| 35 | Lilith | 30 044 | 10,5 s | 0,74 |
+| 40 | Baal | 47 538 | 18,9 s | 2,84 |
+| 45 | Asmodée | 59 363 | 22,0 s | 2,08 |
+| 50 | Lucifer | 73 225 | 26,3 s | 3,60 |
+| 55 | Golgota | 39 710 | **14,5 s** | **0,92** |
+
+Les deux lignes en gras sont le défaut : le boss d'après Lucifer tombait en
+**5,9 secondes**, contre 9,1 pour le Lucifer qu'on venait de battre, et il
+présentait **0,31 mort** contre 0,52. Un tour plus loin, Golgota retombait à
+0,92 mort après un Lucifer à 3,60 — **divisé par quatre**, et cet écart
+s'aggravait à chaque tour puisque le terme de vague dilue le +45 %.
+
+#### Un plancher, pas un remplacement — et la première version s'est trompée
+
+La correction évidente était de faire suivre à tous les boss rebouclés la courbe
+du **dernier** du roster. Elle supprimait bien la dent de scie… en **abaissant**
+la moitié de la boucle, les bases propres de Baal, Asmodée et Lucifer étant
+supérieures à ce qu'elle imposait :
+
+| | PV | Mise à mort |
+|---|---|---|
+| Baal vague 40 | 47 538 → 41 500 | 18,9 → 13,3 s |
+| Lucifer vague 50 | 73 225 → 50 500 | 26,3 → 17,9 s |
+
+Un durcissement qui rendait la moitié du contenu plus facile. C'est un
+**plancher** qu'il fallait : en boucle, aucun boss ne descend sous le réservoir
+du dernier du roster, et ceux qui sont déjà au-dessus gardent le leur. Le +45 %
+par tour s'applique ensuite, inchangé.
+
+Le plancher est **lu sur la scène** du dernier boss, jamais écrit en dur :
+réordonner `boss_scenes` ou en ajouter un sixième suffit, sans qu'un nombre
+recopié parte à la dérive en silence.
+
+#### Les PV allongent le combat, ils ne le rendent pas plus dur
+
+D'où le second levier : les rencontres répétées **frappent plus souvent**.
+`Boss.attack_speed_multiplier` accélère le temps que voit la boucle de phase, ce
+qui resserre les intervalles entre deux frappes — **sans toucher au préavis des
+zones annoncées ni aux dégâts par coup**. Un boss ne touche toujours pas sans
+préavis.
+
+Le plafond est **calculé, pas choisi**. Les 0,4 s d'invulnérabilité du joueur
+bornent les dégâts entrants à 2,5 coups par seconde, et Baal — le boss le plus
+dense — produit déjà 1,94 zone par seconde. À ×1,30 il passait à 2,52 et le
+combat cessait d'être esquivable ; le plafond est donc à **×1,25** (2,43), et la
+montée est de +15 % par tour.
+
+Vérifié, et c'est la mesure qui compte : **le joueur ne prend jamais plus de
+0,83 coup par seconde** sur toute la boucle, pour un plafond d'i-frames à 2,5.
+La pression à se déplacer augmente ; le mur de dégâts inévitables, non.
+
+#### Ce que ça donne
+
+| Vague | Boss | PV après | Mise à mort | Morts | Coups/s |
+|---|---|---|---|---|---|
+| 25 | Lucifer | 28 000 | 9,1 s | 0,46 | 0,44 |
+| 30 | Golgota | **47 125** | **16,0 s** | 0,55 | 0,24 |
+| 35 | Lilith | 53 650 | 18,6 s | 0,89 | 0,31 |
+| 40 | Baal | 60 175 | 19,7 s | 3,09 | 0,76 |
+| 45 | Asmodée | 66 700 | 24,5 s | 2,98 | 0,59 |
+| 50 | Lucifer | 73 225 | 29,7 s | 5,43 | 0,83 |
+| 55 | Golgota | **104 500** | **58,3 s** | 7,36 | 0,46 |
+
+La suite est **monotone** : plus aucune rencontre n'est plus courte que la
+précédente, à aucun tour. Le premier boss d'après Lucifer passe de 5,9 à 16,0
+secondes, et Golgota au deuxième tour de 14,5 à 58,3 — assez pour que
+l'enragement (60 s) commence à mordre, ce qui est exactement son rôle : la run
+est conçue pour se terminer.
+
+**Rien n'a été abaissé.** Les vagues 1 à 25 ne sont pas touchées du tout : le
+chemin `loops == 0` est inchangé, ligne pour ligne, et la mesure le confirme
+(Lucifer vague 25, 28 000 PV, 9,1 s avant comme après).
+
+#### Ce que le banc a appris sur lui-même
+
+Deux fausses mesures avant la bonne, et les deux valent d'être écrites.
+
+**Un joueur aux PV gonflés ne reste pas increvable.** `Player.apply_stats`
+ramène `max_health` à la valeur du personnage, et la Marque de Caïn déclenche un
+recalcul à chaque palier d'éliminations : le joueur reprenait ses 169 PV en
+pleine vague de boss, mourait, et l'écran de fin mettait l'arbre en pause. Le
+combat se figeait sans que rien ne le dise — quatre boss « survivaient » 240
+secondes. Il faut regonfler à **chaque** `stats_recomputed`. Le drapeau
+`invincible` de `Health` ne convient pas non plus : il fait sortir `take_damage`
+avant l'émission de `damaged`, donc il efface la mesure des dégâts présentés.
+
+**La boutique s'ouvre entre deux mesures** et met l'arbre en pause, avec le même
+symptôme silencieux. Un banc qui saute de vague en vague doit la refermer
+d'office.
+
+Et une leçon de méthode déjà connue, re-vérifiée : **un cercle fixe dans le monde
+ne mesure rien**. La jauge de pression se lit sur la distance au boss ; un joueur
+qui tourne autour de l'origine pendant que le boss apparaît n'importe où donnait
+±20 % d'écart entre deux exécutions identiques. En orbitant **le boss**, quatre
+répétitions tiennent dans ±3 %.
+
+#### Le Déchaînement s'applique aussi aux boss — il ne s'appliquait pas
+
+Les boss ont leur propre courbe de PV et ne passent **jamais** par
+`get_health_multiplier()`. C'est voulu : leur difficulté est celle de leur
+palier, pas celle de la vague. Mais l'exponentielle du Déchaînement n'est pas un
+palier — c'est la réponse de l'enfer à un joueur sans plafond — et les boss en
+étaient exemptés **par accident**. Leurs PV montaient linéairement pendant que
+ceux d'une brute étaient multipliés par 1,15 à chaque vague.
+
+Mesuré en comparant le boss à **une seule brute** de la même vague :
+
+| Vague | Boss | PV du boss | PV d'une brute | Le boss vaut |
+|---|---|---|---|---|
+| 30 | Golgota | 47 125 | 31 285 | 1,5 brute |
+| 40 | Baal | 60 175 | 172 370 | **0,35 brute** |
+| 55 | Golgota | 104 500 | 1 961 660 | **0,05 brute** |
+
+À partir de la trentaine, le boss était **la chose la moins solide de l'écran**,
+dans le mode dont c'est précisément le terrain de jeu. Le Déchaînement est un
+défi de classement : on y pousse aussi loin qu'on peut, plus rien n'est plafonné
+côté joueur, et une vague de boss y était devenue un repos.
+
+Le facteur appliqué est **exactement celui de la piétaille**, et ce n'est pas une
+valeur choisie : multiplier les deux par la même chose laisse le rapport
+boss/piétaille **identique à ce qu'il est en régime normal**, à chaque vague. Un
+chiffre propre aux boss aurait redessiné ce rapport sans que personne ne l'ait
+décidé. Vérifié en mesurant les deux régimes, colonne pour colonne :
+
+| Vague | Le boss vaut, régime normal | … en Déchaînement |
+|---|---|---|
+| 30 | 99,7 brutes | **99,7** |
+| 35 | 96,1 | **96,1** |
+| 40 | 93,5 | **93,5** |
+| 45 | 91,5 | **91,5** |
+| 50 | 89,9 | **89,9** |
+| 55 | 116,1 | **116,1** |
+
+Les dégâts suivent la même règle, par `DEGATS_DECHAINES` : sans cela un boss aux
+PV rattrapés serait devenu un sac à frapper de plusieurs millions de points de
+vie qui ne menace rien — l'ennui, pas la difficulté. À la vague 30 son coup vaut
+723 contre 605 à une brute ; à la vague 55, 9 428 contre 6 759. Le boss frappe
+plus fort que la piétaille, comme il doit, et pas d'un ordre de grandeur.
 
 ### La mécanique anti-immobilisation
 
@@ -1331,6 +1493,15 @@ maintenant 1,94 en moyenne — toujours **sous** le plafond. La pression à se
 déplacer augmente ; le mur de dégâts inévitables, non.
 
 ## Le Déchaînement — la récompense d'avoir tué Lucifer
+
+**À QUOI SERT CE MODE**, parce que ça décide de tout le reste : c'est un **défi
+de classement**. On y pousse aussi loin qu'on peut, **plus rien n'est plafonné**
+côté joueur, et la question n'est plus « est-ce que je gagne » mais « jusqu'où
+je tiens ». C'est le sens de la Clé des Abysses. Deux conséquences directes :
+tout ce qui borne le joueur saute (voir plus bas — sauf une seule borne, qui
+plafonne le temps de jeu et non la puissance), et **tout ce qui lui résiste doit
+suivre la même courbe**, boss compris. Un mode où l'on mesure une limite ne peut
+pas comporter une vague où l'on se repose.
 
 Lucifer ne déverrouille rien en mourant : il **laisse tomber la Clé des
 Abysses**, et il faut aller la prendre. La différence n'est pas décorative — un

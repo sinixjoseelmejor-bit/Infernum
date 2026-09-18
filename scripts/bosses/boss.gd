@@ -63,6 +63,19 @@ extends Enemy
 ## accompagne le boss.
 var attack_damage_multiplier: float = 1.0
 
+## Cadence des attaques, posee par le WaveManager pour les rencontres REPETEES.
+## Elle multiplie le temps vu par la boucle de phase : les intervalles entre
+## deux frappes se resserrent, sans toucher au PREAVIS des zones annoncees ni
+## aux degats par coup. C'est le seul levier qui ajoute de la DIFFICULTE et non
+## de la DUREE — gonfler les PV allonge le combat, il ne le rend pas plus dur.
+##
+## Il est PLAFONNE cote WaveManager, et la borne n'est pas decorative : les
+## 0,4 s d'invulnerabilite du joueur bornent les degats entrants a 2,5 coups par
+## seconde. Baal, le boss le plus dense, produit deja 1,94 zone par seconde :
+## 1,94 x 1,25 = 2,43, on reste dessous. A x1,30 il passait a 2,52 et le combat
+## cessait d'etre esquivable.
+var attack_speed_multiplier: float = 1.0
+
 var current_phase: int = 0
 var fight_time: float = 0.0
 var pressure: float = 0.0
@@ -94,8 +107,15 @@ func _physics_process(delta: float) -> void:
 	_update_enrage()
 	_update_phase()
 	_update_pressure(delta)
-	_attack_timer = maxf(0.0, _attack_timer - delta)
-	_run_phase(delta)
+	# La boucle de phase voit un temps ACCELERE pour les rencontres repetees ;
+	# `fight_time` reste en temps reel, sans quoi l'enragement se declencherait
+	# plus tot sans que personne l'ait demande. Les rares boss qui se servent de
+	# ce delta pour orbiter (Lilith, Baal, Lucifer) atteignent leur vitesse de
+	# croisiere un peu plus vite : `move_toward` la borne, la vitesse de pointe
+	# ne bouge pas.
+	var rythme := delta * attack_speed_multiplier
+	_attack_timer = maxf(0.0, _attack_timer - rythme)
+	_run_phase(rythme)
 	super(delta)
 
 
