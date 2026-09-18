@@ -53,9 +53,9 @@ const SELL_RATIO := 0.5
 @onready var pact_status: Label = %PactStatus
 @onready var souls_label: Label = %ShopSoulsLabel
 @onready var wave_label: Label = %ShopWaveLabel
-@onready var sell_separator: HSeparator = %SellSeparator
+@onready var inventaire: PanelContainer = %Inventaire
 @onready var sell_title: Label = %SellTitle
-@onready var sell_row: HFlowContainer = %SellRow
+@onready var sell_row: VBoxContainer = %SellRow
 @onready var reroll_button: Button = %RerollButton
 @onready var continue_button: Button = %ContinueButton
 
@@ -157,6 +157,19 @@ func _roll_offer() -> void:
 		offer_row.add_child(label)
 
 
+## L'INVENTAIRE EST UN PANNEAU À PART, À CÔTÉ DE LA BOUTIQUE.
+##
+## La revente vivait au fond du corps de la boutique, sous l'offre et sous les
+## pactes, donc dans la même zone de défilement : au-delà de quelques objets
+## elle passait sous le bord et il fallait faire défiler pour SAVOIR ce qu'on
+## possédait. Or ce n'est pas la même question que « qu'est-ce que j'achète ».
+## L'une se lit d'un coup d'œil et sert à décider de l'autre.
+##
+## Les deux colonnes n'ont donc ni le même défilement ni la même largeur, et
+## l'inventaire est une LISTE VERTICALE plutôt qu'un `HFlowContainer` : dans une
+## colonne de 330 px, un flux se serait replié sur une ou deux cases par ligne,
+## c'est-à-dire une liste, mais irrégulière.
+##
 ## Un bouton par objet DISTINCT, avec le nombre d'exemplaires : une liste de
 ## 58 lignes pour 24 objets serait illisible, et vendre « un » exemplaire suffit
 ## puisqu'ils sont identiques.
@@ -175,10 +188,11 @@ func _build_sell() -> void:
 		vus[item.id] = true
 		distincts.append(item)
 
+	# LE PANNEAU ENTIER DISPARAÎT quand on ne possède rien, et pas seulement son
+	# contenu : une colonne vide de 330 px à gauche de la boutique décentrerait
+	# l'écran de la première vague sans rien apprendre à personne.
 	var quelque_chose := not distincts.is_empty()
-	sell_separator.visible = quelque_chose
-	sell_title.visible = quelque_chose
-	sell_row.visible = quelque_chose
+	inventaire.visible = quelque_chose
 	if not quelque_chose:
 		UIUtils.restore_focus(self, keep, continue_button)
 		return
@@ -190,7 +204,29 @@ func _build_sell() -> void:
 		# Nom stable : c'est par lui que le focus se retrouve après reconstruction.
 		button.name = "vendre_%s" % item.id
 		button.theme_type_variation = &"CardButton"
-		button.custom_minimum_size = Vector2(196, 44)
+		# Pleine largeur de la colonne : des boutons de largeur variable dans une
+		# liste verticale donnent un bord droit en dents de scie.
+		button.custom_minimum_size = Vector2(0, 46)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		# L'ICÔNE, comme sur les cartes de l'offre. Une liste de noms demande de
+		# LIRE pour retrouver un objet ; la même liste avec son icone se parcourt
+		# des yeux, et c'est exactement ce qu'on fait quand on cherche quoi
+		# revendre. C'est aussi la même image que celle qu'on a vue en l'achetant.
+		#
+		# Filtrage au plus proche et taille ENTIÈREMENT multiple de la source :
+		# les icônes font 16 px, affichées à 32. À l'échelle 2,5 un pixel sur deux
+		# serait deux fois plus large que son voisin.
+		if item.icon != null:
+			button.icon = item.icon
+			# `expand_icon` ET `icon_max_width` ensemble, et les deux sont
+			# nécessaires : sans le premier l'icône est dessinée à sa taille
+			# native, soit 16 px, deux fois trop petite ; sans le second elle
+			# prendrait toute la hauteur du bouton. Le résultat est 32, facteur
+			# ENTIER sur une source de 16.
+			button.expand_icon = true
+			button.add_theme_constant_override(&"icon_max_width", 32)
+			button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.text = "%s%s
 +%d âmes" % [

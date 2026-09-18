@@ -754,6 +754,48 @@ La vente retire un exemplaire, recalcule tout depuis l'inventaire — donc vendr
 le dernier exemplaire d'un objet à effet scripté retire bien son effet — et
 prévient l'orbite, qui sinon continuerait d'afficher un objet vendu.
 
+##### L'inventaire est une colonne à part, à côté de la boutique
+
+La revente vivait au FOND du corps de la boutique, sous l'offre et sous les
+pactes, donc dans la même zone de défilement qu'eux. Au-delà de quelques objets
+elle passait sous le bord, et il fallait faire défiler pour SAVOIR ce qu'on
+possédait. Or ce n'est pas la même question que « qu'est-ce que j'achète » :
+l'une se lit d'un coup d'œil, et elle sert à décider de l'autre. Deux questions
+dans le même défilement, c'est une question qu'on ne se pose plus.
+
+Elle a donc sa **colonne**, à gauche, avec son propre défilement. Quatre
+décisions valent d'être retenues :
+
+- **Une liste verticale, pas un flux.** Dans une colonne de 330 px, un
+  `HFlowContainer` se replie sur une ou deux cases par ligne — c'est-à-dire une
+  liste, mais irrégulière. Les boutons prennent toute la largeur, sinon le bord
+  droit part en dents de scie.
+- **Les icônes, les mêmes que sur les cartes de l'offre.** Une liste de noms
+  demande de LIRE pour retrouver un objet ; avec son icône elle se parcourt des
+  yeux, ce qui est exactement ce qu'on fait quand on cherche quoi revendre. Et
+  c'est la même image que celle qu'on a vue en l'achetant.
+- **32 px, et il a fallu DEUX réglages.** Un `Button` dessine son icône à sa
+  taille native, soit 16 px — deux fois trop petite, et `icon_max_width` seul ne
+  fait que réduire. Il faut `expand_icon` pour qu'elle grandisse ET
+  `icon_max_width` pour qu'elle s'arrête à 32, facteur **entier** sur une source
+  de 16 comme partout ailleurs dans le jeu.
+- **Le panneau entier disparaît quand on ne possède rien**, et pas seulement son
+  contenu : une colonne vide de 330 px à gauche de la boutique décentrerait
+  l'écran de la première vague sans rien apprendre à personne.
+
+La colonne prend la **hauteur de la boutique** et pas celle de l'écran. Essayée
+en pleine hauteur : elle touchait les deux bords, la boutique restait centrée et
+plus courte, et l'écran penchait à gauche. Elle défile dès une dizaine d'objets,
+et c'est assumé — une run complète en possède une vingtaine de distincts, aucune
+colonne ne les montrera tous.
+
+**Le corps de la boutique a dû être remesuré**, et c'est la règle du projet :
+ces minima se reprennent dès qu'on touche à l'habillage. En perdant la section
+de revente il est passé de 480 à 560 px de place — non pas parce qu'il a grandi,
+mais parce qu'il défilait déjà avant : mesuré de 445 à 514 px selon le tirage,
+contre 480 disponibles. Les pactes étaient rognés en bas de la boutique depuis
+un moment, sous la section de revente qui cachait le problème.
+
 ### Relancer la boutique
 
 Le coût repart de zéro à chaque ouverture, et monte vite :
@@ -986,7 +1028,8 @@ relevées écran par écran après coup.
 
 | Écran | Panneau | Contenu / place |
 |---|---|---|
-| Boutique | 880 × 656 | 422 à 445 / 480 |
+| Boutique | 880 × 706 | 445 à 514 / **560** |
+| Objets (colonne de gauche) | 330 × 706 | 642 pour 9 objets / 632 — elle défile, et c'est normal |
 | Malédictions | 760 × 668 | 380 / **396** |
 | Choix du personnage | 860 × 599 | 288 / 300 |
 | Forge Éternelle | 940 × 946 | 538 / **552**  ·  127 / **142** |
