@@ -70,6 +70,14 @@ text = "Passif"
 horizontal_alignment = 1
 autowrap_mode = 3
 
+[node name="UnleashLabel" type="Label" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Déchaînement"
+horizontal_alignment = 1
+autowrap_mode = 3
+
 [node name="StartButton" type="Button" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 54)

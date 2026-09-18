@@ -13,6 +13,8 @@ extends CanvasLayer
 @onready var boss_name_label: Label = %BossNameLabel
 @onready var boss_bar: ProgressBar = %BossBar
 @onready var boss_phase_label: Label = %BossPhaseLabel
+@onready var announce_title: Label = %AnnounceTitle
+@onready var announce_detail: Label = %AnnounceDetail
 
 var wave_manager: WaveManager
 
@@ -31,6 +33,7 @@ func _ready() -> void:
 	GameEvents.boss_phase_changed.connect(_on_boss_phase_changed)
 	GameEvents.boss_enraged.connect(_on_boss_enraged)
 	GameEvents.boss_died.connect(_on_boss_died)
+	GameEvents.announce.connect(_on_announce)
 
 	_on_souls_changed(RunState.souls)
 	_on_keys_changed(RunState.keys)
@@ -102,6 +105,21 @@ func _on_boss_phase_changed(phase: int, total: int) -> void:
 func _on_boss_enraged(_boss: Node2D) -> void:
 	boss_phase_label.text += "  ·  ENRAGÉ"
 	boss_phase_label.add_theme_color_override(&"font_color", Color(1, 0.3, 0.2))
+
+
+## Bandeau des grandes nouvelles. Il s'efface tout seul : rien à refermer, et
+## surtout rien qui mette la partie en pause — la Clé des Abysses tombe en plein
+## combat, et arrêter le jeu pour l'annoncer serait pire que ne rien dire.
+func _on_announce(titre: String, detail: String, couleur: Color) -> void:
+	announce_title.text = titre
+	announce_title.add_theme_color_override(&"font_color", couleur)
+	announce_detail.text = detail
+	announce_detail.add_theme_color_override(&"font_color", Color(0.88, 0.85, 0.9))
+	for etiquette: Label in [announce_title, announce_detail]:
+		var anim := create_tween()
+		anim.tween_property(etiquette, ^"modulate:a", 1.0, 0.35)
+		anim.tween_interval(4.0)
+		anim.tween_property(etiquette, ^"modulate:a", 0.0, 1.2)
 
 
 func _on_boss_died(_boss: Node2D) -> void:

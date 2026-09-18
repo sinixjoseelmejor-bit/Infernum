@@ -86,7 +86,7 @@ func _build_row(summary: Dictionary) -> Control:
 	var detail := Label.new()
 	if exists:
 		detail.text = "%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs" % [
-			summary["keys"], summary["forge_nodes"], Forge.NODES.size(),
+			summary["keys"], summary["forge_nodes"], Forge.count_all_nodes(),
 			summary["best_wave"], summary["total_runs"]]
 	else:
 		detail.text = "Emplacement vide — nouvelle partie"

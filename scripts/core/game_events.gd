@@ -38,6 +38,11 @@ signal shop_opened()
 signal shop_closed()
 signal camera_shake_requested(strength: float)
 
+## Nouvelle à afficher en grand, au centre de l'écran. Réservée à ce qui change
+## la partie pour de bon — il n'y en a qu'une aujourd'hui, la Clé des Abysses.
+## Un bandeau qui servirait à tout ne serait plus lu.
+signal announce(titre: String, detail: String, couleur: Color)
+
 
 func request_shake(strength: float = 4.0) -> void:
 	camera_shake_requested.emit(strength)

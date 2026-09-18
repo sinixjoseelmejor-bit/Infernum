@@ -99,6 +99,7 @@ func _update_movement(delta: float) -> void:
 func _release_pressure() -> void:
 	if not is_instance_valid(target):
 		return
+	_jeter_la_chaine()
 	var offset := global_position - target.global_position
 	if offset.length() > chain_min_gap and target.has_method(&"apply_impulse"):
 		var strength := minf(chain_pull_speed, (offset.length() - chain_min_gap) * 3.0)
@@ -108,3 +109,19 @@ func _release_pressure() -> void:
 	telegraph_at(global_position, 150.0, 0.7, bolt_damage, Color(0.95, 0.75, 0.3))
 	GameEvents.request_shake(8.0)
 	_attack_timer = 0.8
+
+
+## Le dessin de la chaîne, et rien d'autre : la traction et les dégâts sont
+## au-dessus. Le lien ne faisait l'objet d'AUCUNE image — le joueur se voyait
+## aspiré vers Asmodée sans que rien n'explique pourquoi.
+##
+## Elle est montée sur le conteneur de projectiles et non sur le boss : montée
+## sur lui, elle mourrait avec lui, et un boss tué pendant sa propre traction
+## laisserait le joueur glisser au bout d'une chaîne effacée.
+func _jeter_la_chaine() -> void:
+	var lien := ChainLash.new()
+	lien.ancre = self
+	lien.proie = target
+	lien.depuis = global_position
+	lien.vers = target.global_position
+	_projectile_parent().add_child(lien)

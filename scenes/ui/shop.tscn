@@ -104,6 +104,24 @@ theme_override_font_sizes/font_size = 14
 text = "Aucun pacte — la vague suivante se joue normalement."
 autowrap_mode = 3
 
+[node name="SellSeparator" type="HSeparator" parent="Center/Panel/Layout/BodyScroll/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SellTitle" type="Label" parent="Center/Panel/Layout/BodyScroll/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.66, 0.42, 1)
+theme_override_font_sizes/font_size = 16
+text = "REVENDRE"
+
+[node name="SellRow" type="HFlowContainer" parent="Center/Panel/Layout/BodyScroll/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+
 [node name="Footer" type="HBoxContainer" parent="Center/Panel/Layout"]
 layout_mode = 2
 theme_override_constants/separation = 14

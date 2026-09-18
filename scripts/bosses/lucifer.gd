@@ -26,6 +26,8 @@ extends Boss
 @export var ring_damage: float = 13.0
 @export var abyss_interval: float = 1.6
 
+const CLE_DES_ABYSSES := preload("res://scenes/pickups/abyss_key.tscn")
+
 const RADIANT := Color(1.0, 0.92, 0.6)
 const FALLEN := Color(1.0, 0.35, 0.25)
 
@@ -99,6 +101,28 @@ func _update_movement(delta: float) -> void:
 		velocity = velocity.move_toward(Vector2.ZERO, acceleration * 2.0 * delta)
 		return
 	super(delta)
+
+
+## LA CLÉ DES ABYSSES. Lucifer ne déverrouille rien en mourant : il LAISSE
+## TOMBER la clé, et il faut aller la prendre.
+##
+## La différence n'est pas décorative. Un déverrouillage accordé dans le noir
+## pendant l'écran de fin de run ne se fête pas — le joueur lit une ligne de
+## texte après coup, s'il la lit. Un objet qui tombe du corps du boss, qu'on voit
+## traverser l'arène et qu'on ramasse, est la récompense elle-même.
+##
+## Elle est posée AVANT `super()`, qui verse les clés ordinaires et déclenche la
+## mort : elle sort donc du corps de Lucifer et non d'un cadavre déjà disparu.
+##
+## Elle n'est pas lâchée deux fois : le profil qui la possède déjà n'en reçoit
+## pas d'autre. Rejouer Lucifer dans la boucle rapporte ses clés normales, pas
+## une seconde clé sans objet.
+func _on_died(source: Node) -> void:
+	if not SaveGame.abyss_key:
+		var cle := CLE_DES_ABYSSES.instantiate() as Node2D
+		cle.global_position = global_position
+		get_parent().add_child(cle)
+	super(source)
 
 
 ## L'AUBE BRÛLANTE : le cercle s'embrase exactement là où se tient le joueur.

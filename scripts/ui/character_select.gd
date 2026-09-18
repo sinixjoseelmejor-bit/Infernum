@@ -11,6 +11,7 @@ signal forge_requested()
 @onready var stats_label: Label = %CharStatsLabel
 @onready var passive_label: Label = %CharPassiveLabel
 @onready var start_button: Button = %StartButton
+@onready var unleash_label: Label = %UnleashLabel
 @onready var forge_button: Button = %CharForgeButton
 @onready var back_button: Button = %CharBackButton
 
@@ -94,6 +95,13 @@ func _build_card(character: CharacterData) -> Button:
 	box.add_child(_label(character.display_name, 26, character.color, 1))
 	box.add_child(_label(character.title, 14, Color(0.78, 0.74, 0.72), 1))
 	box.add_child(_label(character.archetype.to_upper(), 13, character.color, 1))
+	# L'état de SA Forge, sur SA carte. Les clés sont communes au profil mais les
+	# nœuds ne le sont pas : choisir un personnage, c'est aussi choisir dans quel
+	# investissement on repart, et ça doit se voir avant de cliquer.
+	var avancement := Forge.get_progress_for(character.id)
+	var branche: String = String(Forge.BRANCHES_PERSO.get(character.id, ""))
+	box.add_child(_label("Forge %d/%d  ·  branche %s" % [
+		avancement.x, avancement.y, branche], 11, Color(0.68, 0.64, 0.62), 1))
 	box.add_child(HSeparator.new())
 
 	var desc := _label(character.description, 12, Color(0.72, 0.7, 0.7), 0)
@@ -133,3 +141,18 @@ func _refresh() -> void:
 	else:
 		passive_label.text = ""
 	start_button.text = "COMMENCER AVEC %s" % character.display_name.to_upper()
+	_refresh_dechainement()
+
+
+## Un TÉMOIN, pas un interrupteur : le Déchaînement s'arme à la Forge, où l'on
+## décide ce que devient un personnage. Il doit quand même se lire ici, juste
+## au-dessus du bouton qui lance la partie — c'est le dernier moment pour
+## s'apercevoir qu'on part en déchaîné sans l'avoir voulu.
+func _refresh_dechainement() -> void:
+	var arme := SaveGame.is_unleashed(Characters.selected_id)
+	unleash_label.visible = arme
+	if not arme:
+		return
+	unleash_label.text = "DÉCHAÎNEMENT ARMÉ — aucune limite, et un enfer qui double" \
+		+ " de PV toutes les cinq vagues. Se désarme à la Forge."
+	unleash_label.add_theme_color_override(&"font_color", Color(0.82, 0.58, 1.0))

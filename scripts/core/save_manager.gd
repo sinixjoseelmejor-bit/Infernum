@@ -2,7 +2,13 @@ extends Node
 ## Progression persistante (autoload `SaveGame`), répartie en PROFILS.
 ##
 ## Trois emplacements indépendants, chacun avec ses clés, ses déblocages de Forge
-## et ses statistiques. Changer de profil ou en effacer un permet de repartir de
+## et ses statistiques.
+##
+## LA FORGE EST PAR PERSONNAGE, les objets sont par profil. Ce n'est pas une
+## incohérence : un nœud de Forge modifie les statistiques de celui qui le porte,
+## donc l'investir dans Caïn est un choix qui doit coûter quelque chose ; un
+## objet débloqué, lui, entre au CATALOGUE de la boutique, et un catalogue qui
+## dépendrait du personnage rendrait les tirages incompréhensibles. Changer de profil ou en effacer un permet de repartir de
 ## zéro sans perdre une progression existante — c'est le seul moyen de
 ## « recommencer », puisque les clés sont irréversibles au sein d'un profil.
 ##
@@ -23,7 +29,27 @@ var best_wave: int = 0
 var total_runs: int = 0
 var last_character: StringName = &""
 
+## Déblocages d'objets, communs au profil.
 var _unlocked: Dictionary = {}
+
+## Nœuds de Forge, PAR PERSONNAGE : { "cain": { &"forge_ember": true } }.
+var _forge: Dictionary = {}
+
+## Déchaînement armé, PAR PERSONNAGE : { "cain": true }.
+##
+## C'est un réglage de Forge et non un choix de run, parce que c'est à la Forge
+## qu'on l'arme. Il persiste donc, comme un nœud. Caïn peut être déchaîné pendant
+## que Job reste bridé — c'est la même logique que l'arbre lui-même : ce qu'on
+## investit dans un personnage ne déborde pas sur les autres.
+var _dechaine: Dictionary = {}
+
+## La CLÉ DES ABYSSES est-elle en possession du profil ?
+##
+## Ce n'est pas « Lucifer est mort » : c'est « la clé a été ramassée ». La
+## nuance est le sujet — Lucifer la LAISSE TOMBER, et il faut aller la prendre.
+## Un déverrouillage qui s'accorde dans le noir pendant l'écran de fin ne se
+## fête pas ; un objet qu'on voit tomber et qu'on va chercher, si.
+var abyss_key: bool = false
 
 
 func _ready() -> void:
@@ -64,7 +90,14 @@ func get_profile_summary(slot: int) -> Dictionary:
 	summary["keys"] = config.get_value("meta", "banked_keys", 0)
 	summary["best_wave"] = config.get_value("meta", "best_wave", 0)
 	summary["total_runs"] = config.get_value("meta", "total_runs", 0)
-	summary["forge_nodes"] = (config.get_value("meta", "unlocked", []) as Array).size()
+	var forge_resume: Dictionary = config.get_value("meta", "forge", {})
+	var noeuds := 0
+	for perso in forge_resume:
+		noeuds += (forge_resume[perso] as Array).size()
+	# Un profil pas encore migré porte encore ses nœuds dans `unlocked`, mêlés
+	# aux objets : on ne peut pas les compter ici sans connaître la liste des
+	# nœuds, et ce résumé s'affiche avant que la Forge soit prête.
+	summary["forge_nodes"] = noeuds
 	return summary
 
 
@@ -87,8 +120,18 @@ func load_profile(slot: int, notify: bool = true) -> void:
 		best_wave = config.get_value("meta", "best_wave", 0)
 		total_runs = config.get_value("meta", "total_runs", 0)
 		last_character = StringName(config.get_value("meta", "last_character", ""))
+		abyss_key = bool(config.get_value("meta", "abyss_key", false))
 		for id in config.get_value("meta", "unlocked", []):
 			_unlocked[StringName(id)] = true
+		var dechaine_lu: Dictionary = config.get_value("meta", "dechaine", {})
+		for perso in dechaine_lu:
+			_dechaine[String(perso)] = bool(dechaine_lu[perso])
+		var forge_lu: Dictionary = config.get_value("meta", "forge", {})
+		for perso in forge_lu:
+			var ensemble := {}
+			for id in forge_lu[perso]:
+				ensemble[StringName(id)] = true
+			_forge[String(perso)] = ensemble
 
 	_save_index()
 	if notify:
@@ -119,13 +162,108 @@ func _reset_memory() -> void:
 	best_wave = 0
 	total_runs = 0
 	last_character = &""
+	abyss_key = false
 	_unlocked.clear()
+	_forge.clear()
+	_dechaine.clear()
 
 
 # --- Déblocages et monnaie ---------------------------------------------------
 
 func is_unlocked(id: StringName) -> bool:
 	return _unlocked.has(id)
+
+
+# --- Forge, par personnage ---------------------------------------------------
+
+func is_forge_unlocked(personnage: StringName, id: StringName) -> bool:
+	return (_forge.get(String(personnage), {}) as Dictionary).has(id)
+
+
+func unlock_forge(personnage: StringName, id: StringName) -> void:
+	var cle := String(personnage)
+	if not _forge.has(cle):
+		_forge[cle] = {}
+	if (_forge[cle] as Dictionary).has(id):
+		return
+	_forge[cle][id] = true
+	save_game()
+
+
+func get_forge_ids(personnage: StringName) -> Array:
+	return (_forge.get(String(personnage), {}) as Dictionary).keys()
+
+
+## Nœuds ouverts, tous personnages confondus. Sert au résumé de profil : c'est la
+## mesure de l'investissement total, pas de la puissance d'un personnage.
+func count_forge_nodes() -> int:
+	var total := 0
+	for perso in _forge:
+		total += (_forge[perso] as Dictionary).size()
+	return total
+
+
+func is_unleashed(personnage: StringName) -> bool:
+	# Sans la clé, le réglage ne vaut rien : l'effacer d'un profil réinitialisé
+	# ne suffirait pas, un fichier modifié à la main le rallumerait. La clé est
+	# la condition, à chaque lecture.
+	return abyss_key and bool(_dechaine.get(String(personnage), false))
+
+
+func set_unleashed(personnage: StringName, actif: bool) -> void:
+	if not abyss_key:
+		return
+	_dechaine[String(personnage)] = actif
+	save_game()
+
+
+## Reverrouille des nœuds pour UN personnage. RÉSERVÉ AU PANNEAU DE DÉV.
+func dev_lock_forge(personnage: StringName, ids: Array) -> void:
+	var table: Dictionary = _forge.get(String(personnage), {})
+	var touche := false
+	for id in ids:
+		if table.erase(id):
+			touche = true
+	if touche:
+		save_game()
+
+
+## Retourne true si la clé vient d'être acquise, false si le profil l'avait
+## déjà : l'appelant s'en sert pour n'annoncer la nouvelle qu'une fois.
+func grant_abyss_key() -> bool:
+	if abyss_key:
+		return false
+	abyss_key = true
+	save_game()
+	return true
+
+
+## Fait passer les nœuds de Forge de l'ancien registre commun vers le registre
+## par personnage. Appelée par la Forge, qui est la seule à savoir ce qu'est un
+## nœud — le préfixe `forge_` ne suffirait PAS : l'objet « Cœur de forge » a pour
+## identifiant `forge_heart` et se serait retrouvé classé comme un nœud.
+##
+## Les nœuds sont donnés à TOUS les personnages. Une migration ne doit jamais
+## retirer ce qui a été payé : les clés dépensées l'ont été avant que la règle
+## change, et le joueur n'a pas à en faire les frais. Donner trois fois est
+## l'erreur généreuse, reprendre est celle qu'on ne pardonne pas.
+func migrate_forge(node_ids: Array, character_ids: Array) -> bool:
+	var a_migrer: Array[StringName] = []
+	for id in node_ids:
+		if _unlocked.has(id):
+			a_migrer.append(id)
+	if a_migrer.is_empty():
+		return false
+	for perso in character_ids:
+		var cle := String(perso)
+		if not _forge.has(cle):
+			_forge[cle] = {}
+		for id in a_migrer:
+			_forge[cle][id] = true
+	for id in a_migrer:
+		_unlocked.erase(id)
+	save_game()
+	return true
 
 
 func get_unlocked_ids() -> Array:
@@ -160,20 +298,6 @@ func unlock_id(id: StringName) -> void:
 	save_game()
 
 
-## Reverrouille des identifiants. RÉSERVÉ AU PANNEAU DE DÉVELOPPEMENT.
-##
-## Prend une LISTE explicite et ne vide jamais le registre en entier : objets et
-## nœuds de Forge le partagent, et « réinitialiser la Forge » ne doit pas
-## reverrouiller les objets achetés au fil des runs.
-func dev_lock_ids(ids: Array) -> void:
-	var touche := false
-	for id in ids:
-		if _unlocked.erase(id):
-			touche = true
-	if touche:
-		save_game()
-
-
 ## Tente de débloquer un objet. Retourne false si clés insuffisantes.
 func unlock_item(item: ItemData) -> bool:
 	if item == null or item.key_cost <= 0 or is_unlocked(item.id):
@@ -205,6 +329,20 @@ func save_game() -> void:
 	config.set_value("meta", "total_runs", total_runs)
 	config.set_value("meta", "last_character", String(last_character))
 	config.set_value("meta", "unlocked", _unlocked.keys())
+	config.set_value("meta", "abyss_key", abyss_key)
+	# Les clés du dictionnaire écrit sont des String : un ConfigFile relit les
+	# StringName comme des String, autant l'écrire tel qu'il sera relu.
+	var forge_ecrit := {}
+	for perso in _forge:
+		var liste: Array[String] = []
+		for id in _forge[perso]:
+			liste.append(String(id))
+		forge_ecrit[String(perso)] = liste
+	config.set_value("meta", "forge", forge_ecrit)
+	var dechaine_ecrit := {}
+	for perso in _dechaine:
+		dechaine_ecrit[String(perso)] = bool(_dechaine[perso])
+	config.set_value("meta", "dechaine", dechaine_ecrit)
 	var err := config.save(get_profile_path(active_slot))
 	if err != OK:
 		push_warning("SaveGame : échec de la sauvegarde (%d)" % err)

@@ -102,6 +102,11 @@ func _rebuild() -> void:
 	var stats := RunState.stats
 	wave_label.text = "Vague %d  ·  %d âmes  ·  %d éliminations  ·  %s" % [
 		RunState.wave, RunState.souls, RunState.kills, _duration()]
+	if RunState.unleashed:
+		wave_label.text += "  ·  DÉCHAÎNEMENT"
+		wave_label.add_theme_color_override(&"font_color", Color(1.0, 0.55, 0.2))
+	else:
+		wave_label.remove_theme_color_override(&"font_color")
 
 	UIUtils.clear_children(stats_column)
 	var sources := RunState.get_stat_sources()
@@ -184,7 +189,11 @@ func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Arra
 	# ne sait pas déduire le type de la comparaison au plafond.
 	var valeur := float(brut[1])
 	var cap := float(row[2])
-	var au_plafond: bool = cap > 0.0 and valeur >= cap - 0.0001
+	# DÉCHAÎNEMENT : plus aucun plafond ne s'applique, donc plus aucun ne
+	# s'allume. Laisser la mention serait le pire mensonge possible sur cette
+	# fiche — elle dirait au joueur d'arrêter d'acheter ce qui est justement
+	# devenu illimité.
+	var au_plafond: bool = not RunState.unleashed and cap > 0.0 and valeur >= cap - 0.0001
 	var total := Label.new()
 	total.text = String(brut[0])
 	total.add_theme_font_size_override(&"font_size", 15)

@@ -8,6 +8,16 @@ extends Node
 signal souls_changed(amount: int)
 signal keys_changed(amount: int)
 signal item_gained(item: ItemData, stack_count: int)
+## L'inventaire a été VIDÉ par le début d'une nouvelle run.
+##
+## `item_gained` ne suffisait pas : il n'annonce que les ajouts. Tout ce qui
+## garde une copie de l'inventaire — l'orbite d'objets autour du joueur — se
+## retrouvait à afficher celui de la run précédente, sans jamais l'apprendre.
+signal run_reset()
+## Un exemplaire a été REVENDU. Distinct de `run_reset` : l'inventaire n'est pas
+## vide, il a juste perdu une pile — et tout ce qui en garde une copie doit
+## l'apprendre, sans quoi l'orbite continue d'afficher un objet qu'on a vendu.
+signal item_lost(item: ItemData, stack_count: int)
 signal stats_recomputed(stats: PlayerStats)
 signal run_ended(summary: Dictionary)
 
@@ -22,6 +32,12 @@ var stats := PlayerStats.new()
 
 var souls: int = 0
 var keys: int = 0
+
+## DÉCHAÎNEMENT : plafonds et taxes levés, piles d'objets multipliées.
+##
+## N'est PAS choisi ici : il est armé à la Forge, par personnage, et recopié au
+## début de chaque run. Une seule source de vérité, dans la sauvegarde.
+var unleashed: bool = false
 var wave: int = 0
 var kills: int = 0
 var run_time: float = 0.0
@@ -30,6 +46,13 @@ var is_running: bool = false
 ## {StringName: int} nombre d'exemplaires possédés par objet.
 var owned_counts: Dictionary = {}
 var owned_items: Array[ItemData] = []
+
+## Âmes arrachées aux survivants de la dernière vague. Lu par la boutique pour
+## le dire : des âmes qui arrivent sans explication ne s'attribuent à rien, et
+## le joueur n'apprendrait jamais que blesser sans achever rapporte quelque
+## chose.
+var leftover_souls: int = 0
+var leftover_count: int = 0
 
 ## Secondes chances restantes (nœud de Forge « Seconde chance »).
 var revives_left: int = 0
@@ -46,6 +69,9 @@ func _ready() -> void:
 
 func reset_run() -> void:
 	WaveMods.clear_current()
+	# Relu à chaque run : armer le Déchaînement à la Forge puis lancer une partie
+	# doit suffire, sans passer par un second interrupteur.
+	unleashed = SaveGame.is_unleashed(Characters.selected_id)
 	souls = Forge.get_start_souls()
 	keys = 0
 	wave = 0
@@ -55,12 +81,15 @@ func reset_run() -> void:
 	owned_counts.clear()
 	owned_items.clear()
 	character_bonus.clear()
+	leftover_souls = 0
+	leftover_count = 0
 	revives_left = int(Forge.get_special_total(&"revive"))
 	var character := Characters.get_selected()
 	character_mods = character.starting_mods.duplicate() if character != null else {}
 	recompute_stats()
 	souls_changed.emit(souls)
 	keys_changed.emit(keys)
+	run_reset.emit()
 
 
 func end_run() -> void:
@@ -117,8 +146,28 @@ func consume_revive() -> bool:
 
 # --- Inventaire ---
 
+## Piles maximales d'un objet. Déchaîné, elles sont MULTIPLIÉES.
+##
+## Sans ça, le mode ne tiendrait pas sa promesse : le catalogue entier au maximum
+## de piles n'atteint même pas la plupart des plafonds actuels, donc les lever ne
+## servirait à rien tant que le nombre d'exemplaires reste le vrai frein. C'est
+## la mesure qui l'a montré, pas l'intuition.
+const PILES_DECHAINEES := 4
+
+
+func get_max_stacks(item: ItemData) -> int:
+	if item == null:
+		return 0
+	# Les objets à effet scripté restent UNIQUES même déchaînés : ils sont
+	# écrits pour un exemplaire, et les empiler ne les renforcerait pas — ça
+	# déclencherait le même effet plusieurs fois sur le même événement.
+	if item.special != &"":
+		return item.max_stacks
+	return item.max_stacks * PILES_DECHAINEES if unleashed else item.max_stacks
+
+
 func can_take(item: ItemData) -> bool:
-	return item != null and int(owned_counts.get(item.id, 0)) < item.max_stacks
+	return item != null and int(owned_counts.get(item.id, 0)) < get_max_stacks(item)
 
 
 func add_item(item: ItemData) -> void:
@@ -128,6 +177,38 @@ func add_item(item: ItemData) -> void:
 	owned_items.append(item)
 	recompute_stats()
 	item_gained.emit(item, int(owned_counts[item.id]))
+
+
+## REVENTE : retire UN exemplaire. Retourne false s'il n'y en avait pas.
+##
+## La boutique rend la moitié du prix de base — jamais le prix payé, qui monte
+## avec la vague et la richesse. Revendre est donc toujours une perte sèche, et
+## ne peut pas servir de robinet à âmes : c'est une sortie de secours pour une
+## build enfermée, pas une source de revenu.
+##
+## On retire la DERNIÈRE occurrence : les exemplaires d'un même objet sont
+## identiques (même ressource partagée), donc lequel part n'a aucune
+## conséquence, mais parcourir à l'envers évite de décaler ce qu'on n'a pas
+## encore lu.
+func remove_item(item: ItemData) -> bool:
+	if item == null:
+		return false
+	var reste := int(owned_counts.get(item.id, 0)) - 1
+	if reste < 0:
+		return false
+	if reste == 0:
+		owned_counts.erase(item.id)
+	else:
+		owned_counts[item.id] = reste
+	for i in range(owned_items.size() - 1, -1, -1):
+		if owned_items[i] != null and owned_items[i].id == item.id:
+			owned_items.remove_at(i)
+			break
+	# Recalcul complet : les effets scriptés sont reconstruits depuis
+	# l'inventaire, donc vendre le dernier exemplaire retire bien son `special`.
+	recompute_stats()
+	item_lost.emit(item, reste)
+	return true
 
 
 func has_special(key: StringName) -> bool:
@@ -142,6 +223,9 @@ func has_special(key: StringName) -> bool:
 ## Aucune n'a de canal de scaling qui lui soit propre.
 func recompute_stats() -> void:
 	stats.clear()
+	# Posé ICI et à chaque recalcul, parce que `clear()` ne le remet pas : il
+	# n'est pas un modificateur mais un régime de lecture.
+	stats.uncapped = unleashed
 	for key in character_mods:
 		stats.add_mod(String(key), float(character_mods[key]))
 	for key in character_bonus:
@@ -159,7 +243,20 @@ func recompute_stats() -> void:
 			stats.specials[item.special] = true
 	if has_special(&"reaper_stacks"):
 		stats.damage_pct += get_reaper_bonus()
+	stats.damage_pct += get_conversion_armure()
 	stats_recomputed.emit(stats)
+
+
+## « Vieilles blessures » (branche de Job) : l'armure se convertit en dégâts.
+##
+## Appliqué APRÈS la somme des sources, parce qu'il porte sur le TOTAL d'armure
+## et non sur une contribution. Lu sur `get_armor()`, donc sur l'armure
+## réellement utile : au-delà du plafond, l'armure ne protège plus et ne rend
+## plus de dégâts non plus — sinon elle deviendrait une statistique de dégâts
+## déguisée, sans plafond propre.
+func get_conversion_armure() -> float:
+	var taux := Forge.get_special_total(&"armor_to_damage")
+	return stats.get_armor() * taux if taux > 0.0 else 0.0
 
 
 ## Détail des statistiques par SOURCE, pour la fiche de run.
@@ -179,6 +276,10 @@ func get_stat_sources() -> Array:
 
 	var forge := PlayerStats.new()
 	_verser(forge, Forge.get_bonus_mods())
+	# La conversion d'armure est portée au crédit de la Forge : c'est un de ses
+	# nœuds qui la crée, même si elle se calcule sur l'armure de toutes les
+	# sources réunies.
+	forge.damage_pct += get_conversion_armure()
 
 	# Malédictions et pactes de vague sont réunis : ce sont les deux leviers de
 	# risque volontaire, l'un sur la run, l'autre sur une seule vague.
