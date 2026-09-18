@@ -827,6 +827,40 @@ La run est donc **conçue pour se terminer**, vers la vague 15-20 pour un bon jo
 Pour allonger ou raccourcir les runs, les leviers sont
 `spawns_per_second_growth` (0.22) et `health_growth` (0.14) dans `wave_manager.gd`.
 
+## Le logo du studio, au lancement
+
+La **première** scène du jeu n'est plus le menu : `run/main_scene` pointe sur
+[`splash.tscn`](scenes/ui/splash.tscn), qui montre le logo **RootStudio** sur
+fond noir, puis passe la main. Trois temps — 0,45 s d'apparition, 1,10 s de
+tenue, 0,70 s de fondu — et la tenue est ce qui donne au logo le temps d'être
+LU : à 0,6 s il passe pour un défaut d'affichage, au-delà de 2 s il se fait
+attendre.
+
+**Pourquoi pas l'écran de démarrage de Godot** (`boot_splash`), qui existe déjà :
+il affiche une image fixe pendant le chargement du moteur, sans fondu, sans
+durée réglable et sans moyen de la passer. Une scène coûte trois nœuds et donne
+les trois.
+
+**Elle se passe**, et ce n'est pas un détail : n'importe quelle touche, n'importe
+quel bouton de manette, n'importe quel clic l'abrège. Au deuxième lancement de
+la journée c'est la seule chose qu'on demande à un logo — sans ça, ce qui
+accueille le joueur devient ce qui le retarde. Seules les PRESSIONS comptent :
+sans ce test, la touche qui a lancé le jeu depuis un terminal passerait le logo
+avant qu'il ne s'affiche.
+
+Le logo est mesuré avant d'être posé, comme le reste : son fond est un noir
+**opaque** (0, 0, 0, 255) jusque dans les coins, donc il se fond dans l'écran
+sans qu'on ait à le découper. Et il n'a **aucune grille de pixels** — 93,5 % de
+blocs uniformes au pas 2, en baisse ensuite, contre 100 % pour une vraie planche
+de pixel art. C'est une image redimensionnée, pas du pixel art : elle se met à
+l'échelle librement, en filtrage **linéaire**, là où tout le reste du jeu est au
+plus proche.
+
+Rien n'y est préchargé : le menu est chargé au changement de scène et non
+pendant le fondu. Le jeu pèse 0,3 Mo de contenu et s'ouvre instantanément ; un
+préchargement n'achèterait rien et masquerait le vrai coût s'il augmentait un
+jour.
+
 ## Menu et options
 
 Le menu principal est un hub à quatre entrées :
@@ -2200,7 +2234,8 @@ scenes/
   pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
   combat/                     telegraph
-  ui/                         main_menu · character_select · options · profiles
+  ui/                         splash (logo du studio) · main_menu
+                              character_select · options · profiles
                               hud · shop · game_over · forge · curse_select
                               pause
 scripts/
@@ -2940,7 +2975,7 @@ standard.
 Le choix du sprite n'est pas arbitraire : l'imp a été essayé et rejeté, son épée
 pâle occupe la moitié de la masse et brouille la silhouette à 32 px. Golgota n'a
 qu'un accent de couleur, et il survit à la réduction.
-- **Version.** `config/version` est à `0.7.2`, repris dans les métadonnées de
+- **Version.** `config/version` est à `0.8.0`, repris dans les métadonnées de
   l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.
