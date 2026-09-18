@@ -2560,7 +2560,7 @@ faute de quoi la répétition se verrait ; le détail est dans
 
 ## Son
 
-Sept fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
+Huit fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
 format qui reboucle sans trou : le MP3 porte dans sa définition un silence
 d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
 
@@ -2569,6 +2569,46 @@ n'interdit la mise à disposition que sous forme de banque de sons ou de pack
 autonome (voir [`CREDITS.md`](CREDITS.md)). Un clone suffit donc pour avoir le
 son. S'ils venaient à manquer, le jeu démarre quand même, muet, avec un
 avertissement par fichier et aucune erreur.
+
+### L'arène a deux pistes, et elles s'enchaînent
+
+Une run qui va loin dure plus de vingt minutes. Avec une seule piste de 4 min 26,
+on l'entend donc quatre ou cinq fois — et on finit par l'entendre au sens où on
+ne l'écoute plus. La seconde piste (2 min 05) porte le total à **6 min 31 avant
+la première répétition**.
+
+Elles s'**enchaînent** au lieu d'être tirées au sort à l'ouverture : un tirage par
+run laisserait encore une seule piste tourner en boucle pendant toute la partie,
+c'est-à-dire exactement le problème qu'on voulait régler. Seule la piste de
+DÉPART est tirée au sort, parce que deux runs de suite qui commencent sur la
+même musique s'entendent et que c'est gratuit à éviter.
+
+**Le bouclage dépend du nombre de pistes, et il le faut.** Une liste à une seule
+piste boucle nativement, sans trou — indispensable au menu, dont la piste ne dure
+que 15,5 s et dont la reprise s'entendrait quatre fois par minute. Une liste à
+plusieurs pistes ne boucle **pas** : c'est le signal `finished` qui enchaîne, et
+il ne se déclenche jamais sur un flux bouclé. Le réglage est posé dans le code et
+non dans le fichier `.import`, donc il ne peut pas être perdu par un réimport.
+
+Deux détails qui décident du fonctionnement :
+
+- **Sans fondu entre deux pistes**, et ce n'est pas une économie : les deux se
+  terminent sur une résolution, donc l'enchaînement est une fin suivie d'un
+  début. Un fondu superposerait une fin et un début, ce qui s'entend beaucoup
+  plus qu'une jointure nette.
+- **C'est le lecteur ACTIF qui enchaîne**, et lui seul. Il y en a deux, pour le
+  fondu enchané entre musiques ; celui qui vient d'être coupé émet lui aussi
+  `finished`, et sans ce test il relancerait la musique d'arène par-dessus celle
+  du menu. Vérifié : appeler l'enchaînement sur le lecteur dormant ne change
+  rien.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Pistes d'arène chargées | 2 | **2** (266 s et 125 s) |
+| Bouclage des pistes d'arène | non | `loop = false` |
+| Bouclage du menu | oui | `loop = true` |
+| Fin de piste | passe à l'autre et joue | piste 1 → 0, flux changé, en lecture |
+| Fin sur le lecteur coupé | ignorée | flux inchangé |
 
 ### Deux bus, deux curseurs
 
@@ -2655,7 +2695,8 @@ temps.
 
 | Fichier | Durée | Rôle |
 |---|---|---|
-| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, en boucle |
+| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, 1re piste |
+| `MusicGameplay2.ogg` | 2 min 05 | musique d'arène, 2e piste |
 | `MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
 | `Fireball.ogg` | 8,04 s | tir du joueur, coupé à 0,5 s |
 | `BigRoar.ogg` | 5,09 s | apparition d'un boss |
