@@ -29,6 +29,8 @@ extends Node2D
 
 var _elapsed: float = 0.0
 var _fired: bool = false
+## Un impact a-t-il ete joue ? Si oui, c'est LUI le flash.
+var _impact_lance: bool = false
 
 
 func _ready() -> void:
@@ -41,6 +43,12 @@ func _process(delta: float) -> void:
 	if not _fired and _elapsed >= delay:
 		_fired = true
 		_detonate()
+		# L'IMPACT REMPLACE LE FLASH. Le disque blanc de la detonation existait
+		# parce qu'il n'y avait rien d'autre a montrer ; par-dessus un pic de
+		# pierre qui remplit la zone, il ne dit plus rien et delave le dessin
+		# qu'il recouvre. La zone se retire donc des qu'un effet prend le relais.
+		if _impact_lance:
+			queue_free()
 	elif _fired and _elapsed >= delay + flash_time:
 		queue_free()
 
@@ -60,8 +68,13 @@ func _detonate() -> void:
 
 ## L'effet est monté sur le PARENT et non sur la zone : la zone se libère
 ## `flash_time` après la détonation, ce qui couperait l'animation en plein vol.
+##
+## UNE ZONE QUI NE BLESSE PAS N'A PAS D'IMPACT. Lilith en pose une de 0 dégât
+## pour annoncer sa téléportation : y faire jaillir de la roche montrerait un
+## coup là où il n'y en a aucun, ce qui est exactement le mensonge que tout le
+## reste de la lisibilité des boss cherche à éviter.
 func _spawn_impact() -> void:
-	if impact_scene == null:
+	if impact_scene == null or damage <= 0.0:
 		return
 	var effet := impact_scene.instantiate() as Node2D
 	if effet == null:
@@ -72,10 +85,13 @@ func _spawn_impact() -> void:
 	hote.add_child(effet)
 	effet.global_position = global_position
 	effet.scale = Vector2.ONE * (radius * 2.0 / maxf(1.0, impact_content_width))
+	_impact_lance = true
 
 
 func _draw() -> void:
 	var progress := clampf(_elapsed / maxf(0.01, delay), 0.0, 1.0)
+	if _fired and _impact_lance:
+		return
 	if _fired:
 		draw_circle(Vector2.ZERO, radius, Color(1.0, 0.95, 0.85, 0.55))
 		draw_arc(Vector2.ZERO, radius, 0.0, TAU, 56, Color.WHITE, 4.0, true)

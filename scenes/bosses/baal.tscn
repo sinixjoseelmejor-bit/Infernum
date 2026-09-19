@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/bosses/baal.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/sprites/bosses/baal/baal_idle.png" id="2_sprite"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/combat/telegraph.tscn" id="5_telegraph"]
 [ext_resource type="Texture2D" path="res://assets/sprites/bosses/baal/baal_walk.png" id="90_walk"]
 [ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/impact_flamme.tscn" id="92_impact"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 46.0
@@ -32,6 +33,8 @@ pressure_rate = 1.15
 pressure_max = 4.0
 projectile_scene = ExtResource("4_bolt")
 telegraph_scene = ExtResource("5_telegraph")
+telegraph_impact = ExtResource("92_impact")
+telegraph_impact_width = 79.0
 guaranteed_keys = 2
 
 [node name="Sprite" type="Sprite2D" parent="."]

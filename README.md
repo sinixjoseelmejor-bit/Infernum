@@ -2512,6 +2512,103 @@ dans un enfer, dont le texte serait de toute façon illisible à cette échelle.
 
 ## Effets visuels
 
+### Les zones de boss font jaillir le sol
+
+Une zone annoncée ne montrait que son flash dessiné à la détonation, et c'était
+un choix défendable tant que la seule planche disponible était une bouffée
+générique : huit zones qui partent ensemble n'ont pas besoin qu'on en rajoute.
+Avec une planche d'impacts au sol, le calcul change — **un écrasement de colosse
+de pierre doit faire jaillir la pierre**, et c'est le genre de chose qui
+distingue un boss d'un autre sans toucher à une seule règle.
+
+La planche compte cinq effets sur une grille de **17 × 5 cellules de 96 px**,
+lus par rangée. Chacun va au boss dont il raconte l'attaque :
+
+| Boss | Effet | Images | Pourquoi celui-là |
+|---|---|---|---|
+| **Golgota** | pic de pierre qui jaillit puis retombe en poussière | 51–67 | colosse de pierre, écrasements au sol, et un Calvaire où « sept croix jaillissent » |
+| **Baal** | colonne de flammes qui laisse des pics calcinés | 34–50 | *Le Seigneur de l'Orage*, phase Fournaise, sillage de braise |
+| **Asmodée** | roche qui éclate, sèche et brève | 1–11 | ses zones sont des points de chute de charge : un impact, pas un incendie |
+| **Lucifer** | bloc de roche embrasé | 68–79 | la couronne de l'Aube brûlante |
+| **Lilith** | **aucun** | — | sa seule zone annonce une téléportation et ne blesse personne |
+
+**Une zone qui ne blesse pas n'a pas d'impact**, et c'est un garde-fou et non un
+oubli : la zone de Lilith vaut 0 dégât. Y faire jaillir de la roche montrerait
+un coup là où il n'y en a aucun — exactement le mensonge que toute la lisibilité
+des boss cherche à éviter. `telegraph.gd` teste donc `damage <= 0`.
+
+#### Le dessin fait la taille de la zone, et la mesure a dû être reprise
+
+La mise à l'échelle vaut `rayon × 2 / largeur du dessin`, comme pour l'explosion
+de Braise éternelle : le joueur voit la portée au lieu de la deviner. Encore
+faut-il prendre la bonne largeur.
+
+Prise sur l'**union** des images de la rangée — 90 px pour la pierre — elle
+compte les gravats qui volent loin en fin d'animation, donc elle fait paraître
+le pic **plus petit que sa zone** pendant tout le reste du temps. Prise sur
+l'**image de pointe**, celle qui couvre le plus de surface, le dessin remplit la
+zone au moment où on le regarde :
+
+| Effet | Union | Image de pointe | Retenu |
+|---|---|---|---|
+| Pierre | 90 px | 75 px | **75** |
+| Flamme | 83 px | 79 px | **79** |
+| Roche | 88 px | 79 px | **79** |
+| Braise | 58 px | 52 px | **52** |
+
+Vérifié en jeu sur l'écrasement de Golgota : échelle 3,33, **250 px dessinés
+pour un rayon de 125** — le pic touche les deux bords du disque.
+
+L'échelle n'est **pas entière**, et c'est une exception assumée sur une planche
+de pixel art. Les cas où le projet l'interdit sont des images qu'on regarde
+fixement — icônes d'objets, titre, décor. Un impact passe, et faire
+correspondre le dessin au rayon qui blesse est la promesse la plus forte des
+deux.
+
+#### L'impact remplace le flash de la zone
+
+Le disque blanc de la détonation existait parce qu'il n'y avait rien d'autre à
+montrer. Par-dessus un pic de pierre qui remplit la zone, il ne dit plus rien et
+**délave le dessin qu'il recouvre**. La zone se retire donc dès qu'un effet
+prend le relais — vérifié en jeu : au moment où l'impact paraît, il ne reste
+**zéro** zone détonée à l'écran.
+
+#### Les pics de Golgota ont la couleur de Golgota
+
+La planche est d'un sable clair (146 / 113 / 72 en moyenne) et Golgota est une
+pierre sombre à reflet violacé. Un pic sable qui jaillit sous ses pieds ne
+venait de nulle part.
+
+La teinte est **mesurée, pas choisie**, et sur les faces ÉCLAIRÉES plutôt que
+sur la moyenne : la moyenne de Golgota inclut tout son ombrage (44 / 35 / 39),
+et viser ce chiffre-là aurait amené les pics **sous la luminosité du sol**
+(48 / 52 / 55) — invisibles au moment où ils comptent. Sur le quart le plus
+clair de chaque image, lave exclue, Golgota vaut 87 / 71 / 76 et le pic
+188 / 147 / 87, d'où un `modulate` de **0,46 / 0,48 / 0,87**. Les pics prennent
+sa pierre et restent lisibles sur le sol.
+
+#### La dernière image se tient, puis s'éteint
+
+Une planche d'impact se termine sur son état final — la poussière retombée, les
+pics calcinés — et disparaître à l'image suivante efface ce que l'animation
+venait d'établir : le sol redevient intact en un dixième de seconde, comme si
+rien ne s'était passé.
+
+La dernière image est donc **tenue 1,45 s**, dont **0,45 s de fondu** : une
+seconde pleine où le sol reste brisé, puis l'extinction. Essayée à 0,45 s, la
+tenue passait encore pour la fin de l'animation plutôt que pour une trace.
+
+Le fondu n'est pas un ornement : une tenue suivie d'une disparition sèche
+remplace un défaut par un autre, la dernière image sautant au lieu de s'éteindre.
+
+Un impact vit donc **1,73 s** en tout. Golgota enchaîne deux écrasements toutes
+les 1,7 s en phase 2 : les traces se chevauchent, et c'est le comportement voulu
+— un sol que le colosse a déjà brisé ne redevient pas intact entre deux coups.
+
+`hold_time` et `hold_fade` valent **0 par défaut** : l'explosion de Braise
+éternelle et l'animation de mort se terminent sur du vide, elles n'ont rien à
+tenir et leur comportement ne change pas.
+
 ### L'animation de mort — la même pour les cinq ennemis
 
 Un ennemi tué disparaîssait dans la même image que son dernier éclair de
@@ -2975,7 +3072,7 @@ standard.
 Le choix du sprite n'est pas arbitraire : l'imp a été essayé et rejeté, son épée
 pâle occupe la moitié de la masse et brouille la silhouette à 32 px. Golgota n'a
 qu'un accent de couleur, et il survit à la réduction.
-- **Version.** `config/version` est à `0.8.0`, repris dans les métadonnées de
+- **Version.** `config/version` est à `0.8.1`, repris dans les métadonnées de
   l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.
