@@ -1664,6 +1664,29 @@ plafond n'était jamais atteint, les zones étaient la seule limite. Il en produ
 maintenant 1,94 en moyenne — toujours **sous** le plafond. La pression à se
 déplacer augmente ; le mur de dégâts inévitables, non.
 
+### Lucifer était le plus petit des cinq
+
+Mesuré sur la boîte du contenu de chaque planche de repos, multiplié par
+l'échelle du sprite dans la scène :
+
+| Boss | Échelle | À l'écran |
+|---|---|---|
+| Asmodée | ×5,5 | 253 × 137 px |
+| Golgota | ×5,5 | 176 × 170 px |
+| Baal | ×5,5 | 170 × 154 px |
+| Lilith | ×4,0 | 136 × 116 px |
+| **Lucifer** | ×5,0 → **×6,0** | 195 × 155 → **234 × 186 px** |
+
+Lucifer est le dernier boss, celui qu'on affronte à la vague 25 au bout d'une
+demi-heure, et il était le **seul des quatre gros sous ×5,5**. Il passe à ×6,0 :
+il domine désormais les quatre autres au lieu d'arriver en dessous.
+
+**Sa boîte de collision ne bouge pas** (rayon 50). Ce n'est pas un oubli :
+l'agrandir le rendrait plus facile à toucher ET plus dangereux au contact, deux
+changements d'équilibrage pour une demande d'apparence. Le décalage entre son
+dessin et sa boîte existait déjà — Asmodée mesure 253 px de large pour un rayon
+de 52 — parce que la boîte représente le corps, pas l'envergure.
+
 ## Le Déchaînement — la récompense d'avoir tué Lucifer
 
 **À QUOI SERT CE MODE**, parce que ça décide de tout le reste : c'est un **défi
@@ -2630,6 +2653,65 @@ temps.**
 éternelle et l'animation de mort se terminent sur du vide, elles n'ont rien à
 tenir et leur comportement ne change pas.
 
+#### Chaque boss joue la planche à sa façon
+
+Quatre boss tirent leur impact de la même planche, et rien ne les distinguait
+au-delà de l'effet choisi : huit zones lancées ensemble affichaient huit fois le
+même dessin, à la même orientation, dans le même sens. Trois réglages y
+répondent, un par boss, et **aucun ne coûte quoi que ce soit en jeu**.
+
+**Asmodée — un miroir une fois sur deux.** Ses zones sont des points de chute de
+charge et elles tombent par paquets ; deux éclats de roche côte à côte se
+lisaient comme un copier-coller. `random_flip` était à `false` sur les quatre
+impacts, sans raison écrite. Il passe à `true` chez lui seul : le dessin est
+assez asymétrique pour que le retournement se voie, et la lumière de la planche
+vient d'en haut, donc la miroiter ne la contredit pas.
+
+**Lucifer — une orientation au hasard.** Son embrasement projette ses débris
+dans toutes les directions : c'est le seul des quatre qui n'a **ni haut ni bas**
+à trahir. La rotation lui est donc réservée — sur un pic de pierre planté dans
+le sol, elle ferait basculer la face éclairée et mentirait.
+
+Deux pièges, tous deux mesurés plutôt que devinés :
+
+- `offset` place le dessin par rapport au point touché, et il **tourne avec le
+  nœud**. Sans contre-rotation, l'éclat décrirait un cercle autour du point
+  d'impact au lieu de rester dessus. Il est donc contre-tourné du même angle.
+- Son `offset` valait `(0, -13)`, hérité d'un alignement au sol, alors que le
+  centre du dessin est à `(-1, -4)` de celui de la cellule : l'éclat paraissait
+  **78 px trop haut** à l'échelle où il est joué, soit les deux tiers du rayon
+  de la zone. Ça ne se voyait pas tant qu'il tombait toujours de travers de la
+  même façon ; une orientation au hasard l'a rendu évident. Corrigé à `(0, 4)`,
+  l'éclat est centré sur le cercle qui blesse.
+
+**Golgota — la planche se joue à l'envers**, de la dernière image vers la
+première. Sa rangée est la seule des quatre qui se **dissipe** : les trois
+autres se terminent sur de la pierre plantée ou des pics calcinés, la sienne
+finit en poussière emportée. Mesuré sur la couverture alpha de chaque cellule,
+sur les 9 216 pixels d'une image :
+
+| Image | 62 | 63 | 64 | 65 | 66 | 67 |
+|---|---|---|---|---|---|---|
+| Pixels opaques | 885 | 583 | 293 | 111 | 20 | **1** |
+
+La dernière image est **vide**. La tenue de 1,45 s ajoutée pour que le sol ne
+redevienne pas intact entre deux coups ne tenait donc **rien** chez Golgota :
+elle prolongeait une cellule transparente. Lue à l'envers, la même planche
+raconte la poussière qui se rassemble en pic, et surtout elle se termine sur la
+**pierre plantée** (1 459 pixels) — la tenue tient enfin quelque chose.
+
+La teinte n'a pas eu à bouger : recalculée sur l'image désormais tenue, elle
+donne 0,460 / 0,478 / 0,873 contre 0,46 / 0,48 / 0,87 en place, et le pic rend
+87 / 71 / 76 à l'écran contre 87 / 74 / 78 mesurés sur la capture — la couleur
+de la pierre de Golgota, comme prévu.
+
+**Ce que ça coûte à la lisibilité, et c'est assumé :** les cinq premières images
+jouées sont celles qui étaient les dernières, donc les plus vides. Pendant
+**0,17 s** après le coup, il ne reste que de la poussière éparse pour marquer
+l'endroit touché — le flash blanc de la zone, lui, a été retiré au patch
+précédent puisque l'impact le remplace. Démarrer la lecture à l'image 62, voire
+58 (une image de flash, qui marquerait le coup net), supprimerait ce trou.
+
 ### L'animation de mort — la même pour les cinq ennemis
 
 Un ennemi tué disparaîssait dans la même image que son dernier éclair de
@@ -2776,7 +2858,7 @@ faute de quoi la répétition se verrait ; le détail est dans
 
 ## Son
 
-Huit fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
+Quatorze fichiers OGG Vorbis, dans `assets/audio/`. L'OGG est le seul
 format qui reboucle sans trou : le MP3 porte dans sa définition un silence
 d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
 
@@ -2786,12 +2868,71 @@ autonome (voir [`CREDITS.md`](CREDITS.md)). Un clone suffit donc pour avoir le
 son. S'ils venaient à manquer, le jeu démarre quand même, muet, avec un
 avertissement par fichier et aucune erreur.
 
-### L'arène a deux pistes, et elles s'enchaînent
+### L'arène a six pistes, et elles s'enchaînent
 
 Une run qui va loin dure plus de vingt minutes. Avec une seule piste de 4 min 26,
 on l'entend donc quatre ou cinq fois — et on finit par l'entendre au sens où on
-ne l'écoute plus. La seconde piste (2 min 05) porte le total à **6 min 31 avant
-la première répétition**.
+ne l'écoute plus. Les six pistes portent le total à **17 min 13 avant la
+première répétition** : une run complète, ou presque, sans jamais réentendre la
+même musique.
+
+**L'ordre alterne les deux sources et les durées.** On entre dans la liste à un
+rang tiré au sort puis on la suit : deux pistes voisines sont deux pistes qu'on
+entendra l'une après l'autre à chaque run, quel que soit le point d'entrée.
+
+| Rang | Piste | Durée |
+|---|---|---|
+| 1 | `MusicGameplay.ogg` | 4 min 26 |
+| 2 | `alex-morgan-thrash-metal` | 3 min 02 |
+| 3 | `MusicGameplay2.ogg` | 2 min 05 |
+| 4 | `wolfdudedodi-cyber-wolf` | 3 min 24 |
+| 5 | `strawberry_candy-powerful-heavy-metal` | 2 min 07 |
+| 6 | `mrclaps-this-heavy-metal` | 2 min 09 |
+
+#### Les niveaux ont dû être mesurés, pas supposés
+
+Les fichiers ne sont pas masterisés ensemble : une piste 3 dB plus forte que la
+précédente s'entend comme une erreur du jeu, pas comme un choix de l'album.
+Mesuré en RMS sur trois fenêtres de 4 s prises à 15 %, 45 % et 75 % de chaque
+piste (l'énergie d'un morceau n'est pas la même à l'intro et au refrain, une
+fenêtre unique aurait mesuré le passage sur lequel elle est tombée) :
+
+| Piste | RMS | Correction |
+|---|---|---|
+| `MusicGameplay.ogg` | −14,85 dB | référence |
+| `MusicGameplay2.ogg` | −14,69 dB | référence |
+| `mrclaps-this-heavy-metal` | −13,95 dB | **−0,9 dB** |
+| `strawberry_candy-powerful-heavy-metal` | −14,63 dB | aucune |
+| `wolfdudedodi-cyber-wolf` | −15,35 dB | aucune |
+| `alex-morgan-thrash-metal` | −16,62 dB | **+1,8 dB** |
+
+Les deux pistes d'origine sont la **référence** : c'est sur elles que tous les
+volumes d'effets ont été réglés, les corriger déréglerait le reste du jeu.
+
+**Seules les pistes qui s'écartent d'au moins 1 dB sont corrigées.** En dessous,
+la correction ne s'entend pas et la table mentirait sur sa précision.
+
+#### Les fins de piste ont été vérifiées avant de garder la jointure nette
+
+L'enchaînement se fait sans fondu, ce qui suppose que chaque piste se termine
+sur une résolution. Mesuré par tranches de 0,5 s sur les trois dernières
+secondes, aucune des quatre nouvelles ne s'arrête plus sèchement que les deux
+d'origine : toutes finissent entre −14 et −27 dB, comme `MusicGameplay.ogg`
+(−17,5 à −21 dB). La jointure garde donc le même comportement.
+
+#### Deux fichiers déposés ne sont pas des musiques d'arène
+
+Le dossier en contient six ; **quatre** entrent dans la liste.
+
+- `43084433-hard-rock-logo-intro-335297.ogg` (13,8 s) est un générique de logo.
+  Dans la rotation d'arène, il ferait changer la musique au bout de treize
+  secondes. Il conviendrait en revanche au menu, dont l'unique piste de 15,5 s
+  se répète quatre fois par minute.
+- `freesound_community-rock-destroy-6409.ogg` (2,9 s) est un **effet**, pas une
+  musique — de la roche qui se brise, ce qui tombe bien pour l'écrasement de
+  Golgota, qui n'a aucun son propre.
+
+Les deux restent sur le disque, hors de toute liste, en attendant une décision.
 
 Elles s'**enchaînent** au lieu d'être tirées au sort à l'ouverture : un tirage par
 run laisserait encore une seule piste tourner en boucle pendant toute la partie,
@@ -2820,10 +2961,11 @@ Deux détails qui décident du fonctionnement :
 
 | Sonde | Attendu | Mesuré |
 |---|---|---|
-| Pistes d'arène chargées | 2 | **2** (266 s et 125 s) |
+| Pistes d'arène chargées | 6 | **6**, 17 min 13 au total |
+| Correction de niveau appliquée | 2 pistes sur 6 | +1,8 dB et −0,9 dB, les autres à 0 |
 | Bouclage des pistes d'arène | non | `loop = false` |
 | Bouclage du menu | oui | `loop = true` |
-| Fin de piste | passe à l'autre et joue | piste 1 → 0, flux changé, en lecture |
+| Fin de piste | passe à la suivante et joue | 3 → 4 → 5 → 0, flux changé, en lecture |
 | Fin sur le lecteur coupé | ignorée | flux inchangé |
 
 ### Deux bus, deux curseurs
@@ -2909,11 +3051,22 @@ temps.
 
 ### Les fichiers
 
+Les musiques d'origine restent sous `SoundEffects/`, avec le `LICENSE.txt` qui
+les couvre : les déplacer pour faire joli casserait cette piste-là. Les musiques
+ajoutées depuis vivent sous `Music/`. Le chemin est donc écrit en entier dans la
+liste plutôt que deviné à partir d'un dossier unique.
+
 | Fichier | Durée | Rôle |
 |---|---|---|
-| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, 1re piste |
-| `MusicGameplay2.ogg` | 2 min 05 | musique d'arène, 2e piste |
-| `MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
+| `SoundEffects/MusicGameplay.ogg` | 4 min 26 | musique d'arène, rang 1 |
+| `Music/alex-morgan-thrash-metal…` | 3 min 02 | musique d'arène, rang 2 |
+| `SoundEffects/MusicGameplay2.ogg` | 2 min 05 | musique d'arène, rang 3 |
+| `Music/wolfdudedodi-cyber-wolf…` | 3 min 24 | musique d'arène, rang 4 |
+| `Music/strawberry_candy-powerful…` | 2 min 07 | musique d'arène, rang 5 |
+| `Music/mrclaps-this-heavy-metal…` | 2 min 09 | musique d'arène, rang 6 |
+| `Music/43084433-hard-rock-logo-intro…` | 13,8 s | déposé, **inutilisé** |
+| `Music/freesound_community-rock-destroy…` | 2,9 s | déposé, **inutilisé** |
+| `SoundEffects/MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
 | `Fireball.ogg` | 8,04 s | tir du joueur, coupé à 0,5 s |
 | `BigRoar.ogg` | 5,09 s | apparition d'un boss |
 | `chooseUpgradeSound.ogg` | 1,37 s | objet obtenu, nœud de Forge débloqué |

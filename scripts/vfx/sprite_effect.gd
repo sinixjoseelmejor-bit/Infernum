@@ -15,9 +15,24 @@ extends Sprite2D
 @export var last_frame: int = -1
 @export var fps: float = 60.0
 ## Un miroir aléatoire suffit à casser la répétition quand deux explosions
-## partent côte à côte. Pas de rotation : elle ferait tourner l'éclairage de
-## l'effet, qui vient d'en haut.
+## partent côte à côte.
 @export var random_flip: bool = true
+
+## ROTATION ALÉATOIRE. Réservée aux effets SANS haut ni bas : elle fait tourner
+## l'éclairage avec le dessin, donc elle ment sur un pic de pierre planté dans
+## le sol, dont la face éclairée doit rester vers le ciel. Un éclatement qui
+## projette ses débris dans toutes les directions, lui, n'a pas d'orientation
+## à trahir — et huit zones qui partent ensemble se ressemblent beaucoup moins.
+@export var random_rotation: bool = false
+
+## LECTURE À L'ENVERS, de la dernière image vers la première.
+##
+## Une planche d'impact peut raconter un pic qui jaillit PUIS se désagrège en
+## poussière. Lue à l'envers, la même planche raconte la poussière qui se
+## rassemble en pic — et surtout elle se TERMINE sur la pierre plantée, au lieu
+## de se terminer sur rien. C'est ce qui rend la tenue de la dernière image
+## utile : tenir une image vide n'affiche rien.
+@export var reverse: bool = false
 
 ## TENUE DE LA DERNIÈRE IMAGE, en secondes, puis fondu.
 ##
@@ -42,20 +57,28 @@ var _held: float = 0.0
 func _ready() -> void:
 	if last_frame < 0:
 		last_frame = hframes * vframes - 1
-	frame = first_frame
+	frame = _image_de_depart()
 	if random_flip and randi() % 2 == 0:
 		flip_h = true
+	if random_rotation:
+		rotation = randf() * TAU
+		# `offset` place le dessin par rapport au point touché, et il tourne avec
+		# le nœud : sans contre-rotation, le dessin décrirait un cercle autour de
+		# ce point au lieu de rester dessus. Contre-tourné, il retombe exactement
+		# là où il serait sans rotation.
+		offset = offset.rotated(-rotation)
 
 
 func _process(delta: float) -> void:
 	_time += delta
-	var index := first_frame + int(_time * fps)
-	if index <= last_frame:
+	var avance := int(_time * fps)
+	var index := (last_frame - avance) if reverse else (first_frame + avance)
+	if index >= first_frame and index <= last_frame:
 		frame = index
 		return
 
-	# L'animation est finie : on tient la dernière image, puis on s'éteint.
-	frame = last_frame
+	# L'animation est finie : on tient la dernière image JOUÉE, puis on s'éteint.
+	frame = _image_de_fin()
 	if hold_time <= 0.0:
 		queue_free()
 		return
@@ -67,3 +90,11 @@ func _process(delta: float) -> void:
 		var reste := hold_time - _held
 		if reste < hold_fade:
 			modulate.a = reste / hold_fade
+
+
+func _image_de_depart() -> int:
+	return last_frame if reverse else first_frame
+
+
+func _image_de_fin() -> int:
+	return first_frame if reverse else last_frame

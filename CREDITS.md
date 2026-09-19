@@ -99,6 +99,27 @@ toute diffusion publique, au même titre que la police Alagard et `menu.jpg`. Si
 elle vient d'ailleurs, sa licence peut être plus étroite que celle qui autorise
 le versionnement de ce dossier.
 
+### Musiques d'arène ajoutées — dossier `Music/`
+
+Six fichiers déposés dans `assets/audio/Music/`, dont quatre employés comme
+musiques d'arène. **Aucun fichier de licence ne les accompagne** : ils ont été
+téléchargés comme libres de droits et libres de licence, et c'est cette mention
+faite au téléchargement qui fonde leur emploi ici. Si le point devait être
+retracé, c'est la page de téléchargement qui fait foi.
+
+Les noms de fichiers sont **gardés tels quels**, avec le pseudonyme de l'auteur
+et l'identifiant du morceau. Ils sont laids dans le code et c'est le prix : ce
+sont eux qui portent l'attribution, faute de fichier de licence.
+
+| Fichier | Auteur annoncé | Durée | Emploi |
+|---|---|---|---|
+| `alex-morgan-thrash-metal-591343.ogg` | alex-morgan | 3 min 02 | arène |
+| `wolfdudedodi-cyber-wolf-529967.ogg` | wolfdudedodi | 3 min 24 | arène |
+| `strawberry_candy-powerful-heavy-metal-heavy-force-572627.ogg` | strawberry_candy | 2 min 07 | arène |
+| `mrclaps-this-heavy-metal-492569.ogg` | mrclaps | 2 min 09 | arène |
+| `43084433-hard-rock-logo-intro-335297.ogg` | — | 13,8 s | aucun |
+| `freesound_community-rock-destroy-6409.ogg` | freesound_community | 2,9 s | aucun |
+
 ## Art propre au projet
 
 Versionné, contrairement aux planches tirées des packs : il n'appartient à
