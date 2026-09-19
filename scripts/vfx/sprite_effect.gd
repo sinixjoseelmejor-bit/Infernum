@@ -19,7 +19,24 @@ extends Sprite2D
 ## l'effet, qui vient d'en haut.
 @export var random_flip: bool = true
 
+## TENUE DE LA DERNIÈRE IMAGE, en secondes, puis fondu.
+##
+## Une planche d'impact au sol se termine sur son état final — la poussière
+## retombée, les pics calcinés — et disparaître à l'image suivante efface ce
+## que l'animation venait d'etablir. Le sol redevient intact en un dixième de
+## seconde, comme si rien ne s'était passé.
+##
+## Le fondu n'est pas un ornement : une tenue suivie d'une disparition sèche
+## remplace un défaut par un autre, la dernière image sautant au lieu de
+## s'éteindre. Il est compris DANS la tenue, pas en plus.
+##
+## Les deux valent 0 par défaut : l'explosion de Braise éternelle et l'animation
+## de mort se terminent sur du vide, elles n'ont rien à tenir.
+@export var hold_time: float = 0.0
+@export var hold_fade: float = 0.0
+
 var _time: float = 0.0
+var _held: float = 0.0
 
 
 func _ready() -> void:
@@ -33,7 +50,20 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	var index := first_frame + int(_time * fps)
-	if index > last_frame:
+	if index <= last_frame:
+		frame = index
+		return
+
+	# L'animation est finie : on tient la dernière image, puis on s'éteint.
+	frame = last_frame
+	if hold_time <= 0.0:
 		queue_free()
 		return
-	frame = index
+	_held += delta
+	if _held >= hold_time:
+		queue_free()
+		return
+	if hold_fade > 0.0:
+		var reste := hold_time - _held
+		if reste < hold_fade:
+			modulate.a = reste / hold_fade

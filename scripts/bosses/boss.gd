@@ -53,6 +53,22 @@ extends Enemy
 @export_group("Attaques")
 @export var projectile_scene: PackedScene
 @export var telegraph_scene: PackedScene
+## CE QUI JAILLIT DU SOL QUAND LA ZONE DÉTONE, propre à chaque boss.
+##
+## Les zones annoncées n'affichaient que leur flash dessiné, et c'était un choix
+## défendable tant que la seule planche disponible était une bouffée générique :
+## huit zones qui partent ensemble n'ont pas besoin qu'on en rajoute. Avec une
+## planche d'impacts au sol, le calcul change — un écrasement de colosse de
+## pierre DOIT faire jaillir la pierre, et c'est le genre de chose qui distingue
+## un boss d'un autre sans toucher à une seule règle.
+##
+## Lilith n'en a pas : sa seule zone annonce une téléportation et ne blesse
+## personne (voir le garde-fou dans `telegraph.gd`).
+@export var telegraph_impact: PackedScene
+## Largeur utile du dessin dans sa cellule, mesurée sur la couverture alpha.
+## Elle diffère d'un effet à l'autre — 58 px pour la braise, 90 pour la pierre —
+## et c'est elle qui fait correspondre le dessin au RAYON de la zone.
+@export var telegraph_impact_width: float = 88.0
 
 ## Mise a l'echelle des degats d'ATTAQUE (zones annoncees et projectiles), posee
 ## par le WaveManager a l'apparition. Les valeurs ecrites dans chaque boss sont
@@ -285,6 +301,8 @@ func telegraph_at(point: Vector2, radius: float, delay: float, damage: float,
 	zone.delay = delay
 	zone.damage = _outgoing_damage(damage)
 	zone.color = color
+	zone.impact_scene = telegraph_impact
+	zone.impact_content_width = telegraph_impact_width
 	_projectile_parent().add_child(zone)
 
 

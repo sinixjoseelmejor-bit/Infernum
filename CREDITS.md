@@ -120,6 +120,16 @@ elle n'impose rien, la mention est ici parce que l'auteur la dit appréciée.
 
 Utilisée pour l'explosion de *Braise éternelle*.
 
+### Impacts au sol des boss
+
+`assets/sprites/bosses/vfx-Sheet.png` — cinq effets d'impact sur une grille de
+17 × 5 cellules de 96 px, achetés. **Aucun fichier de licence n'accompagne la
+planche** : l'auteur précise à l'achat qu'elle est d'usage libre, et c'est sur
+cette mention que repose son emploi ici. Si ce point devait être retracé, c'est
+la page d'achat qui fait foi, faute de `LICENSE.txt`.
+
+Utilisée pour les zones annoncées de Golgota, Baal, Asmodée et Lucifer.
+
 ### Icônes d'objets
 
 `assets/packs/ItemIconPack/` — 1244 icônes 16×16, `LICENSE.txt` fourni avec le
