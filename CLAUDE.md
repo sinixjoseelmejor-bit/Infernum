@@ -42,6 +42,11 @@ révélées fausses ici, et les erreurs sont documentées dans le README.
   le jeu tourne à ~170 fps en fenêtré.
 - Pour mesurer un coût **par image**, **désactiver la vsync** — sinon tout se
   vaut.
+- **Ne jamais prendre une capture d'écran DANS une boucle de chronométrage.**
+  Enregistrer un PNG de 3440 × 1440 bloque le jeu ~0,6 s : une animation de
+  0,53 s a été mesurée à 1,00 s pour cette seule raison. En cas de doute,
+  comparer l'horloge murale au temps que le NŒUD a vécu — s'ils divergent, c'est
+  le banc qui bloque, pas le jeu qui rame.
 - Les `Array` et `Dictionary` déclarés en `const` sont en **lecture seule à
   l'exécution** dans Godot 4 : impossible de les patcher en mémoire pour un A/B.
   Il faut éditer le fichier.
