@@ -2605,6 +2605,27 @@ Un impact vit donc **1,73 s** en tout. Golgota enchaîne deux écrasements toute
 les 1,7 s en phase 2 : les traces se chevauchent, et c'est le comportement voulu
 — un sol que le colosse a déjà brisé ne redevient pas intact entre deux coups.
 
+#### Golgota frappe deux fois moins vite que les autres
+
+Son impact joue à **30 images par seconde** là où les trois autres sont à 60,
+soit **0,53 s** d'animation au lieu de 0,28. À 60 la pierre jaillissait d'un
+coup sec puis se figeait 1,45 s : le contraste entre une éruption brève et une
+trace longue faisait paraître l'animation pressée, ce qu'elle était.
+
+C'est aussi ce que son identité demande. Golgota est « lent, écrasant », il se
+déplace à 42 quand Lilith va à 140 : sa pierre n'a aucune raison de jaillir à la
+vitesse d'une flamme. Les trois autres gardent 60 — le feu de Baal, la roche
+sèche d'Asmodée et la braise de Lucifer sont des événements brefs.
+
+Mesuré en jeu : **0,53 s d'animation, 1,50 s de tenue, 2,03 s en tout.**
+
+**Et la première mesure disait 1,00 s d'animation.** Le banc enregistrait une
+capture d'écran au milieu de la boucle de chronométrage : écrire un PNG de
+3440 × 1440 bloque le jeu environ six dixièmes de seconde. L'horloge murale
+avançait, `_time` du nœud non — c'est la comparaison des deux qui l'a montré,
+et rien dans le jeu n'était ralenti. **On ne capture pas dans une mesure de
+temps.**
+
 `hold_time` et `hold_fade` valent **0 par défaut** : l'explosion de Braise
 éternelle et l'animation de mort se terminent sur du vide, elles n'ont rien à
 tenir et leur comportement ne change pas.
@@ -3072,7 +3093,7 @@ standard.
 Le choix du sprite n'est pas arbitraire : l'imp a été essayé et rejeté, son épée
 pâle occupe la moitié de la masse et brouille la silhouette à 32 px. Golgota n'a
 qu'un accent de couleur, et il survit à la réduction.
-- **Version.** `config/version` est à `0.8.1`, repris dans les métadonnées de
+- **Version.** `config/version` est à `0.8.2`, repris dans les métadonnées de
   l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.
