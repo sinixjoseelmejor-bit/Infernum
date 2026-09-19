@@ -99,10 +99,16 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 
 ## Points ouverts
 
-- **Trois licences à confirmer avant toute diffusion publique** : la police
+- **Licences à confirmer avant toute diffusion publique** : la police
   **Alagard** (créditée « Pix3M », sans licence vérifiée), l'illustration
   **menu.jpg**, et **MusicGameplay2.ogg**, déposée dans le dossier audio sans
-  qu'on sache si le `LICENSE.txt` du lot la couvre.
+  qu'on sache si le `LICENSE.txt` du lot la couvre. Les quatre musiques de
+  `assets/audio/Music/` et la planche `vfx-Sheet.png` sont dans un autre cas :
+  elles ont été annoncées libres au téléchargement ou à l'achat, **sans fichier
+  de licence joint** — c'est la page d'origine qui fait foi.
+- **Deux fichiers audio déposés et inutilisés**, en attente de décision : un
+  générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
+  2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.

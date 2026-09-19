@@ -17,6 +17,12 @@ extends Node
 ## infiniment moins que d'ignorer le tir qui vient de partir.
 
 const DIR := "res://assets/audio/SoundEffects/"
+## LES MUSIQUES PORTENT LEUR DOSSIER, les effets non. Les fichiers du lot
+## d'origine vivent sous `SoundEffects/` avec le `LICENSE.txt` qui les couvre,
+## et les déplacer pour faire joli casserait cette piste-là. Les musiques
+## ajoutées depuis vivent sous `Music/`. Le chemin est donc écrit en entier
+## dans la liste plutôt que deviné.
+const AUDIO_DIR := "res://assets/audio/"
 const VOICES := 16
 ## Fondu enchaîné entre deux musiques, et descente d'une voix coupée.
 const MUSIC_FADE := 0.7
@@ -25,11 +31,15 @@ const SILENCE_DB := -60.0
 
 ## UNE PISTE OU PLUSIEURS, et c'est la taille de la liste qui décide du reste.
 ##
-## L'arène en a deux : une run qui va loin dure plus de vingt minutes, donc une
+## L'arène en a six : une run qui va loin dure plus de vingt minutes, donc une
 ## seule piste de 4 min 26 se répète quatre fois. Elles s'ENCHAÎNENT au lieu
 ## d'être tirées au sort à l'ouverture : un tirage par run laisserait encore une
 ## seule piste tourner en boucle pendant toute la partie, ce qui est exactement
-## le problème qu'on voulait régler.
+## le problème qu'on voulait régler. Les six font 17 min 14 bout à bout.
+##
+## L'ORDRE ALTERNE LES DEUX SOURCES et les durées : on entre dans la liste à un
+## rang tiré au sort, puis on la suit, donc deux pistes voisines sont deux
+## pistes qu'on entendra l'une après l'autre à chaque run.
 ##
 ## LE BOUCLAGE DÉPEND DU NOMBRE. Une liste à une piste boucle nativement, sans
 ## trou — c'est indispensable au menu, dont la piste ne dure que 15,5 s et dont
@@ -37,8 +47,28 @@ const SILENCE_DB := -60.0
 ## ne boucle PAS : c'est `finished` qui enchâine, et il ne se déclenche jamais
 ## sur un flux bouclé.
 const MUSIC := {
-	&"menu": ["MenuSoundMusic.ogg"],
-	&"arene": ["MusicGameplay.ogg", "MusicGameplay2.ogg"],
+	&"menu": ["SoundEffects/MenuSoundMusic.ogg"],
+	&"arene": [
+		"SoundEffects/MusicGameplay.ogg",
+		"Music/alex-morgan-thrash-metal-591343.ogg",
+		"SoundEffects/MusicGameplay2.ogg",
+		"Music/wolfdudedodi-cyber-wolf-529967.ogg",
+		"Music/strawberry_candy-powerful-heavy-metal-heavy-force-572627.ogg",
+		"Music/mrclaps-this-heavy-metal-492569.ogg",
+	],
+}
+
+## CORRECTION DE NIVEAU, PISTE PAR PISTE. Les fichiers ne sont pas masterisés
+## ensemble : mesurés en RMS sur trois fenêtres de 4 s prises à 15 %, 45 % et
+## 75 % de chaque piste, ils s'étalent de -13,95 à -16,62 dB. Les deux pistes
+## d'origine tiennent -14,85 et -14,69 dB : c'est la référence, puisque c'est
+## le niveau auquel tout le reste du jeu a été réglé.
+##
+## Seules les pistes qui s'en écartent d'AU MOINS 1 dB figurent ici. En dessous,
+## la correction ne s'entend pas et la table ment sur sa précision.
+const MUSIC_GAIN := {
+	"Music/alex-morgan-thrash-metal-591343.ogg": 1.8,
+	"Music/mrclaps-this-heavy-metal-492569.ogg": -0.9,
 }
 
 ## Un son = un fichier plus la façon de le jouer.
@@ -83,6 +113,7 @@ var _voice_db: Array[float] = []
 var _last_played: Dictionary = {}
 
 var _playlists: Dictionary = {}
+var _gains: Dictionary = {}
 var _piste: int = 0
 var _music: Array[AudioStreamPlayer] = []
 var _music_active: int = 0
@@ -100,11 +131,14 @@ func _ready() -> void:
 	for key in MUSIC:
 		var pistes: Array = MUSIC[key]
 		var flux: Array[AudioStream] = []
+		var gains: Array[float] = []
 		for fichier in pistes:
-			var stream := _charger(fichier, pistes.size() == 1)
+			var stream := _charger(AUDIO_DIR + fichier, pistes.size() == 1)
 			if stream != null:
 				flux.append(stream)
+				gains.append(MUSIC_GAIN.get(fichier, 0.0))
 		_playlists[key] = flux
+		_gains[key] = gains
 	for key in SFX:
 		_load(key, (SFX[key] as Dictionary)["file"], false)
 
@@ -143,13 +177,12 @@ func _ready() -> void:
 
 
 func _load(key: StringName, file: String, looping: bool) -> void:
-	var stream := _charger(file, looping)
+	var stream := _charger(DIR + file, looping)
 	if stream != null:
 		_streams[key] = stream
 
 
-func _charger(file: String, looping: bool) -> AudioStream:
-	var path := DIR + file
+func _charger(path: String, looping: bool) -> AudioStream:
 	if not ResourceLoader.exists(path):
 		push_warning("Audio : fichier manquant, son ignoré — " + path)
 		return null
@@ -260,7 +293,7 @@ func play_music(track: StringName) -> void:
 		incoming.stream = stream
 		incoming.volume_db = SILENCE_DB
 		incoming.play()
-		_music_tween.tween_property(incoming, ^"volume_db", 0.0, MUSIC_FADE)
+		_music_tween.tween_property(incoming, ^"volume_db", _gain_piste(), MUSIC_FADE)
 	if outgoing.playing:
 		_music_tween.tween_property(outgoing, ^"volume_db", SILENCE_DB, MUSIC_FADE)
 		_music_tween.chain().tween_callback(outgoing.stop)
@@ -284,8 +317,14 @@ func _piste_suivante(index: int) -> void:
 	_piste = (_piste + 1) % flux.size()
 	var player := _music[_music_active]
 	player.stream = flux[_piste]
-	player.volume_db = 0.0
+	player.volume_db = _gain_piste()
 	player.play()
+
+
+## Correction de niveau de la piste en cours, 0 dB si elle n'en demande pas.
+func _gain_piste() -> float:
+	var gains: Array = _gains.get(_music_track, [])
+	return gains[_piste] if _piste < gains.size() else 0.0
 
 
 func stop_music() -> void:

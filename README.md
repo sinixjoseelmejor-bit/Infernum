@@ -2776,7 +2776,7 @@ faute de quoi la répétition se verrait ; le détail est dans
 
 ## Son
 
-Huit fichiers OGG Vorbis, dans `assets/audio/SoundEffects/`. L'OGG est le seul
+Quatorze fichiers OGG Vorbis, dans `assets/audio/`. L'OGG est le seul
 format qui reboucle sans trou : le MP3 porte dans sa définition un silence
 d'encodeur en tête et en queue, qui s'entendrait à chaque reprise de la musique.
 
@@ -2786,12 +2786,71 @@ autonome (voir [`CREDITS.md`](CREDITS.md)). Un clone suffit donc pour avoir le
 son. S'ils venaient à manquer, le jeu démarre quand même, muet, avec un
 avertissement par fichier et aucune erreur.
 
-### L'arène a deux pistes, et elles s'enchaînent
+### L'arène a six pistes, et elles s'enchaînent
 
 Une run qui va loin dure plus de vingt minutes. Avec une seule piste de 4 min 26,
 on l'entend donc quatre ou cinq fois — et on finit par l'entendre au sens où on
-ne l'écoute plus. La seconde piste (2 min 05) porte le total à **6 min 31 avant
-la première répétition**.
+ne l'écoute plus. Les six pistes portent le total à **17 min 13 avant la
+première répétition** : une run complète, ou presque, sans jamais réentendre la
+même musique.
+
+**L'ordre alterne les deux sources et les durées.** On entre dans la liste à un
+rang tiré au sort puis on la suit : deux pistes voisines sont deux pistes qu'on
+entendra l'une après l'autre à chaque run, quel que soit le point d'entrée.
+
+| Rang | Piste | Durée |
+|---|---|---|
+| 1 | `MusicGameplay.ogg` | 4 min 26 |
+| 2 | `alex-morgan-thrash-metal` | 3 min 02 |
+| 3 | `MusicGameplay2.ogg` | 2 min 05 |
+| 4 | `wolfdudedodi-cyber-wolf` | 3 min 24 |
+| 5 | `strawberry_candy-powerful-heavy-metal` | 2 min 07 |
+| 6 | `mrclaps-this-heavy-metal` | 2 min 09 |
+
+#### Les niveaux ont dû être mesurés, pas supposés
+
+Les fichiers ne sont pas masterisés ensemble : une piste 3 dB plus forte que la
+précédente s'entend comme une erreur du jeu, pas comme un choix de l'album.
+Mesuré en RMS sur trois fenêtres de 4 s prises à 15 %, 45 % et 75 % de chaque
+piste (l'énergie d'un morceau n'est pas la même à l'intro et au refrain, une
+fenêtre unique aurait mesuré le passage sur lequel elle est tombée) :
+
+| Piste | RMS | Correction |
+|---|---|---|
+| `MusicGameplay.ogg` | −14,85 dB | référence |
+| `MusicGameplay2.ogg` | −14,69 dB | référence |
+| `mrclaps-this-heavy-metal` | −13,95 dB | **−0,9 dB** |
+| `strawberry_candy-powerful-heavy-metal` | −14,63 dB | aucune |
+| `wolfdudedodi-cyber-wolf` | −15,35 dB | aucune |
+| `alex-morgan-thrash-metal` | −16,62 dB | **+1,8 dB** |
+
+Les deux pistes d'origine sont la **référence** : c'est sur elles que tous les
+volumes d'effets ont été réglés, les corriger déréglerait le reste du jeu.
+
+**Seules les pistes qui s'écartent d'au moins 1 dB sont corrigées.** En dessous,
+la correction ne s'entend pas et la table mentirait sur sa précision.
+
+#### Les fins de piste ont été vérifiées avant de garder la jointure nette
+
+L'enchaînement se fait sans fondu, ce qui suppose que chaque piste se termine
+sur une résolution. Mesuré par tranches de 0,5 s sur les trois dernières
+secondes, aucune des quatre nouvelles ne s'arrête plus sèchement que les deux
+d'origine : toutes finissent entre −14 et −27 dB, comme `MusicGameplay.ogg`
+(−17,5 à −21 dB). La jointure garde donc le même comportement.
+
+#### Deux fichiers déposés ne sont pas des musiques d'arène
+
+Le dossier en contient six ; **quatre** entrent dans la liste.
+
+- `43084433-hard-rock-logo-intro-335297.ogg` (13,8 s) est un générique de logo.
+  Dans la rotation d'arène, il ferait changer la musique au bout de treize
+  secondes. Il conviendrait en revanche au menu, dont l'unique piste de 15,5 s
+  se répète quatre fois par minute.
+- `freesound_community-rock-destroy-6409.ogg` (2,9 s) est un **effet**, pas une
+  musique — de la roche qui se brise, ce qui tombe bien pour l'écrasement de
+  Golgota, qui n'a aucun son propre.
+
+Les deux restent sur le disque, hors de toute liste, en attendant une décision.
 
 Elles s'**enchaînent** au lieu d'être tirées au sort à l'ouverture : un tirage par
 run laisserait encore une seule piste tourner en boucle pendant toute la partie,
@@ -2820,10 +2879,11 @@ Deux détails qui décident du fonctionnement :
 
 | Sonde | Attendu | Mesuré |
 |---|---|---|
-| Pistes d'arène chargées | 2 | **2** (266 s et 125 s) |
+| Pistes d'arène chargées | 6 | **6**, 17 min 13 au total |
+| Correction de niveau appliquée | 2 pistes sur 6 | +1,8 dB et −0,9 dB, les autres à 0 |
 | Bouclage des pistes d'arène | non | `loop = false` |
 | Bouclage du menu | oui | `loop = true` |
-| Fin de piste | passe à l'autre et joue | piste 1 → 0, flux changé, en lecture |
+| Fin de piste | passe à la suivante et joue | 3 → 4 → 5 → 0, flux changé, en lecture |
 | Fin sur le lecteur coupé | ignorée | flux inchangé |
 
 ### Deux bus, deux curseurs
@@ -2909,11 +2969,22 @@ temps.
 
 ### Les fichiers
 
+Les musiques d'origine restent sous `SoundEffects/`, avec le `LICENSE.txt` qui
+les couvre : les déplacer pour faire joli casserait cette piste-là. Les musiques
+ajoutées depuis vivent sous `Music/`. Le chemin est donc écrit en entier dans la
+liste plutôt que deviné à partir d'un dossier unique.
+
 | Fichier | Durée | Rôle |
 |---|---|---|
-| `MusicGameplay.ogg` | 4 min 26 | musique d'arène, 1re piste |
-| `MusicGameplay2.ogg` | 2 min 05 | musique d'arène, 2e piste |
-| `MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
+| `SoundEffects/MusicGameplay.ogg` | 4 min 26 | musique d'arène, rang 1 |
+| `Music/alex-morgan-thrash-metal…` | 3 min 02 | musique d'arène, rang 2 |
+| `SoundEffects/MusicGameplay2.ogg` | 2 min 05 | musique d'arène, rang 3 |
+| `Music/wolfdudedodi-cyber-wolf…` | 3 min 24 | musique d'arène, rang 4 |
+| `Music/strawberry_candy-powerful…` | 2 min 07 | musique d'arène, rang 5 |
+| `Music/mrclaps-this-heavy-metal…` | 2 min 09 | musique d'arène, rang 6 |
+| `Music/43084433-hard-rock-logo-intro…` | 13,8 s | déposé, **inutilisé** |
+| `Music/freesound_community-rock-destroy…` | 2,9 s | déposé, **inutilisé** |
+| `SoundEffects/MenuSoundMusic.ogg` | 15,5 s | musique des menus, en boucle |
 | `Fireball.ogg` | 8,04 s | tir du joueur, coupé à 0,5 s |
 | `BigRoar.ogg` | 5,09 s | apparition d'un boss |
 | `chooseUpgradeSound.ogg` | 1,37 s | objet obtenu, nœud de Forge débloqué |
