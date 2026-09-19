@@ -1664,6 +1664,29 @@ plafond n'était jamais atteint, les zones étaient la seule limite. Il en produ
 maintenant 1,94 en moyenne — toujours **sous** le plafond. La pression à se
 déplacer augmente ; le mur de dégâts inévitables, non.
 
+### Lucifer était le plus petit des cinq
+
+Mesuré sur la boîte du contenu de chaque planche de repos, multiplié par
+l'échelle du sprite dans la scène :
+
+| Boss | Échelle | À l'écran |
+|---|---|---|
+| Asmodée | ×5,5 | 253 × 137 px |
+| Golgota | ×5,5 | 176 × 170 px |
+| Baal | ×5,5 | 170 × 154 px |
+| Lilith | ×4,0 | 136 × 116 px |
+| **Lucifer** | ×5,0 → **×6,0** | 195 × 155 → **234 × 186 px** |
+
+Lucifer est le dernier boss, celui qu'on affronte à la vague 25 au bout d'une
+demi-heure, et il était le **seul des quatre gros sous ×5,5**. Il passe à ×6,0 :
+il domine désormais les quatre autres au lieu d'arriver en dessous.
+
+**Sa boîte de collision ne bouge pas** (rayon 50). Ce n'est pas un oubli :
+l'agrandir le rendrait plus facile à toucher ET plus dangereux au contact, deux
+changements d'équilibrage pour une demande d'apparence. Le décalage entre son
+dessin et sa boîte existait déjà — Asmodée mesure 253 px de large pour un rayon
+de 52 — parce que la boîte représente le corps, pas l'envergure.
+
 ## Le Déchaînement — la récompense d'avoir tué Lucifer
 
 **À QUOI SERT CE MODE**, parce que ça décide de tout le reste : c'est un **défi
