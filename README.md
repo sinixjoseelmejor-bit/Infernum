@@ -2630,6 +2630,65 @@ temps.**
 éternelle et l'animation de mort se terminent sur du vide, elles n'ont rien à
 tenir et leur comportement ne change pas.
 
+#### Chaque boss joue la planche à sa façon
+
+Quatre boss tirent leur impact de la même planche, et rien ne les distinguait
+au-delà de l'effet choisi : huit zones lancées ensemble affichaient huit fois le
+même dessin, à la même orientation, dans le même sens. Trois réglages y
+répondent, un par boss, et **aucun ne coûte quoi que ce soit en jeu**.
+
+**Asmodée — un miroir une fois sur deux.** Ses zones sont des points de chute de
+charge et elles tombent par paquets ; deux éclats de roche côte à côte se
+lisaient comme un copier-coller. `random_flip` était à `false` sur les quatre
+impacts, sans raison écrite. Il passe à `true` chez lui seul : le dessin est
+assez asymétrique pour que le retournement se voie, et la lumière de la planche
+vient d'en haut, donc la miroiter ne la contredit pas.
+
+**Lucifer — une orientation au hasard.** Son embrasement projette ses débris
+dans toutes les directions : c'est le seul des quatre qui n'a **ni haut ni bas**
+à trahir. La rotation lui est donc réservée — sur un pic de pierre planté dans
+le sol, elle ferait basculer la face éclairée et mentirait.
+
+Deux pièges, tous deux mesurés plutôt que devinés :
+
+- `offset` place le dessin par rapport au point touché, et il **tourne avec le
+  nœud**. Sans contre-rotation, l'éclat décrirait un cercle autour du point
+  d'impact au lieu de rester dessus. Il est donc contre-tourné du même angle.
+- Son `offset` valait `(0, -13)`, hérité d'un alignement au sol, alors que le
+  centre du dessin est à `(-1, -4)` de celui de la cellule : l'éclat paraissait
+  **78 px trop haut** à l'échelle où il est joué, soit les deux tiers du rayon
+  de la zone. Ça ne se voyait pas tant qu'il tombait toujours de travers de la
+  même façon ; une orientation au hasard l'a rendu évident. Corrigé à `(0, 4)`,
+  l'éclat est centré sur le cercle qui blesse.
+
+**Golgota — la planche se joue à l'envers**, de la dernière image vers la
+première. Sa rangée est la seule des quatre qui se **dissipe** : les trois
+autres se terminent sur de la pierre plantée ou des pics calcinés, la sienne
+finit en poussière emportée. Mesuré sur la couverture alpha de chaque cellule,
+sur les 9 216 pixels d'une image :
+
+| Image | 62 | 63 | 64 | 65 | 66 | 67 |
+|---|---|---|---|---|---|---|
+| Pixels opaques | 885 | 583 | 293 | 111 | 20 | **1** |
+
+La dernière image est **vide**. La tenue de 1,45 s ajoutée pour que le sol ne
+redevienne pas intact entre deux coups ne tenait donc **rien** chez Golgota :
+elle prolongeait une cellule transparente. Lue à l'envers, la même planche
+raconte la poussière qui se rassemble en pic, et surtout elle se termine sur la
+**pierre plantée** (1 459 pixels) — la tenue tient enfin quelque chose.
+
+La teinte n'a pas eu à bouger : recalculée sur l'image désormais tenue, elle
+donne 0,460 / 0,478 / 0,873 contre 0,46 / 0,48 / 0,87 en place, et le pic rend
+87 / 71 / 76 à l'écran contre 87 / 74 / 78 mesurés sur la capture — la couleur
+de la pierre de Golgota, comme prévu.
+
+**Ce que ça coûte à la lisibilité, et c'est assumé :** les cinq premières images
+jouées sont celles qui étaient les dernières, donc les plus vides. Pendant
+**0,17 s** après le coup, il ne reste que de la poussière éparse pour marquer
+l'endroit touché — le flash blanc de la zone, lui, a été retiré au patch
+précédent puisque l'impact le remplace. Démarrer la lecture à l'image 62, voire
+58 (une image de flash, qui marquerait le coup net), supprimerait ce trou.
+
 ### L'animation de mort — la même pour les cinq ennemis
 
 Un ennemi tué disparaîssait dans la même image que son dernier éclair de

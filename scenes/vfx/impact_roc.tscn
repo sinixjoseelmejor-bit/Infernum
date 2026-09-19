@@ -15,6 +15,6 @@ script = ExtResource("1_script")
 first_frame = 1
 last_frame = 11
 fps = 60.0
-random_flip = false
+random_flip = true
 hold_time = 1.45
 hold_fade = 0.45
