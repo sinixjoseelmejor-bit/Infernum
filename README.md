@@ -2912,6 +2912,34 @@ volumes d'effets ont été réglés, les corriger déréglerait le reste du jeu.
 **Seules les pistes qui s'écartent d'au moins 1 dB sont corrigées.** En dessous,
 la correction ne s'entend pas et la table mentirait sur sa précision.
 
+#### Le RMS ne suffisait pas : les six pistes ont été repesées en LUFS
+
+Le RMS mesure une énergie, pas une sensation. Deux morceaux au même RMS ne
+s'entendent pas au même volume si l'un est dense dans le médium et l'autre
+aéré — et quatre des six pistes sont du metal, c'est-à-dire exactement le cas où
+l'écart se creuse. La vérification s'est donc refaite en **LUFS pondéré K**
+(ITU-R BS.1770 : plateau aigu +4 dB à 1 682 Hz, coupe-bas à 38 Hz, les deux
+biquads calculés à la fréquence de mixage réelle), mesuré **à la sortie master**
+plutôt que sur le fichier :
+
+| Piste | LUFS | Écart |
+|---|---|---|
+| `mrclaps` | −32,20 | référence |
+| `strawberry_candy` | −32,20 | 0,0 |
+| `MusicGameplay` | −32,52 | −0,3 |
+| `MusicGameplay2` | −33,06 | −0,9 |
+| `wolfdudedodi` | −33,41 | −1,2 |
+| `alex-morgan` | −33,66 | −1,5 |
+| `MenuSoundMusic` | **−37,36** | **−4,8** |
+
+Les six pistes d'arène tiennent dans **1,5 dB** : l'égalisation faite au RMS
+résiste à la mesure perceptive, elle n'a pas eu à bouger.
+
+**La piste du menu, elle, est 4,8 dB en dessous.** Passer du menu à l'arène est
+donc une marche vers le haut. La corriger demanderait de la remonter, or ses
+crêtes sortent déjà à +6,5 dBFS : elle monterait dans la saturation. Le point
+reste ouvert et il se réglera sur le fichier, pas sur un gain.
+
 #### Les fins de piste ont été vérifiées avant de garder la jointure nette
 
 L'enchaînement se fait sans fondu, ce qui suppose que chaque piste se termine
@@ -2967,6 +2995,52 @@ Deux détails qui décident du fonctionnement :
 | Bouclage du menu | oui | `loop = true` |
 | Fin de piste | passe à la suivante et joue | 3 → 4 → 5 → 0, flux changé, en lecture |
 | Fin sur le lecteur coupé | ignorée | flux inchangé |
+
+### Le curseur de musique ne descendait pas
+
+Remonté en jeu : **la musique reste trop forte même en bas de la barre.** Deux
+causes, toutes deux mesurées, et aucune des deux n'est le choix des pistes.
+
+#### Le curseur était une amplitude, pas un volume
+
+La valeur du curseur partait telle quelle en amplitude — `linear_to_db(v)`, soit
+20 log v. Le bas de la course n'y descend presque pas : le dernier cran avant la
+coupure vaut **−26 dB**, le précédent −20 dB. Quelqu'un qui trouve la musique
+trop forte à ce cran-là n'a plus rien entre lui et le silence complet.
+
+Le curseur est donc **mis au carré** — 40 log v. Le haut de la course ne bouge
+pas, le bas descend vraiment :
+
+| Cran | 0,05 | 0,10 | 0,20 | 0,35 | 0,50 | 0,70 | 1,00 |
+|---|---|---|---|---|---|---|---|
+| Avant | −26,0 | −20,0 | −14,0 | −9,1 | −6,0 | −3,1 | 0 |
+| Après | −52,0 | −40,0 | −28,0 | −18,2 | −12,0 | −6,2 | 0 |
+
+**Les deux curseurs suivent la même règle.** Deux réglages côte à côte qui ne
+réagiraient pas pareil seraient pires que le défaut d'origine.
+
+**Un réglage déjà enregistré change donc de sens** : un 0,10 qui donnait −20 dB
+en donne −40. C'est voulu — c'est la plainte — mais il faut le savoir : il faut
+remonter le curseur vers 0,40 pour retrouver l'ancien niveau, et tout ce qui est
+en dessous est maintenant atteignable, ce qui n'était pas le cas.
+
+#### À fond, la musique saturait
+
+Mesurées à la sortie, les crêtes des pistes décodées vont de **+5,9 à
++8,1 dBFS** : ce sont des masterings modernes, limités très haut. Curseur à
+fond, elles sortaient du master entre **+3,2 et +5,4 dBFS**, donc écrêtées — et
+une crête écrêtée ne s'entend pas comme du volume, elle s'entend comme une
+déformation. C'est une partie de ce que « trop fort » désignait.
+
+La musique garde donc **8 dB de garde** (`MUSIC_HEADROOM`), mesurés pour que la
+pire crête des sept fichiers repasse sous 0 dBFS. Vérifié après coup, curseur à
+fond, sur la piste la plus crêtée : **−3,67 dBFS** de crête contre +5,4 avant,
+pour −22,25 dBFS de RMS.
+
+Le défaut du curseur passe de 0,70 à **1,00** : le haut de la course est
+désormais le niveau de référence, calibré et sans saturation. À l'oreille le
+réglage par défaut ne change donc pas (−22,3 contre −20,6 dBFS), c'est le reste
+de la course qui devient utilisable.
 
 ### Deux bus, deux curseurs
 

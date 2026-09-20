@@ -109,6 +109,9 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - **Deux fichiers audio déposés et inutilisés**, en attente de décision : un
   générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
   2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
+- La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :
+  passer du menu au jeu est une marche vers le haut. La remonter la ferait
+  saturer, ses crêtes sortant déjà à +6,5 dBFS — ça se règle sur le fichier.
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.

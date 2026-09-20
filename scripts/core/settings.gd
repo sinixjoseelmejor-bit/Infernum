@@ -25,9 +25,13 @@ const JOYSTICK_LABELS := {
 @export var shake_scale: float = 1.0
 ## Quantifie l'entrée analogique sur 8 axes (le clavier l'est nativement).
 @export var eight_way: bool = true
-## Volumes linéaires 0..1. Ils agissent sur les bus `Musique` et `Effets`, donc
-## sur tout ce qui y est branché — aucun lecteur n'a à être au courant.
-@export_range(0.0, 1.0, 0.05) var music_volume: float = 0.7
+## Volumes 0..1. Ils agissent sur les bus `Musique` et `Effets`, donc sur tout
+## ce qui y est branché — aucun lecteur n'a à être au courant.
+##
+## La musique part à fond : le haut du curseur EST le niveau de référence, déjà
+## 8 dB sous la saturation (voir `MUSIC_HEADROOM` dans `audio.gd`). Baisser par
+## défaut une piste déjà calibrée reviendrait à corriger deux fois.
+@export_range(0.0, 1.0, 0.05) var music_volume: float = 1.0
 @export_range(0.0, 1.0, 0.05) var sfx_volume: float = 0.9
 
 
@@ -94,7 +98,7 @@ func reset() -> void:
 	joystick_mode = JoystickMode.AUTO
 	shake_scale = 1.0
 	eight_way = true
-	music_volume = 0.7
+	music_volume = 1.0
 	sfx_volume = 0.9
 	apply_display()
 	apply_audio()
@@ -118,6 +122,23 @@ func apply_audio() -> void:
 	_set_bus(&"Effets", sfx_volume)
 
 
+## LE CURSEUR EST AU CARRÉ, et ce n'est pas une coquetterie.
+##
+## Pris tel quel comme amplitude — `linear_to_db(v)`, soit 20 log v — le bas du
+## curseur ne descend presque pas : le cran le plus bas avant la coupure vaut
+## -26 dB, et le suivant -20 dB. Un joueur qui trouve la musique trop forte à
+## ce cran-là n'a plus RIEN entre lui et le silence total. C'est exactement ce
+## qui a été remonté, et c'est un défaut du curseur, pas des pistes.
+##
+## Au carré — 40 log v — le même cran vaut -48 dB et le curseur garde du grain
+## jusqu'en bas, sans rien changer en haut de la course :
+##
+##     cran       0.05    0.10    0.20    0.35    0.50    0.70    1.00
+##     avant      -26.0   -20.0   -14.0    -9.1    -6.0    -3.1     0.0  (dB)
+##     après      -52.0   -40.0   -28.0   -18.2   -12.0    -6.2     0.0  (dB)
+##
+## Les deux bus suivent la même règle : deux curseurs côte à côte qui ne
+## réagiraient pas pareil seraient pires que le défaut d'origine.
 func _set_bus(bus: StringName, volume: float) -> void:
 	var index := AudioServer.get_bus_index(bus)
 	if index < 0:
@@ -125,7 +146,8 @@ func _set_bus(bus: StringName, volume: float) -> void:
 	# À zéro on coupe le bus : `linear_to_db(0)` vaut -inf, et un volume de -inf
 	# reste un calcul de mixage inutile à chaque image.
 	AudioServer.set_bus_mute(index, volume <= 0.001)
-	AudioServer.set_bus_volume_db(index, linear_to_db(maxf(volume, 0.001)))
+	var v := maxf(volume, 0.001)
+	AudioServer.set_bus_volume_db(index, linear_to_db(v * v))
 
 
 func _commit() -> void:

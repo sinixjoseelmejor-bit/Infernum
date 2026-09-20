@@ -26,6 +26,17 @@ const AUDIO_DIR := "res://assets/audio/"
 const VOICES := 16
 ## Fondu enchaîné entre deux musiques, et descente d'une voix coupée.
 const MUSIC_FADE := 0.7
+## GARDE SUR LA MUSIQUE, en dB.
+##
+## Les pistes sont masterisees fort : mesurees a la sortie, leurs cretes
+## atteignent +5,9 a +8,1 dBFS une fois decodees. Curseur a fond, elles
+## sortaient donc du master entre +3,2 et +5,4 dBFS -- c'est-a-dire ECRETEES,
+## et une crete ecretee ne s'entend pas comme un volume, elle s'entend comme une
+## deformation. Huit decibels de garde ramenent la pire d'entre elles a
+## -2,6 dBFS et le haut du curseur devient le niveau de reference, jouable.
+##
+## Ce n'est pas un reglage de gout : il se recalcule si les pistes changent.
+const MUSIC_HEADROOM := -8.0
 const CUT_FADE := 0.12
 const SILENCE_DB := -60.0
 
@@ -321,10 +332,11 @@ func _piste_suivante(index: int) -> void:
 	player.play()
 
 
-## Correction de niveau de la piste en cours, 0 dB si elle n'en demande pas.
+## Niveau de la piste en cours : la garde commune, plus sa correction propre.
 func _gain_piste() -> float:
 	var gains: Array = _gains.get(_music_track, [])
-	return gains[_piste] if _piste < gains.size() else 0.0
+	var correction: float = gains[_piste] if _piste < gains.size() else 0.0
+	return MUSIC_HEADROOM + correction
 
 
 func stop_music() -> void:
