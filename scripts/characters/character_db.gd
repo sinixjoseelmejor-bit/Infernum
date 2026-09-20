@@ -55,8 +55,11 @@ const CHARACTERS: Array[Dictionary] = [
 		"starting_mods": {"armor": 12.0},
 		"passive_name": "La Patience",
 		"passive_desc": "Régénère 1.4 PV par seconde, mais uniquement après "
-			+ "3 secondes sans avoir été touché.",
+			+ "3 secondes sans avoir été touché.\n"
+			+ "LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et "
+			+ "renvoie tout ce qui le touche. Rate, il reste planté.",
 		"special": &"patience",
+		"power": &"steadfast",
 		# Le seul a toucher la moisson des survivants a taux PLEIN : user une
 		# foule sans l'achever est ce qu'il fait, et c'est ce que la moisson
 		# paie. Les deux autres restent a 0,25.
@@ -138,6 +141,41 @@ const DASH_COOLDOWN := 2.2
 ##
 ## LE MINIMUM existe pour qu'un appui ne puisse pas gâcher la ressource : en
 ## dessous du quart de la Marque, le coup ne part pas du tout.
+## LE REFUS DE PLIER — le verbe de Job.
+##
+## POURQUOI UNE PARADE, ET PAS UN BOUCLIER. Job a déjà 146 PV effectifs et peut
+## atteindre les 90 % de réduction de l'armure : une immunité de plus ne
+## changerait pas sa façon de jouer, elle la confirmerait — et ce serait une
+## SECONDE source d'invulnérabilité, ce que les i-frames interdisent en étant
+## déjà la seule borne des dégâts entrants. La parade, elle, n'annule qu'UN coup
+## et se mérite : elle donne une compétence à apprendre au personnage le plus
+## passif des trois.
+##
+## ELLE NE PARE PAS LES ZONES ANNONCÉES, et c'est la règle la plus importante :
+## toute la difficulté du jeu est le placement, et une parade qui marche sur les
+## zones remplacerait « lis le sol et bouge » par un bouton. La distinction est
+## structurelle et non une liste de cas — une zone qui détone passe `null` comme
+## auteur, personne d'autre ne le fait.
+##
+## L'AMORCE EST LE CŒUR DU RÉGLAGE. Sans elle, à 170 images par seconde, la
+## parade serait une réaction pure : soit triviale, soit illisible. Avec 0,15 s
+## d'amorce elle devient une PRÉDICTION — et ce jeu est fait pour ça, puisque
+## chaque attaque de boss est annoncée par un disque qui se remplit.
+##
+## LA SANCTION est ce qui empêche de la lancer en boucle : raté, Job reste cloué
+## 0,5 s. À 2,5 coups par seconde au maximum, ça coûte à peu près un coup — de
+## quoi hésiter, pas de quoi condamner.
+const PARADE_AMORCE := 0.15
+const PARADE_FENETRE := 0.25
+const PARADE_RACINE := 0.5
+const PARADE_RECHARGE := 4.0
+const PARADE_RAYON := 150.0
+## Multiple des dégâts d'arme. FIXE, et surtout pas une fraction de ce qui a été
+## paré : au Déchaînement les dégâts ennemis montent en exponentielle, donc un
+## contre proportionnel exploserait exactement là où le mode cherche la limite.
+const PARADE_RATIO := 2.5
+const PARADE_RECUL := 420.0
+
 const PRIX_RAYON := 200.0
 const PRIX_RATIO := 3.0
 const PRIX_MINIMUM := 0.25

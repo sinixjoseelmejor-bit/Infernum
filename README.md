@@ -1118,7 +1118,7 @@ ligne biblique des boss. Le choix se fait au menu et se mémorise entre les runs
 | Vitesse | 215 | 218 | **288** |
 | Arme | 19 dégâts / 2.9 par s | 10.5 / 3.5 | 9 / **5.2** |
 | Portée | 340 | 355 | 300 |
-| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague — et le **PRIX DU SANG** (Espace / A), qui la dépense d'un coup autour de lui | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
+| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague — et le **PRIX DU SANG** (Espace / A), qui la dépense d'un coup autour de lui | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché**, et le **REFUS DE PLIER** (Espace / A) — une parade qui annule un coup et renvoie tout ce qui est au contact | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
 
 ### Équilibrage
 
@@ -1339,6 +1339,89 @@ d'entrée**, pas la fonction qu'elle appelle.
 Il n'a **pas de son**, comme la ruée : la banque en compte sept, aucun ne dit
 « dépenser ». C'est le troisième à ajouter, avec le coup encaissé et l'âme
 ramassée.
+
+### Le Refus de plier — la parade de Job
+
+Troisième et dernier verbe. Job était le personnage le plus **passif** des
+trois : il encaisse, il régénère, il attend. Ses 146 PV effectifs et ses 90 %
+de réduction possible en font déjà le plus solide — lui donner un bouclier
+n'aurait pas changé sa façon de jouer, ça l'aurait confirmée.
+
+**Et un bouclier était interdit.** Les 0,4 s d'i-frames sont la seule borne des
+dégâts entrants du jeu ; une immunité temporaire serait une seconde source
+d'invulnérabilité, c'est-à-dire un canal parallèle. La parade, elle, **annule un
+coup et un seul**, et se mérite.
+
+| | Valeur | Pourquoi celle-là |
+|---|---|---|
+| Amorce | **0,15 s** | sans elle, à 170 images par seconde, la parade serait une réaction pure : triviale ou illisible. Avec, c'est une **prédiction** — et le jeu est fait pour ça, chaque attaque de boss étant annoncée par un disque qui se remplit |
+| Fenêtre | **0,25 s** | assez pour couvrir l'arrivée d'un coup lu à l'avance, trop peu pour couvrir une hésitation |
+| Sanction | **0,5 s cloué** | ratée, il reste planté dans la mêlée. À 2,5 coups/s au maximum, ça coûte environ un coup : de quoi hésiter, pas de quoi condamner |
+| Recharge | **4 s** | le bouton d'équilibrage, comme les 2,2 s de la ruée |
+| Contre | **2,5 × l'arme**, 150 px, recul 420 | il repousse tout ce qui est au contact : c'est la réponse à ce que Job ne sait pas faire, se dégager |
+
+#### Ce qu'elle ne pare pas, et pourquoi c'est la règle la plus importante
+
+**Les zones annoncées ne se parent pas.** Toute la difficulté du jeu est le
+placement ; une parade qui marche sur les zones remplacerait « lis le sol et
+bouge » par un bouton, et effacerait la lecture qu'elle prétend récompenser —
+exactement l'argument qui interdit déjà une ruée invulnérable.
+
+La distinction est **structurelle et non une liste de cas** : une zone qui
+détone appelle `apply_damage` **sans auteur** (`source = null`), là où le
+contact, un projectile et un rayon en passent toujours un. La parade ne teste
+donc rien de particulier — elle ne s'arme que s'il y a quelqu'un en face.
+
+**Un coup paré n'ouvre pas les i-frames**, puisqu'on sort avant `take_damage`.
+Parer dans une mêlée laisse donc exposé 0,4 s plus tôt que d'encaisser : la
+parade n'est pas gratuite, même réussie. C'est mesuré — le coup suivant passe
+immédiatement.
+
+**Le contre fait des dégâts FIXES**, un multiple des dégâts d'arme, et surtout
+pas une fraction de ce qui a été paré : au Déchaînement les dégâts ennemis
+montent en exponentielle, donc un contre proportionnel exploserait exactement là
+où le mode cherche la limite.
+
+#### Trois états, parce qu'une recharge ne suffisait pas
+
+La ruée pouvait se contenter d'une jauge de recharge : elle part à l'instant où
+on la demande. Pas celle-ci. Un joueur qui ne voit pas **quand** la fenêtre est
+ouverte ne peut pas apprendre à la placer — il croit que le jeu répond mal alors
+qu'il appuie trop tôt.
+
+| État | Dessin |
+|---|---|
+| Amorce | un anneau large qui se **resserre** vers le corps |
+| Fenêtre | un anneau **serré et vif**, plus un point central |
+| Recharge | un arc qui se remplit, comme la ruée |
+| Réussite | un éclat blanc, et l'onde du contre part jusqu'à 150 px |
+
+Le bleu est celui de Job et ressemble à celui de la ruée : ça ne pose pas de
+problème, les deux appartiennent à des personnages différents et ne peuvent pas
+être à l'écran en même temps.
+
+#### Sondes
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Coup de 40 dans la fenêtre | annulé | **140 → 140 PV** |
+| Contre sur une brute à 100 px | dégâts | **42,3** (2,5 × 16,92) |
+| **Zone annoncée** dans la fenêtre | **encaissée** | **140 → 118,6 PV** |
+| Coup suivant immédiat | il passe | **140 → 111,4 PV** |
+| Parade ratée | cloué, puis libre | **0 px** pendant 0,5 s, **79 px** ensuite |
+| Nouvelle parade après réussite | refusée | **fenêtre fermée** |
+| Cible à 149 px | touchée | **42,3** |
+| Cible à 151 px | épargnée | **0** |
+| Caïn et Loth | aucune parade | **coup encaissé, 85 → 65 et 80 → 60** |
+
+**Le banc s'est trompé une fois, et la cause mérite d'être gardée** : le contre
+mesurait 59,2 au lieu de 42,3, soit exactement le contre **plus une balle de
+Job** (16,92). Son arme porte à 355 px, donc toute cible à portée du contre
+l'est aussi, et un tir parti dans la même image entrait dans la mesure. Coupée
+l'arme, le chiffre tombe pile sur l'attendu. Une mesure de dégâts sur un
+personnage qui tire tout seul doit d'abord le faire taire.
+
+Elle n'a **pas de son**, comme la ruée et le Prix du sang.
 
 ## Démarche procédurale
 
