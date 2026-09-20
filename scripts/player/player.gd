@@ -56,6 +56,11 @@ var _knockback: Vector2 = Vector2.ZERO
 
 ## Ruée : réservée aux personnages qui la portent (`CharacterData.dash`).
 var _peut_foncer: bool = false
+## Pouvoir non-déplacement du personnage, s'il en a un. Le joueur ne l'exécute
+## pas : il annonce l'appui, et le système qui possède la ressource répond.
+var _pouvoir: StringName = &""
+var _jauge_marque: MarkGauge
+var _marque_plafond: float = 1.0
 var _dash_direction: Vector2 = Vector2.RIGHT
 var _dash_restant: float = 0.0
 var _dash_recharge: float = 0.0
@@ -97,8 +102,13 @@ func _physics_process(delta: float) -> void:
 		facing = move_input.normalized()
 
 	_dash_recharge = maxf(0.0, _dash_recharge - delta)
-	if _ruee_disponible() and Input.is_action_just_pressed(&"dash"):
-		_lancer_ruee()
+	# UNE SEULE TOUCHE, un pouvoir par personnage. Elle s'appelle encore `dash`
+	# dans la table d'entrées, du nom du premier qui l'a utilisée.
+	if Input.is_action_just_pressed(&"dash") and not health.is_dead:
+		if _ruee_disponible():
+			_lancer_ruee()
+		elif _pouvoir != &"":
+			GameEvents.power_requested.emit()
 
 	if _dash_restant > 0.0:
 		_avancer_ruee(delta)
@@ -115,6 +125,12 @@ func _physics_process(delta: float) -> void:
 	if _jauge != null:
 		var reste := _dash_recharge / maxf(0.01, Characters.DASH_COOLDOWN)
 		_jauge.remplissage = clampf(1.0 - reste, 0.0, 1.0)
+
+	if _jauge_marque != null:
+		# La jauge lit la MÊME valeur que les dégâts : le bonus déjà appliqué,
+		# divisé par son plafond. Elle ne peut donc pas mentir sur la charge.
+		var marque: float = RunState.character_bonus.get(&"damage_pct", 0.0)
+		_jauge_marque.remplissage = clampf(marque / _marque_plafond, 0.0, 1.0)
 
 	# Le stick droit prime s'il est poussé ; sinon les armes visent dans la
 	# direction du déplacement — sur mobile le pouce sert aux deux à la fois.
@@ -243,6 +259,15 @@ func _apply_character(character: CharacterData) -> void:
 	if _peut_foncer and _jauge == null:
 		_jauge = DashGauge.new()
 		add_child(_jauge)
+	_pouvoir = character.power
+	if _pouvoir == &"blood_price" and _jauge_marque == null:
+		_jauge_marque = MarkGauge.new()
+		_jauge_marque.minimum = Characters.PRIX_MINIMUM
+		add_child(_jauge_marque)
+		# Le plafond ne bouge pas pendant une run : la Forge s'achète entre deux
+		# parties. On le lit une fois plutôt qu'à chaque image.
+		_marque_plafond = maxf(0.01,
+			Characters.MARK_MAX + Forge.get_special_total(&"mark_max"))
 	targeting.range_radius = character.targeting_range
 	animator.set_sheets(character.sprite_idle, character.sprite_walk)
 	sprite.offset = character.sprite_offset

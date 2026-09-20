@@ -1118,7 +1118,7 @@ ligne biblique des boss. Le choix se fait au menu et se mémorise entre les runs
 | Vitesse | 215 | 218 | **288** |
 | Arme | 19 dégâts / 2.9 par s | 10.5 / 3.5 | 9 / **5.2** |
 | Portée | 340 | 355 | 300 |
-| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
+| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague — et le **PRIX DU SANG** (Espace / A), qui la dépense d'un coup autour de lui | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
 
 ### Équilibrage
 
@@ -1246,6 +1246,99 @@ jauges au même endroit se confondraient :
 Elle n'a pas de son : la banque en compte sept, aucun ne dit « traverser », et en
 détourner un dirait autre chose. C'est le premier à ajouter avec le coup encaissé
 et l'âme ramassée.
+
+### Le Prix du sang — Caïn dépense sa Marque
+
+Même raisonnement que pour la ruée, appliqué au personnage suivant : il fallait
+un **verbe**, et il ne fallait pas inventer une ressource pour l'alimenter.
+
+La Marque en était déjà une, gâchée. Elle monte jusqu'à +25 % en tuant, puis
+**retombe à zéro à chaque vague**, et le joueur n'avait jamais rien pu en faire :
+elle se remplit toute seule et se vide toute seule. Le pouvoir en fait une
+décision — **garder ses 25 % pour le boss qui arrive, ou les brûler maintenant
+pour sortir d'un encerclement**.
+
+| | Valeur | Pourquoi celle-là |
+|---|---|---|
+| Rayon | **200 px** | l'explosion de Braise éternelle porte à 135 px et part à chaque élimination ; celui-ci coûte une vague de Marque et ne part qu'une fois. À 200 px il prend une mêlée entière autour du joueur sans devenir une frappe d'écran |
+| Dégâts | **3 × l'arme × la charge** | ils suivent l'arme principale, comme l'explosion : ils profitent des objets de dégâts, mais pas de la cadence ni du multishot — c'est ce qui les empêche de scaler seuls |
+| Minimum | **25 % de la Marque** | en dessous, rien ne part du tout. Sans ce test, un appui réflexe à trois éliminations grille la vague entière pour un coup qui ne tue rien |
+| Recul | **260** | le coup sert aussi à ouvrir un passage, pas seulement à tuer |
+
+**Le plafond du coup est celui de la Marque**, pas un chiffre à part : la branche
+de Forge de Caïn, qui monte déjà le plafond à +45 %, monte le coup avec lui, et
+aucun canal de scaling nouveau ne s'ouvre.
+
+#### Le marché, chiffré
+
+La Marque pleine vaut **11,9 DPS** pour Caïn (59,5 de base, dont 25 % viennent
+d'elle). La garder rapporte donc, selon ce qu'il reste de vague :
+
+| Reste de vague | Valeur de la Marque gardée | Le coup la dépasse à partir de |
+|---|---|---|
+| 10 s | 119 | **2 ennemis** |
+| 20 s | 238 | **4 ennemis** |
+| 30 s | 357 | **6 ennemis** |
+
+Le coup vaut **71,3 par cible** à Marque pleine, arme nue. C'est la forme de
+décision recherchée : **un outil de foule, jamais une réponse à un boss**. Seul
+face à Golgota, dépenser la Marque rapporte 71 là où la garder en rapporte 238.
+
+**Le coup profite deux fois de la Marque**, et c'est mesuré : 71,3 au lieu de
+57,0, parce que les dégâts d'arme qu'il lit portent encore le +25 % au moment où
+il part. C'est assumé — la Marque est sur lui quand il frappe — et ça reste borné
+par le même plafond.
+
+#### L'échelle de l'explosion était fausse, et pas seulement ici
+
+Le dessin se met à l'échelle du rayon, comme tout le reste. Pris sur la largeur
+en usage — 111 px, l'**union** des 29 images — le résultat mesuré en jeu donnait
+**278 px dessinés pour une zone de 400**. L'union compte les étoiles projetées au
+loin à l'image 9 ; l'**image de pointe** n'en fait que 82.
+
+C'est exactement l'erreur corrigée sur les impacts de boss en 0.8.1, restée ici
+parce que ce correctif-là n'avait touché que la planche des boss. La constante
+passe donc à 82 px **pour les deux** : le Prix du sang dessine désormais 377 px
+sur 400, et **l'explosion de Braise éternelle grandit du même tiers** sans que
+sa portée change d'un pixel.
+
+#### Une troisième jauge, et il fallait qu'elle se distingue
+
+La Marque n'était affichée **nulle part**. Un pouvoir dont on ignore la charge
+n'est pas un choix, c'est une loterie — et le choix est tout ce qu'il apporte.
+
+|  | Seconde chance | Ruée | Marque |
+|---|---|---|---|
+| Sens | se vide | se remplit | se remplit |
+| Rayon | 56 px | 26 px | 26 px |
+| Teinte | doré | bleu froid | **rouge sang** |
+| Visible | pendant le compte | pendant la recharge | dès qu'il y a de la Marque |
+
+Le rayon est celui de la ruée, volontairement : les deux appartiennent à des
+personnages différents et ne peuvent pas être à l'écran en même temps. L'arc
+reste **terne sous le minimum** et s'éclaire au franchissement — l'instant où le
+pouvoir devient utilisable est le seul que le joueur ne doit pas manquer.
+
+#### Sondes
+
+Comme pour la ruée, la promesse est vérifiée en déclenchant la **vraie action
+d'entrée**, pas la fonction qu'elle appelle.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Marque pleine, brute à 120 px | dégâts, Marque vidée | **71,3**, 25 % → 0 % |
+| Même coup, cible à 190 px | identique | **71,3** |
+| Marque à moitié (13 %) | environ la moitié | **33,5**, 25 % → 0 % |
+| Marque à 5 % | rien, et Marque gardée | **0 dégât**, 5 % → 5 % |
+| Cible à 199 px | touchée | **71,3** |
+| Cible à 201 px | épargnée | **0** |
+| Touche Espace pour de vrai | le coup part | **71,3**, 25 % → 0 % |
+| Jauges montées sur Caïn | Marque oui, ruée non | **oui / non** |
+| Job et Loth | aucun pouvoir, aucune jauge | **0 dégât, aucune jauge** |
+
+Il n'a **pas de son**, comme la ruée : la banque en compte sept, aucun ne dit
+« dépenser ». C'est le troisième à ajouter, avec le coup encaissé et l'âme
+ramassée.
 
 ## Démarche procédurale
 

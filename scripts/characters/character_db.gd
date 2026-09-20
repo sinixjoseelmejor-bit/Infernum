@@ -30,9 +30,15 @@ const CHARACTERS: Array[Dictionary] = [
 		"weapon_projectile_speed": 760.0, "weapon_crit_chance": 0.08,
 		"starting_mods": {},
 		"passive_name": "La Marque",
+		# La fiche dit les DEUX moitiés, comme pour Loth : un pouvoir qu'on
+		# découvre en appuyant au hasard sur les touches est un pouvoir que la
+		# plupart des joueurs n'utiliseront jamais.
 		"passive_desc": "+1 % de dégâts par élimination dans la vague en cours, "
-			+ "plafonné à +25 %. Remis à zéro à chaque nouvelle vague.",
+			+ "plafonné à +25 %. Remis à zéro à chaque nouvelle vague.\n"
+			+ "LE PRIX DU SANG (Espace / A) : dépense la Marque d'un coup, "
+			+ "autour de lui, d'autant plus fort qu'elle était haute.",
 		"special": &"mark_of_cain",
+		"power": &"blood_price",
 	},
 	{
 		"id": &"job", "name": "Job", "title": "L'Éprouvé",
@@ -112,6 +118,31 @@ const DASH_SPEED := 1090.0
 const DASH_TIME := 0.22
 const DASH_COOLDOWN := 2.2
 
+## LE PRIX DU SANG — le verbe de Caïn.
+##
+## POURQUOI CELUI-LÀ. La Marque monte jusqu'à +25 % puis se remet à zéro à
+## chaque vague, et le joueur n'a jamais rien pu en faire : elle se remplit
+## toute seule et se vide toute seule. Le pouvoir en fait une RESSOURCE — garder
+## ses 25 % pour le boss qui arrive, ou les brûler maintenant pour sortir d'un
+## encerclement. La décision est neuve, la ressource ne l'est pas, et son
+## plafond reste celui de la Marque : aucun canal de scaling nouveau.
+##
+## LES DÉGÂTS SUIVENT L'ARME PRINCIPALE, comme l'explosion de Braise éternelle :
+## ils profitent des objets de dégâts mais pas de la cadence ni du multishot.
+## C'est ce qui empêche le coup de scaler seul.
+##
+## LE RAYON se lit sur ce qu'il doit couvrir : l'explosion de Braise éternelle
+## porte à 135 px et part à chaque élimination ; celui-ci coûte une vague de
+## Marque et ne part qu'une fois. À 200 px il attrape une mêlée entière autour
+## du joueur sans devenir une frappe d'écran.
+##
+## LE MINIMUM existe pour qu'un appui ne puisse pas gâcher la ressource : en
+## dessous du quart de la Marque, le coup ne part pas du tout.
+const PRIX_RAYON := 200.0
+const PRIX_RATIO := 3.0
+const PRIX_MINIMUM := 0.25
+const PRIX_KNOCKBACK := 260.0
+
 var selected_id: StringName = &"cain"
 
 var _catalog: Dictionary = {}
@@ -147,6 +178,7 @@ func _ready() -> void:
 		character.passive_description = entry.get("passive_desc", "")
 		character.special = entry.get("special", &"")
 		character.dash = entry.get("dash", false)
+		character.power = entry.get("power", &"")
 		character.leftover_ratio = entry.get("leftover_ratio", 0.25)
 		_catalog[character.id] = character
 		_order.append(character.id)

@@ -109,6 +109,12 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - **Deux fichiers audio déposés et inutilisés**, en attente de décision : un
   générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
   2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
+- **Un verbe par personnage** : Loth traverse (la ruée), Caïn dépense sa Marque
+  (le Prix du sang). Il manque celui de **Job** — la piste retenue est une
+  parade à amorce, qui annule UN coup au contact et contre-attaque, jamais
+  contre les zones annoncées.
+- **Aucun des deux pouvoirs n'a de son.** Avec le coup encaissé et l'âme
+  ramassée, ce sont les manques les plus visibles de la banque.
 - La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :
   passer du menu au jeu est une marche vers le haut. La remonter la ferait
   saturer, ses crêtes sortant déjà à +6,5 dBFS — ça se règle sur le fichier.
