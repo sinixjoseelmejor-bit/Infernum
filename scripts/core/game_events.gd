@@ -38,6 +38,12 @@ signal shop_opened()
 signal shop_closed()
 signal camera_shake_requested(strength: float)
 
+## POUVOIR DEMANDÉ (Espace / A). Le joueur ne sait pas ce que la touche déclenche
+## et n'a pas à le savoir : la ruée de Loth vit dans `player.gd` parce qu'elle
+## déplace, le Prix du sang vit dans `character_effects.gd` parce qu'il dépense
+## un passif. Le joueur appuie, celui que ça concerne répond.
+signal power_requested()
+
 ## Nouvelle à afficher en grand, au centre de l'écran. Réservée à ce qui change
 ## la partie pour de bon — il n'y en a qu'une aujourd'hui, la Clé des Abysses.
 ## Un bandeau qui servirait à tout ne serait plus lu.

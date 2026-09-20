@@ -30,9 +30,15 @@ const CHARACTERS: Array[Dictionary] = [
 		"weapon_projectile_speed": 760.0, "weapon_crit_chance": 0.08,
 		"starting_mods": {},
 		"passive_name": "La Marque",
+		# La fiche dit les DEUX moitiés, comme pour Loth : un pouvoir qu'on
+		# découvre en appuyant au hasard sur les touches est un pouvoir que la
+		# plupart des joueurs n'utiliseront jamais.
 		"passive_desc": "+1 % de dégâts par élimination dans la vague en cours, "
-			+ "plafonné à +25 %. Remis à zéro à chaque nouvelle vague.",
+			+ "plafonné à +25 %. Remis à zéro à chaque nouvelle vague.\n"
+			+ "LE PRIX DU SANG (Espace / A) : dépense la Marque d'un coup, "
+			+ "autour de lui, d'autant plus fort qu'elle était haute.",
 		"special": &"mark_of_cain",
+		"power": &"blood_price",
 	},
 	{
 		"id": &"job", "name": "Job", "title": "L'Éprouvé",
@@ -49,8 +55,11 @@ const CHARACTERS: Array[Dictionary] = [
 		"starting_mods": {"armor": 12.0},
 		"passive_name": "La Patience",
 		"passive_desc": "Régénère 1.4 PV par seconde, mais uniquement après "
-			+ "3 secondes sans avoir été touché.",
+			+ "3 secondes sans avoir été touché.\n"
+			+ "LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et "
+			+ "renvoie tout ce qui le touche. Rate, il reste planté.",
 		"special": &"patience",
+		"power": &"steadfast",
 		# Le seul a toucher la moisson des survivants a taux PLEIN : user une
 		# foule sans l'achever est ce qu'il fait, et c'est ce que la moisson
 		# paie. Les deux autres restent a 0,25.
@@ -112,6 +121,66 @@ const DASH_SPEED := 1090.0
 const DASH_TIME := 0.22
 const DASH_COOLDOWN := 2.2
 
+## LE PRIX DU SANG — le verbe de Caïn.
+##
+## POURQUOI CELUI-LÀ. La Marque monte jusqu'à +25 % puis se remet à zéro à
+## chaque vague, et le joueur n'a jamais rien pu en faire : elle se remplit
+## toute seule et se vide toute seule. Le pouvoir en fait une RESSOURCE — garder
+## ses 25 % pour le boss qui arrive, ou les brûler maintenant pour sortir d'un
+## encerclement. La décision est neuve, la ressource ne l'est pas, et son
+## plafond reste celui de la Marque : aucun canal de scaling nouveau.
+##
+## LES DÉGÂTS SUIVENT L'ARME PRINCIPALE, comme l'explosion de Braise éternelle :
+## ils profitent des objets de dégâts mais pas de la cadence ni du multishot.
+## C'est ce qui empêche le coup de scaler seul.
+##
+## LE RAYON se lit sur ce qu'il doit couvrir : l'explosion de Braise éternelle
+## porte à 135 px et part à chaque élimination ; celui-ci coûte une vague de
+## Marque et ne part qu'une fois. À 200 px il attrape une mêlée entière autour
+## du joueur sans devenir une frappe d'écran.
+##
+## LE MINIMUM existe pour qu'un appui ne puisse pas gâcher la ressource : en
+## dessous du quart de la Marque, le coup ne part pas du tout.
+## LE REFUS DE PLIER — le verbe de Job.
+##
+## POURQUOI UNE PARADE, ET PAS UN BOUCLIER. Job a déjà 146 PV effectifs et peut
+## atteindre les 90 % de réduction de l'armure : une immunité de plus ne
+## changerait pas sa façon de jouer, elle la confirmerait — et ce serait une
+## SECONDE source d'invulnérabilité, ce que les i-frames interdisent en étant
+## déjà la seule borne des dégâts entrants. La parade, elle, n'annule qu'UN coup
+## et se mérite : elle donne une compétence à apprendre au personnage le plus
+## passif des trois.
+##
+## ELLE NE PARE PAS LES ZONES ANNONCÉES, et c'est la règle la plus importante :
+## toute la difficulté du jeu est le placement, et une parade qui marche sur les
+## zones remplacerait « lis le sol et bouge » par un bouton. La distinction est
+## structurelle et non une liste de cas — une zone qui détone passe `null` comme
+## auteur, personne d'autre ne le fait.
+##
+## L'AMORCE EST LE CŒUR DU RÉGLAGE. Sans elle, à 170 images par seconde, la
+## parade serait une réaction pure : soit triviale, soit illisible. Avec 0,15 s
+## d'amorce elle devient une PRÉDICTION — et ce jeu est fait pour ça, puisque
+## chaque attaque de boss est annoncée par un disque qui se remplit.
+##
+## LA SANCTION est ce qui empêche de la lancer en boucle : raté, Job reste cloué
+## 0,5 s. À 2,5 coups par seconde au maximum, ça coûte à peu près un coup — de
+## quoi hésiter, pas de quoi condamner.
+const PARADE_AMORCE := 0.15
+const PARADE_FENETRE := 0.25
+const PARADE_RACINE := 0.5
+const PARADE_RECHARGE := 4.0
+const PARADE_RAYON := 150.0
+## Multiple des dégâts d'arme. FIXE, et surtout pas une fraction de ce qui a été
+## paré : au Déchaînement les dégâts ennemis montent en exponentielle, donc un
+## contre proportionnel exploserait exactement là où le mode cherche la limite.
+const PARADE_RATIO := 2.5
+const PARADE_RECUL := 420.0
+
+const PRIX_RAYON := 200.0
+const PRIX_RATIO := 3.0
+const PRIX_MINIMUM := 0.25
+const PRIX_KNOCKBACK := 260.0
+
 var selected_id: StringName = &"cain"
 
 var _catalog: Dictionary = {}
@@ -147,6 +216,7 @@ func _ready() -> void:
 		character.passive_description = entry.get("passive_desc", "")
 		character.special = entry.get("special", &"")
 		character.dash = entry.get("dash", false)
+		character.power = entry.get("power", &"")
 		character.leftover_ratio = entry.get("leftover_ratio", 0.25)
 		_catalog[character.id] = character
 		_order.append(character.id)

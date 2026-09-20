@@ -56,6 +56,17 @@ var _knockback: Vector2 = Vector2.ZERO
 
 ## Ruée : réservée aux personnages qui la portent (`CharacterData.dash`).
 var _peut_foncer: bool = false
+## Pouvoir non-déplacement du personnage, s'il en a un. Le joueur ne l'exécute
+## pas : il annonce l'appui, et le système qui possède la ressource répond.
+var _pouvoir: StringName = &""
+## Parade : minuteurs des trois temps (amorce, fenêtre, sanction) et recharge.
+var _parade_amorce: float = 0.0
+var _parade_fenetre: float = 0.0
+var _parade_racine: float = 0.0
+var _parade_recharge: float = 0.0
+var _jauge_parade: ParryGauge
+var _jauge_marque: MarkGauge
+var _marque_plafond: float = 1.0
 var _dash_direction: Vector2 = Vector2.RIGHT
 var _dash_restant: float = 0.0
 var _dash_recharge: float = 0.0
@@ -97,11 +108,27 @@ func _physics_process(delta: float) -> void:
 		facing = move_input.normalized()
 
 	_dash_recharge = maxf(0.0, _dash_recharge - delta)
-	if _ruee_disponible() and Input.is_action_just_pressed(&"dash"):
-		_lancer_ruee()
+	# UNE SEULE TOUCHE, un pouvoir par personnage. Elle s'appelle encore `dash`
+	# dans la table d'entrées, du nom du premier qui l'a utilisée.
+	if Input.is_action_just_pressed(&"dash") and not health.is_dead:
+		if _ruee_disponible():
+			_lancer_ruee()
+		elif _pouvoir == &"steadfast":
+			_lancer_parade()
+		elif _pouvoir != &"":
+			GameEvents.power_requested.emit()
+	if _pouvoir == &"steadfast":
+		_avancer_parade(delta)
 
 	if _dash_restant > 0.0:
 		_avancer_ruee(delta)
+	elif _parade_racine > 0.0:
+		# CLOUÉ. La sanction d'une parade ratée n'est pas un malus abstrait :
+		# il reste sur place, dans la mêlée, et encaisse ce qu'il a voulu parer.
+		_move_velocity = _move_velocity.move_toward(Vector2.ZERO, friction * 3.0 * delta)
+		_knockback = _knockback.move_toward(Vector2.ZERO, knockback_friction * delta)
+		velocity = _move_velocity + _knockback
+		move_and_slide()
 	else:
 		if move_input != Vector2.ZERO:
 			_move_velocity = _move_velocity.move_toward(
@@ -115,6 +142,12 @@ func _physics_process(delta: float) -> void:
 	if _jauge != null:
 		var reste := _dash_recharge / maxf(0.01, Characters.DASH_COOLDOWN)
 		_jauge.remplissage = clampf(1.0 - reste, 0.0, 1.0)
+
+	if _jauge_marque != null:
+		# La jauge lit la MÊME valeur que les dégâts : le bonus déjà appliqué,
+		# divisé par son plafond. Elle ne peut donc pas mentir sur la charge.
+		var marque: float = RunState.character_bonus.get(&"damage_pct", 0.0)
+		_jauge_marque.remplissage = clampf(marque / _marque_plafond, 0.0, 1.0)
 
 	# Le stick droit prime s'il est poussé ; sinon les armes visent dans la
 	# direction du déplacement — sur mobile le pouce sert aux deux à la fois.
@@ -203,6 +236,91 @@ func _avancer_ruee(delta: float) -> void:
 		_move_velocity = _dash_direction * move_speed
 
 
+## LA PARADE DE JOB — les trois temps, puis la recharge.
+##
+## Elle n'accorde AUCUNE invulnérabilité : elle annule un coup, un seul, et
+## consomme la fenêtre en le faisant. Voir `apply_damage`.
+func _lancer_parade() -> void:
+	if _parade_recharge > 0.0 or _parade_racine > 0.0:
+		return
+	if _parade_amorce > 0.0 or _parade_fenetre > 0.0:
+		return
+	_parade_amorce = Characters.PARADE_AMORCE
+
+
+func _avancer_parade(delta: float) -> void:
+	_parade_recharge = maxf(0.0, _parade_recharge - delta)
+	_parade_racine = maxf(0.0, _parade_racine - delta)
+	if _parade_amorce > 0.0:
+		_parade_amorce = maxf(0.0, _parade_amorce - delta)
+		if _parade_amorce <= 0.0:
+			_parade_fenetre = Characters.PARADE_FENETRE
+	elif _parade_fenetre > 0.0:
+		_parade_fenetre = maxf(0.0, _parade_fenetre - delta)
+		if _parade_fenetre <= 0.0:
+			# Fenêtre écoulée sans rien parer : c'est un coup dans le vide.
+			_parade_racine = Characters.PARADE_RACINE
+			_parade_recharge = Characters.PARADE_RECHARGE
+	if _jauge_parade == null:
+		return
+	if _parade_amorce > 0.0:
+		_jauge_parade.etat = ParryGauge.Etat.AMORCE
+		_jauge_parade.progression = 1.0 - _parade_amorce / Characters.PARADE_AMORCE
+	elif _parade_fenetre > 0.0:
+		_jauge_parade.etat = ParryGauge.Etat.FENETRE
+		_jauge_parade.progression = _parade_fenetre / Characters.PARADE_FENETRE
+	elif _parade_recharge > 0.0:
+		_jauge_parade.etat = ParryGauge.Etat.RECHARGE
+		_jauge_parade.progression = 1.0 - _parade_recharge / Characters.PARADE_RECHARGE
+	else:
+		_jauge_parade.etat = ParryGauge.Etat.PRET
+
+
+func is_parrying() -> bool:
+	return _parade_fenetre > 0.0
+
+
+## LE CONTRE. Dégâts FIXES — un multiple des dégâts d'arme — et surtout pas une
+## fraction de ce qui a été paré : au Déchaînement les dégâts ennemis montent en
+## exponentielle, et un contre proportionnel y deviendrait la réponse à tout.
+func _contrer(source: Node) -> void:
+	_parade_fenetre = 0.0
+	_parade_recharge = Characters.PARADE_RECHARGE
+	var armes := get_weapons()
+	var degats: float = armes[0].get_projectile_damage() * Characters.PARADE_RATIO \
+		if not armes.is_empty() else 0.0
+	GameEvents.request_shake(hit_shake * 1.5)
+	if _jauge_parade != null:
+		_jauge_parade.reussite()
+	_onde_parade()
+	# RIEN À DÉTRUIRE CÔTÉ PROJECTILE, et il a fallu le vérifier : `source` est
+	# le TIREUR et non le projectile — `projectile.gd` passe son `origin`. Le
+	# libérer aurait tué l'ennemi qui venait de tirer. Le projectile, lui,
+	# disparaît de lui-même à l'impact.
+	if degats <= 0.0:
+		return
+	GameEvents.damage_dealt.emit(degats, global_position, false)
+	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		var node := enemy as Node2D
+		if node == null or node.is_queued_for_deletion():
+			continue
+		var ecart: Vector2 = node.global_position - global_position
+		if ecart.length() > Characters.PARADE_RAYON:
+			continue
+		if node.has_method(&"apply_damage"):
+			node.call(&"apply_damage", degats, self,
+				ecart.normalized() * Characters.PARADE_RECUL)
+
+
+func _onde_parade() -> void:
+	var onde := ParryWave.new()
+	onde.rayon = Characters.PARADE_RAYON
+	var bacs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	var bac: Node = bacs[0] if not bacs.is_empty() else get_parent()
+	bac.add_child(onde)
+	onde.global_position = global_position
+
+
 func is_dashing() -> bool:
 	return _dash_restant > 0.0
 
@@ -243,6 +361,18 @@ func _apply_character(character: CharacterData) -> void:
 	if _peut_foncer and _jauge == null:
 		_jauge = DashGauge.new()
 		add_child(_jauge)
+	_pouvoir = character.power
+	if _pouvoir == &"steadfast" and _jauge_parade == null:
+		_jauge_parade = ParryGauge.new()
+		add_child(_jauge_parade)
+	if _pouvoir == &"blood_price" and _jauge_marque == null:
+		_jauge_marque = MarkGauge.new()
+		_jauge_marque.minimum = Characters.PRIX_MINIMUM
+		add_child(_jauge_marque)
+		# Le plafond ne bouge pas pendant une run : la Forge s'achète entre deux
+		# parties. On le lit une fois plutôt qu'à chaque image.
+		_marque_plafond = maxf(0.01,
+			Characters.MARK_MAX + Forge.get_special_total(&"mark_max"))
 	targeting.range_radius = character.targeting_range
 	animator.set_sheets(character.sprite_idle, character.sprite_walk)
 	sprite.offset = character.sprite_offset
@@ -278,6 +408,21 @@ func heal(amount: float) -> void:
 func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2.ZERO) -> void:
 	var reduced := amount * (1.0 - RunState.stats.get_damage_reduction())
 	if health.is_dead or health.is_invulnerable():
+		return
+	# LA PARADE ANNULE UN COUP, ET UN SEUL. Elle est testée ici, après les
+	# i-frames — un coup qui n'allait pas passer n'a pas à la consommer — et
+	# avant les dégâts, pour qu'elle n'en laisse rien.
+	#
+	# `source == null` EXCLUT LES ZONES ANNONCÉES. C'est structurel : une zone
+	# qui détone ne passe pas d'auteur, un ennemi au contact, un projectile et un
+	# rayon en passent un. Le placement reste donc le seul recours contre ce qui
+	# est annoncé au sol, et c'est le cœur du jeu.
+	#
+	# UN COUP PARÉ NE DÉCLENCHE PAS LES 0,4 s D'I-FRAMES, puisqu'on sort avant
+	# `take_damage`. Parer dans une mêlée laisse donc exposé plus tôt que
+	# d'encaisser : la parade n'est pas gratuite, même réussie.
+	if source != null and is_instance_valid(source) and is_parrying():
+		_contrer(source)
 		return
 	if reduced >= health.current and RunState.consume_revive():
 		# Seconde chance (Forge) : le coup fatal relève à mi-vie, hors d'atteinte

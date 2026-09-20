@@ -109,6 +109,14 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - **Deux fichiers audio déposés et inutilisés**, en attente de décision : un
   générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
   2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
+- **Un verbe par personnage, les trois sont faits** : Loth traverse (la ruée),
+  Caïn dépense sa Marque (le Prix du sang), Job pare (le Refus de plier). Trois
+  règles à ne pas casser en y touchant : pas de seconde source
+  d'invulnérabilité, pas d'effet proportionnel aux dégâts SUBIS (le
+  Déchaînement les fait exploser), et **rien ne pare une zone annoncée** — le
+  placement est le cœur du jeu.
+- **Aucun des trois pouvoirs n'a de son.** Avec le coup encaissé et l'âme
+  ramassée, ce sont les manques les plus visibles de la banque.
 - La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :
   passer du menu au jeu est une marche vers le haut. La remonter la ferait
   saturer, ses crêtes sortant déjà à +6,5 dBFS — ça se règle sur le fichier.

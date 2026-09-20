@@ -14,6 +14,12 @@ extends Node
 ## `Forge.get_special_total` suffit à garantir qu'ils ne peuvent pas fuir sur un
 ## autre personnage — la Forge ne rend que les nœuds de celui qui est choisi.
 
+const PRIX_VFX := preload("res://scenes/vfx/explosion.tscn")
+## Largeur utile du dessin d'explosion, en pixels : l'IMAGE DE POINTE de la
+## planche, la même mesure que celle qui sert à Braise éternelle. L'union des
+## images vaut 111 px et rapetissait le dessin d'un tiers.
+const PRIX_VFX_CONTENU := 82.0
+
 var _player: Player
 
 # Caïn — La Marque
@@ -33,6 +39,7 @@ func _ready() -> void:
 	GameEvents.player_spawned.connect(_bind_player)
 	GameEvents.enemy_died.connect(_on_enemy_died)
 	GameEvents.wave_started.connect(_on_wave_started)
+	GameEvents.power_requested.connect(_on_power_requested)
 	_bind_player(get_tree().get_first_node_in_group(Groups.PLAYER))
 
 
@@ -78,6 +85,84 @@ func _appliquer_marque() -> void:
 	var cadence := Forge.get_special_total(&"mark_fire_rate")
 	if cadence > 0.0:
 		RunState.set_character_bonus(&"fire_rate_pct", _mark_bonus * cadence)
+
+
+## LE PRIX DU SANG. La Marque partait à la poubelle à chaque vague sans que le
+## joueur puisse en faire quoi que ce soit ; elle devient une ressource qu'on
+## choisit de garder ou de brûler.
+##
+## LE COUP VAUT CE QUE VALAIT LA MARQUE. Les dégâts suivent l'arme principale —
+## comme l'explosion de Braise éternelle, donc ils profitent des objets de
+## dégâts mais pas de la cadence ni du multishot — et sont multipliés par la
+## CHARGE, pas par un chiffre à part. Le plafond du coup est donc le plafond de
+## la Marque, celui que la branche de Forge de Caïn déplace déjà : aucun canal
+## de scaling nouveau ne s'ouvre ici.
+##
+## EN DESSOUS DU MINIMUM, RIEN NE PART. Sans ce test, un appui réflexe à trois
+## éliminations grillerait la vague entière pour un coup qui ne tue rien : le
+## pouvoir se retournerait contre celui qui l'utilise.
+func _on_power_requested() -> void:
+	if not Characters.has_special(&"mark_of_cain"):
+		return
+	if not is_instance_valid(_player) or _player.health.is_dead:
+		return
+	var plafond := Characters.MARK_MAX + Forge.get_special_total(&"mark_max")
+	var charge := _mark_bonus / maxf(0.01, plafond)
+	if charge < Characters.PRIX_MINIMUM:
+		return
+	var degats := _degats_arme() * Characters.PRIX_RATIO * charge
+	if degats <= 0.0:
+		return
+
+	var centre: Vector2 = _player.global_position
+	_effet_prix_du_sang(centre)
+	GameEvents.damage_dealt.emit(degats, centre, false)
+	GameEvents.request_shake(5.0)
+	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		var node := enemy as Node2D
+		if node == null or node.is_queued_for_deletion():
+			continue
+		var ecart: Vector2 = node.global_position - centre
+		if ecart.length() > Characters.PRIX_RAYON:
+			continue
+		if node.has_method(&"apply_damage"):
+			node.call(&"apply_damage", degats, _player,
+				ecart.normalized() * Characters.PRIX_KNOCKBACK)
+
+	# LA MARQUE EST DÉPENSÉE, et c'est le prix. On remet les ÉLIMINATIONS à zéro
+	# plutôt que le bonus : c'est le compteur qui fait foi, comme au changement
+	# de vague, pour que le compte reste juste si le plafond change en cours de
+	# run.
+	_wave_kills = 0
+	_mark_bonus = -1.0
+	_appliquer_marque()
+
+
+## L'effet reprend la planche d'explosion, à la TAILLE du rayon qui blesse, et
+## teinté du rouge de Caïn : la même image en orange est déjà celle de Braise
+## éternelle, et deux effets identiques pour deux causes différentes se lisent
+## comme un seul.
+func _effet_prix_du_sang(at: Vector2) -> void:
+	var bacs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	if bacs.is_empty():
+		return
+	var vfx := PRIX_VFX.instantiate() as Node2D
+	if vfx == null:
+		return
+	bacs[0].add_child(vfx)
+	vfx.global_position = at
+	vfx.scale = Vector2.ONE * (Characters.PRIX_RAYON * 2.0 / PRIX_VFX_CONTENU)
+	vfx.modulate = Color(1.0, 0.45, 0.42)
+
+
+## Les dégâts de référence : ceux de l'arme principale, projectile compris.
+func _degats_arme() -> float:
+	if not is_instance_valid(_player):
+		return 0.0
+	var armes := _player.get_weapons()
+	if armes.is_empty():
+		return 0.0
+	return armes[0].get_projectile_damage()
 
 
 func _on_wave_started(_index: int) -> void:

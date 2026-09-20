@@ -63,6 +63,10 @@ extends Resource
 @export var passive_description: String = ""
 ## Identifiant lu par `character_effects.gd`. Vide = pas de passif scripté.
 @export var special: StringName = &""
+## Pouvoir déclenché par la touche Espace, pour ceux dont le pouvoir n'est pas
+## un déplacement. Sert au joueur à monter la bonne jauge, rien de plus : l'effet
+## lui-même appartient au système qui possède la ressource dépensée.
+@export var power: StringName = &""
 ## Part de sa valeur en âmes qu'un ennemi SURVIVANT lui rend à la fin de la
 ## vague, au prorata des dégâts encaissés (voir `wave_manager.gd`).
 ##

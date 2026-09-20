@@ -10,10 +10,16 @@ extends Node
 ##     + multishot rendent le joueur intuable.
 
 const EXPLOSION_VFX := preload("res://scenes/vfx/explosion.tscn")
-## Largeur utile de la planche d'explosion, en pixels — mesurée sur la boîte
-## englobante de ses 29 images, pas lue sur le nom du fichier (une cellule fait
-## 120 px mais le dessin n'en occupe que 111).
-const EXPLOSION_VFX_CONTENT := 111.0
+## Largeur utile de la planche d'explosion, en pixels — mesurée sur l'IMAGE DE
+## POINTE, pas sur le nom du fichier ni sur l'union des images.
+##
+## La cellule fait 120 px, l'union des 29 images 111, et l'image de pointe 82.
+## Prise sur l'union, l'échelle comptait les étoiles projetées au loin à l'image
+## 9 et rapetissait l'explosion pendant tout le reste de l'animation : mesuré en
+## jeu, 278 px dessinés pour une zone de 400. C'est exactement l'erreur corrigée
+## sur les impacts de boss en 0.8.1, restée ici parce que ce correctif-là n'avait
+## touché que la planche des boss.
+const EXPLOSION_VFX_CONTENT := 82.0
 
 @export var explosion_radius: float = 135.0
 @export var explosion_damage_ratio: float = 0.70
