@@ -109,7 +109,7 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	super()
 	_rng.randomize()
-	add_to_group(&"bosses")
+	add_to_group(Groups.BOSSES)
 	GameEvents.boss_spawned.emit(self)
 	GameEvents.boss_phase_changed.emit(current_phase, phase_thresholds.size() + 1)
 	health.health_changed.connect(_on_health_changed)

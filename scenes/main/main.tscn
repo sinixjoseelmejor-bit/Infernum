@@ -3,11 +3,7 @@
 [ext_resource type="Script" uid="uid://bc86s38iod8l0" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://cgs1lxla4y2xq" path="res://scripts/systems/wave_manager.gd" id="3_waves"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/imp.tscn" id="4_imp"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/hound.tscn" id="5_hound"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/cultist.tscn" id="6_cultist"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/brute.tscn" id="7_brute"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/oeil.tscn" id="25_oeil"]
+[ext_resource type="Resource" path="res://scenes/main/enemy_roster.tres" id="26_roster"]
 [ext_resource type="Script" uid="uid://c144mxv4yonf3" path="res://scripts/systems/item_effects.gd" id="8_effects"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/shop.tscn" id="10_shop"]
@@ -85,7 +81,7 @@ unique_name_in_owner = true
 position = Vector2(1, 0)
 script = ExtResource("3_waves")
 boss_scenes = Array[PackedScene]([ExtResource("14_golgota"), ExtResource("15_lilith"), ExtResource("16_baal"), ExtResource("17_asmodee"), ExtResource("18_lucifer")])
-enemy_scenes = Array[PackedScene]([ExtResource("4_imp"), ExtResource("5_hound"), ExtResource("6_cultist"), ExtResource("7_brute"), ExtResource("25_oeil")])
+roster = ExtResource("26_roster")
 
 [node name="ItemEffects" type="Node" parent="." unique_id=718003909]
 script = ExtResource("8_effects")

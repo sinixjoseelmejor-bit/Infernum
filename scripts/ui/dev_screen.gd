@@ -272,7 +272,7 @@ func _construire_outils() -> void:
 # --- Actions -----------------------------------------------------------------
 
 func _aller(cible: int) -> void:
-	var waves := get_tree().get_first_node_in_group(&"wave_manager") as WaveManager
+	var waves := get_tree().get_first_node_in_group(Groups.WAVE_MANAGER) as WaveManager
 	if waves == null:
 		_dire("pas de gestionnaire de vagues")
 		return

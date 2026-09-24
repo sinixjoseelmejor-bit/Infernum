@@ -96,7 +96,7 @@ func _achever(cible: Node2D) -> void:
 	# seconde. Le parcours des noeuds de Forge vient donc en dernier.
 	if cible == null or not is_instance_valid(cible):
 		return
-	if cible.is_in_group(&"bosses") or not cible.is_in_group(Groups.ENEMIES):
+	if cible.is_in_group(Groups.BOSSES) or not cible.is_in_group(Groups.ENEMIES):
 		return
 	var vie := cible.get(&"health") as Health
 	if vie == null or vie.is_dead or vie.max_health <= 0.0:

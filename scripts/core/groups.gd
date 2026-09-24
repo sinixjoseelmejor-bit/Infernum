@@ -12,3 +12,6 @@ const ENEMY_CONTAINER := &"enemy_container"
 ## Le gestionnaire de vagues, que le butin interroge pour connaître l'échelle
 ## de dégâts courante — son soin est libellé en coups encaissables.
 const WAVE_MANAGER := &"wave_manager"
+## Les boss, que les effets d'objets excluent et que le saut de vague du
+## panneau dev annonce morts avant de les effacer.
+const BOSSES := &"bosses"
