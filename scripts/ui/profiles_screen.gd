@@ -102,11 +102,14 @@ func _build_row(summary: Dictionary) -> Control:
 	row.add_child(select)
 
 	var erase := Button.new()
+	# Style DANGER : l'action la plus destructrice de l'interface ne doit jamais
+	# être la plus visible. En doré plein, elle attirait l'œil sur le profil actif.
+	erase.theme_type_variation = &"DangerButton"
 	erase.custom_minimum_size = Vector2(160, 40)
 	erase.disabled = not exists
 	if _pending_delete == slot:
 		erase.text = "Confirmer ?"
-		erase.add_theme_color_override(&"font_color", Color(1, 0.35, 0.25))
+		erase.add_theme_color_override(&"font_color", Color(1, 0.93, 0.86))
 		erase.pressed.connect(func() -> void:
 			SaveGame.delete_profile(slot)
 			_pending_delete = -1

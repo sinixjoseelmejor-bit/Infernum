@@ -75,6 +75,7 @@ value = 100.0
 show_percentage = false
 
 [node name="HealthLabel" type="Label" parent="Root/HealthBar"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -82,7 +83,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 20
 text = "100 / 100"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -109,11 +112,14 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="SoulsLabel" type="Label" parent="Root/Currencies/Souls"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_colors/font_color = Color(0.56, 0.94, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
 text = "0 âmes"
 vertical_alignment = 1
 
@@ -131,44 +137,54 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="KeysLabel" type="Label" parent="Root/Currencies/Keys"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 1
 theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
 text = "0 clés"
 vertical_alignment = 1
 
 [node name="WaveLabel" type="Label" parent="Root"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -180.0
-offset_top = 14.0
-offset_right = 180.0
-offset_bottom = 54.0
+offset_left = -240.0
+offset_top = 10.0
+offset_right = 240.0
+offset_bottom = 66.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 50
 text = "VAGUE 1"
 horizontal_alignment = 1
 
 [node name="WaveTimerLabel" type="Label" parent="Root"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -180.0
-offset_top = 52.0
-offset_right = 180.0
-offset_bottom = 84.0
+offset_left = -240.0
+offset_top = 64.0
+offset_right = 240.0
+offset_bottom = 100.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 30
 text = "0:20"
 horizontal_alignment = 1
 
 [node name="AnnounceTitle" type="Label" parent="Root"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 modulate = Color(1, 1, 1, 0)
 layout_mode = 1
@@ -176,11 +192,14 @@ anchor_left = 0.5
 anchor_top = 0.42
 anchor_right = 0.5
 anchor_bottom = 0.42
-offset_left = -420.0
-offset_right = 420.0
+offset_left = -520.0
+offset_top = -24.0
+offset_right = 520.0
 offset_bottom = 58.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 46
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 70
 text = "TITRE"
 horizontal_alignment = 1
 
@@ -203,6 +222,7 @@ horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="KillsLabel" type="Label" parent="Root"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 1.0
@@ -212,7 +232,9 @@ offset_top = 18.0
 offset_right = -24.0
 offset_bottom = 56.0
 grow_horizontal = 0
-theme_override_font_sizes/font_size = 28
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
 text = "0"
 horizontal_alignment = 2
 
@@ -230,10 +252,13 @@ grow_horizontal = 2
 theme_override_constants/separation = 2
 
 [node name="BossNameLabel" type="Label" parent="Root/BossPanel"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.35, 0.25, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_colors/font_outline_color = Color(0.05, 0.02, 0.02, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/font_size = 30
 text = "BOSS"
 horizontal_alignment = 1
 

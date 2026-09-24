@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bg8hhi6kcb8wh"
-path="res://.godot/imported/alagard.ttf-384173aa1940560c638759aff37d300b.fontdata"
+uid="uid://d4dvtk83s8ts"
+path="res://.godot/imported/Jersey10-Regular.ttf-200460e514ca6d2634756f713ee1b38e.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/alagard.ttf"
-dest_files=["res://.godot/imported/alagard.ttf-384173aa1940560c638759aff37d300b.fontdata"]
+source_file="res://assets/fonts/Jersey10-Regular.ttf"
+dest_files=["res://.godot/imported/Jersey10-Regular.ttf-200460e514ca6d2634756f713ee1b38e.fontdata"]
 
 [params]
 

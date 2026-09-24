@@ -36,10 +36,11 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="GameOverTitle" type="Label" parent="Center/Panel/Layout"]
+theme_type_variation = &"TitleLabel"
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.35, 0.2, 1)
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 60
 text = "VOUS ÊTES MORT"
 horizontal_alignment = 1
 
@@ -54,9 +55,10 @@ horizontal_alignment = 1
 layout_mode = 2
 
 [node name="UnlockTitle" type="Label" parent="Center/Panel/Layout"]
+theme_type_variation = &"TitleLabel"
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 30
 text = "Débloquer du contenu"
 
 [node name="BankedKeysLabel" type="Label" parent="Center/Panel/Layout"]
@@ -81,6 +83,7 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="ForgeButton" type="Button" parent="Center/Panel/Layout/Buttons"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -88,6 +91,7 @@ size_flags_horizontal = 3
 text = "Forge Éternelle"
 
 [node name="MenuButton" type="Button" parent="Center/Panel/Layout/Buttons"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2

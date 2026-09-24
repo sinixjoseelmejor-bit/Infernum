@@ -10,6 +10,8 @@ const CARD_MIN_SIZE := Vector2(196, 214)
 var item: ItemData
 var cost: int = 0
 var purchased: bool = false
+## La pièce rare de l'offre : liseré épais et fond teinté de sa rareté.
+var featured: bool = false
 
 var _icon: TextureRect
 var _name_label: Label
@@ -54,7 +56,8 @@ func _build() -> void:
 	title.add_child(_icon)
 
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override(&"font_size", 20)
+	_name_label.theme_type_variation = &"TitleLabel"
+	_name_label.add_theme_font_size_override(&"font_size", 30)
 	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_child(_name_label)
@@ -85,6 +88,12 @@ func setup(new_item: ItemData, new_cost: int) -> void:
 	item = new_item
 	cost = new_cost
 	purchased = false
+	if is_node_ready():
+		_refresh()
+
+
+func set_featured(value: bool) -> void:
+	featured = value
 	if is_node_ready():
 		_refresh()
 
@@ -121,6 +130,12 @@ func _refresh() -> void:
 	style.bg_color = Color(0.11, 0.05, 0.06, 0.96)
 	style.border_color = color
 	style.set_border_width_all(2)
+	if featured:
+		# Le fond prend un cinquième de la couleur de rareté, le liseré double :
+		# la carte se repère d'un coup d'œil, sans rien masquer des autres.
+		style.bg_color = style.bg_color.lerp(color, 0.2)
+		style.set_border_width_all(4)
+		_rarity_label.text = "%s  ·  PIÈCE RARE" % item.get_rarity_name().to_upper()
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(2)
 	add_theme_stylebox_override(&"panel", style)

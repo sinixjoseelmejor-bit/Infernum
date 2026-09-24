@@ -26,7 +26,7 @@ theme_override_constants/margin_right = 40
 theme_override_constants/margin_bottom = 28
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(760, 0)
+custom_minimum_size = Vector2(1240, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -37,15 +37,16 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(0.83, 0.42, 0.92, 1)
-theme_override_font_sizes/font_size = 38
+theme_override_font_sizes/font_size = 60
 text = "MALÉDICTIONS"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.68, 0.64, 0.64, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 17
 text = "Facultatif. Chaque malédiction durcit la run entière en échange de meilleures récompenses. Vous pouvez commencer sans en prendre aucune."
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -54,25 +55,31 @@ autowrap_mode = 3
 layout_mode = 2
 
 [node name="Scroll" type="ScrollContainer" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 396)
 layout_mode = 2
+horizontal_scroll_mode = 0
 
-[node name="CurseList" type="VBoxContainer" parent="Center/Panel/Layout/Scroll"]
+[node name="CurseList" type="GridContainer" parent="Center/Panel/Layout/Scroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 3
 
 [node name="DangerLabel" type="Label" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 text = "Aucune malédiction — run de référence."
 horizontal_alignment = 1
 
 [node name="StartRunButton" type="Button" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 52)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
+theme_override_font_sizes/font_size = 40
 text = "Commencer sans malédiction"

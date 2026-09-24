@@ -12,7 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.01, 0.015, 0.92)
+color = Color(0.04, 0.01, 0.015, 0.8)
 
 [node name="Center" type="MarginContainer" parent="."]
 anchors_preset = 15
@@ -21,24 +21,25 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 24
+theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_bottom = 12
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(940, 0)
+custom_minimum_size = Vector2(1560, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
 [node name="Layout" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(1, 0.62, 0.16, 1)
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 50
 text = "FORGE ÉTERNELLE"
 horizontal_alignment = 1
 
@@ -49,8 +50,9 @@ theme_override_constants/separation = 24
 [node name="ForgeKeysLabel" type="Label" parent="Center/Panel/Layout/Header"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 30
 text = "Clés : 0"
 
 [node name="ForgeProgressLabel" type="Label" parent="Center/Panel/Layout/Header"]
@@ -63,14 +65,26 @@ text = "Forge 0 / 15"
 horizontal_alignment = 2
 
 [node name="TreeScroll" type="ScrollContainer" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 552)
 layout_mode = 2
+horizontal_scroll_mode = 0
 
 [node name="BranchesRow" type="HBoxContainer" parent="Center/Panel/Layout/TreeScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 28
+
+[node name="ForgeDetailLabel" type="Label" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.86, 0.78, 1)
+theme_override_font_sizes/font_size = 16
+text = "Survolez un nœud pour le détail."
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="AbyssPanel" type="PanelContainer" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
@@ -93,11 +107,13 @@ autowrap_mode = 3
 
 [node name="ItemsTitle" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 30
 text = "Objets à débloquer"
 
 [node name="ItemsScroll" type="ScrollContainer" parent="Center/Panel/Layout"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 142)
 layout_mode = 2
 
@@ -108,6 +124,7 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
 [node name="ForgeCloseButton" type="Button" parent="Center/Panel/Layout"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
