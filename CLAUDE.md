@@ -75,7 +75,12 @@ godot --headless --path . --import
 godot --headless --path . --export-release "Windows Desktop"
 godot --headless --path . --export-release "Web"
 godot --headless --path . --export-release "Windows Desktop (dev)"
+godot --headless --path . res://tools/test_waves.tscn
 ```
+
+- La dernière ligne lance les **tests des vagues** (courbes, boss, roster,
+  moisson), code de sortie 0 si tout passe. À relancer après toute retouche de
+  `scripts/systems/wave_manager.gd` ou de `scripts/systems/waves/`.
 
 - Les deux premiers préréglages sont **pour les joueurs** et **excluent le
   panneau de développement**. Le troisième le garde et porte l'indicateur
@@ -99,8 +104,7 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 
 ## Points ouverts
 
-- **Licences à confirmer avant toute diffusion publique** : la police
-  **Alagard** (créditée « Pix3M », sans licence vérifiée), l'illustration
+- **Licences à confirmer avant toute diffusion publique** : l'illustration
   **menu.jpg**, et **MusicGameplay2.ogg**, déposée dans le dossier audio sans
   qu'on sache si le `LICENSE.txt` du lot la couvre. Les quatre musiques de
   `assets/audio/Music/` et la planche `vfx-Sheet.png` sont dans un autre cas :
@@ -115,6 +119,10 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   d'invulnérabilité, pas d'effet proportionnel aux dégâts SUBIS (le
   Déchaînement les fait exploser), et **rien ne pare une zone annoncée** — le
   placement est le cœur du jeu.
+- **Quatre objets de la 0.8.6 ne se jugent qu'en jeu** : Fléau des géants
+  (porte de boss), Serpent d'airain (esquive), Corne de Moloch (risque) et
+  Reliquaire (boutique). La métrique du banc ne les voit pas ; leurs effets
+  sont vérifiés, leur valeur ne l'est pas.
 - **Aucun des trois pouvoirs n'a de son.** Avec le coup encaissé et l'âme
   ramassée, ce sont les manques les plus visibles de la banque.
 - La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :
