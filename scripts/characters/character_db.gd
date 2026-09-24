@@ -176,6 +176,13 @@ const PARADE_RAYON := 150.0
 const PARADE_RATIO := 2.5
 const PARADE_RECUL := 420.0
 
+## SERPENT D'AIRAIN (objet épique) : les trois verbes reviennent plus vite.
+## Ruée et parade rechargent en 70 % du temps. Le Prix du sang ne se recharge
+## pas avec le temps mais avec la Marque : il en garde donc 30 % après usage,
+## ce qui revient au même raccourcissement.
+const POWER_HASTE := 0.7
+const PRIX_MARQUE_GARDEE := 0.3
+
 const PRIX_RAYON := 200.0
 const PRIX_RATIO := 3.0
 const PRIX_MINIMUM := 0.25
