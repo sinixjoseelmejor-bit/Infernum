@@ -1,0 +1,57 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/bosses/helel.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/lucifer/lucifer_idle.png" id="2_sprite"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="PackedScene" path="res://scenes/projectiles/cursed_bolt.tscn" id="4_bolt"]
+[ext_resource type="PackedScene" path="res://scenes/combat/telegraph.tscn" id="5_telegraph"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bosses/lucifer/lucifer_walk.png" id="90_walk"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/impact_braise.tscn" id="92_impact"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 50.0
+
+[node name="Helel" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 7
+motion_mode = 1
+script = ExtResource("1_script")
+move_speed = 110.0
+acceleration = 950.0
+knockback_resistance = 1.0
+contact_damage = 22.0
+enrage_time = 140.0
+contact_cooldown = 0.8
+max_health = 16000.0
+soul_value = 600
+boss_name = "Hélel"
+subtitle = "Fils de l'Aurore"
+phase_thresholds = Array[float]([0.75, 0.5, 0.25])
+engage_distance = 320.0
+pressure_rate = 1.15
+pressure_max = 3.5
+projectile_scene = ExtResource("4_bolt")
+telegraph_scene = ExtResource("5_telegraph")
+telegraph_impact = ExtResource("92_impact")
+telegraph_impact_width = 52.0
+guaranteed_keys = 6
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+texture_filter = 1
+scale = Vector2(6.0, 6.0)
+offset = Vector2(0, 7.5)
+hframes = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 16000.0
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("91_anim")
+idle_texture = ExtResource("2_sprite")
+walk_texture = ExtResource("90_walk")

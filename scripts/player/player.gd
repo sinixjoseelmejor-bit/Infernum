@@ -72,6 +72,15 @@ var _dash_restant: float = 0.0
 var _dash_recharge: float = 0.0
 var _trace_restante: float = 0.0
 var _jauge: DashGauge = null
+## Ferveur de Job (0 à FERVEUR_MAX) : pleine, le pouvoir libère le Jugement.
+var ferveur: float = 0.0
+## Projectile d'origine de l'arme, retenu pour le rendre à qui n'en a pas de
+## propre : les changements de corps contre Hélel passent de la lance à la
+## boule de feu et retour.
+var _projectile_origine: PackedScene = null
+
+## Le Jugement vient d'être rendu, à cet endroit : la Consécration s'y pose.
+signal jugement_rendu(at: Vector2)
 
 
 func _ready() -> void:
@@ -114,7 +123,10 @@ func _physics_process(delta: float) -> void:
 		if _ruee_disponible():
 			_lancer_ruee()
 		elif _pouvoir == &"steadfast":
-			_lancer_parade()
+			if ferveur >= _ferveur_max():
+				_rendre_jugement()
+			else:
+				_lancer_parade()
 		elif _pouvoir != &"":
 			GameEvents.power_requested.emit()
 	if _pouvoir == &"steadfast":
@@ -307,6 +319,7 @@ func _contrer(source: Node) -> void:
 	if _jauge_parade != null:
 		_jauge_parade.reussite()
 	_onde_parade()
+	add_ferveur(1.0)
 	# RIEN À DÉTRUIRE CÔTÉ PROJECTILE, et il a fallu le vérifier : `source` est
 	# le TIREUR et non le projectile — `projectile.gd` passe son `origin`. Le
 	# libérer aurait tué l'ennemi qui venait de tirer. Le projectile, lui,
@@ -324,6 +337,55 @@ func _contrer(source: Node) -> void:
 		if node.has_method(&"apply_damage"):
 			node.call(&"apply_damage", degats, self,
 				ecart.normalized() * Characters.PARADE_RECUL)
+
+
+func _ferveur_max() -> float:
+	# « Il n'a pas plié » (Forge) : deux charges suffisent.
+	return Characters.FERVEUR_MAX - Forge.get_special_total(&"ferveur_rapide")
+
+
+func add_ferveur(amount: float) -> void:
+	if _pouvoir != &"steadfast":
+		return
+	ferveur = minf(_ferveur_max(), ferveur + amount)
+	if _jauge_parade != null:
+		_jauge_parade.charges = roundi(_ferveur_max())
+		_jauge_parade.ferveur = ferveur / _ferveur_max()
+
+
+## LE JUGEMENT : une onde sacrée autour de Job, en dégâts FIXES — un multiple
+## des dégâts d'arme, comme le contre et la Consécration. Il consacre le sol où
+## il tombe, sur-le-champ.
+func _rendre_jugement() -> void:
+	ferveur = 0.0
+	if _jauge_parade != null:
+		_jauge_parade.ferveur = 0.0
+	var armes := get_weapons()
+	var degats: float = armes[0].get_projectile_damage() * Characters.JUGEMENT_RATIO \
+		if not armes.is_empty() else 0.0
+	GameEvents.request_shake(hit_shake * 2.5)
+	Audio.play(&"objet")
+	var onde := ParryWave.new()
+	onde.rayon = Characters.JUGEMENT_RAYON
+	onde.teinte = Color(1.0, 0.86, 0.45)
+	onde.duree = 0.5
+	var bacs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	(bacs[0] if not bacs.is_empty() else get_parent()).add_child(onde)
+	onde.global_position = global_position
+	jugement_rendu.emit(global_position)
+	if degats <= 0.0:
+		return
+	GameEvents.damage_dealt.emit(degats, global_position, true)
+	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		var node := enemy as Node2D
+		if node == null or node.is_queued_for_deletion():
+			continue
+		var ecart: Vector2 = node.global_position - global_position
+		if ecart.length() > Characters.JUGEMENT_RAYON:
+			continue
+		if node.has_method(&"apply_damage"):
+			node.call(&"apply_damage", degats, self,
+				ecart.normalized() * Characters.JUGEMENT_RECUL)
 
 
 func _onde_parade() -> void:
@@ -393,11 +455,58 @@ func _apply_character(character: CharacterData) -> void:
 	_sprite_scale = maxf(0.01, character.sprite_scale)
 	sprite.scale = Vector2(_sprite_scale, _sprite_scale)
 	for weapon in get_weapons():
+		if _projectile_origine == null:
+			_projectile_origine = weapon.projectile_scene
+		weapon.projectile_scene = character.projectile_scene \
+			if character.projectile_scene != null else _projectile_origine
+		weapon.pierce = character.weapon_pierce
 		weapon.damage = character.weapon_damage
 		weapon.fire_rate = character.weapon_fire_rate
 		weapon.projectile_speed = character.weapon_projectile_speed
 		weapon.crit_chance = character.weapon_crit_chance
 		weapon.crit_multiplier = character.weapon_crit_multiplier
+
+
+## CHANGE DE DAMNÉ EN PLEIN COMBAT (Hélel), sur le MÊME nœud : ennemis, caméra,
+## effets et ramassages tiennent tous une référence au joueur, le remplacer les
+## casserait tous.
+##
+## Rien de l'ancien pouvoir ne doit survivre au changement, et deux restes
+## seraient graves : une sanction de parade en cours clouerait le nouveau venu
+## pour toujours (elle ne décompte que chez Job), et une ruée interrompue
+## laisserait le joueur traverser les ennemis. La part de PV est conservée :
+## passer de Job (130) à Loth (80) ne doit ni tuer ni soigner.
+func swap_character(character: CharacterData) -> void:
+	if character == null:
+		return
+	var ratio := health.get_ratio()
+	if _dash_restant > 0.0:
+		collision_mask |= Layers.ENEMY
+	_dash_restant = 0.0
+	_dash_recharge = 0.0
+	_trace_restante = 0.0
+	_parade_amorce = 0.0
+	_parade_fenetre = 0.0
+	_parade_racine = 0.0
+	_parade_recharge = 0.0
+	ferveur = 0.0
+	for gauge: Node in [_jauge, _jauge_parade, _jauge_marque]:
+		if is_instance_valid(gauge):
+			gauge.queue_free()
+	_jauge = null
+	_jauge_parade = null
+	_jauge_marque = null
+
+	_apply_character(character)
+	_base_move_speed = move_speed
+	_base_max_health = max_health
+	_base_range = targeting.range_radius
+	# Recalcule les stats avec les modificateurs du nouveau venu ; le signal
+	# repasse par `apply_stats`, qui lit les bases qu'on vient de relever.
+	RunState.swap_character()
+	if not health.is_dead:
+		health.current = clampf(health.max_health * ratio, 1.0, health.max_health)
+		health.health_changed.emit(health.current, health.max_health)
 
 
 ## Recalcul complet depuis les valeurs de base (jamais de delta cumulé).

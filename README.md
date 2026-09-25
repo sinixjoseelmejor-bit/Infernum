@@ -1411,13 +1411,13 @@ ligne biblique des boss. Le choix se fait au menu et se mémorise entre les runs
 
 | | **Caïn** *Le Premier Sang* | **Job** *L'Éprouvé* | **Loth** *Le Fuyard* |
 |---|---|---|---|
-| Archétype | Dégâts | Survie | Mobilité |
+| Archétype | Dégâts | **Paladin** (0.9.0) | Mobilité |
 | Figure | le premier meurtrier, marqué pour ne jamais mourir ni être en paix | on lui a tout pris pour voir s'il plierait ; il n'a pas plié | il a quitté la ville en flammes sans se retourner — contrairement à sa femme |
 | PV | 85 | 130 (+12 armure) | 80 |
 | Vitesse | 215 | 218 | **288** |
-| Arme | 19 dégâts / 2.9 par s | 10.5 / 3.5 | 9 / **5.2** |
+| Arme | 19 dégâts / 2.9 par s | **Lance du Juste** : 19 / 2.2, traverse un ennemi | 9 / **5.2** |
 | Portée | 340 | 355 | 300 |
-| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague — et le **PRIX DU SANG** (Espace / A), qui la dépense d'un coup autour de lui | **La Patience** : 0.9 PV/s, mais seulement après **4 s sans être touché**, et le **REFUS DE PLIER** (Espace / A) — une parade qui annule un coup et renvoie tout ce qui est au contact | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
+| Passif | **La Marque** : +1 % de dégâts par élimination dans la vague, plafonné à **+25 %**, remis à zéro à chaque vague — et le **PRIX DU SANG** (Espace / A), qui la dépense d'un coup autour de lui | **La Consécration** : immobile 0,5 s, il consacre le sol (160 px) — ce qui y entre brûle, il s'y soigne — et le **REFUS DE PLIER** (Espace / A), dont trois réussites chargent le **JUGEMENT** | **Ne pas se retourner** : **+20 % de cadence** tant qu'il se déplace, et la **RUÉE** (Espace / A) — 240 px à travers les corps, toutes les 2,2 s |
 
 ### Équilibrage
 
@@ -2687,6 +2687,246 @@ remesurée devient.)*
 
 Les âmes ne sont volontairement pas capitalisées : une épargne inter-runs
 trivialiserait les premières vagues de la partie suivante.
+
+## Job devient paladin (0.9.0)
+
+Les runs de Job étaient les plus ennuyeuses, et pour une raison mesurable : son
+passif, la Patience, le soignait à condition de NE PAS être touché pendant
+3 s. Le personnage le plus solide du jeu était récompensé pour attendre, avec une
+arme qui tapait mollement (44 DPS contre 60 à Caïn) et une parade qui défendait
+sans jamais menacer. Le paladin garde la solidité et retourne la défense en
+attaque ; il garde aussi son verbe, la parade, et les trois règles qui
+l'encadrent (pas de seconde invulnérabilité, rien de proportionnel aux dégâts
+subis, rien ne pare une zone annoncée).
+
+- **La Lance du Juste**, à la place de la boule de feu : moins de traits, plus
+  lourds (19 × 2,2 au lieu de 12 × 3,5 — même DPS de départ, 44), qui
+  traversent un ennemi. Nouveau projectile, `lance_sacree.tscn`.
+- **La Consécration** remplace la Patience. Immobile 0,5 s, il consacre le sol
+  sous ses pieds (160 px). La zone RESTE où il l'a posée : petits pas permis à
+  l'intérieur, il en sort et elle s'éteint en 1,2 s. Ce qui y entre brûle à
+  **0,5 × les dégâts d'arme par seconde** — un multiple de l'arme, comme le
+  contre, donc elle suit toute la build sans canal à part ; il s'y soigne de
+  2 PV/s. C'est l'exact contraire de Loth, qui gagne à bouger.
+- **La Ferveur et le Jugement.** Chaque parade réussie charge la Ferveur (trois
+  losanges sous les pieds) ; un ennemi tué sur le sol consacré en donne un
+  dixième, pour que le Jugement ne soit pas réservé à qui maîtrise la parade.
+  Pleine, l'appui suivant libère le **Jugement** au lieu de parer : une onde de
+  240 px à **6 × les dégâts d'arme**, qui consacre le sol sur-le-champ. Parer,
+  parer, frapper.
+- **Sa Forge suit, sans rien retirer aux profils** : les identifiants des nœuds
+  restent, leurs effets changent. « Œil pour œil » (renvoi des coups, un effet
+  de tank passif) devient **Terre sainte** (zone +33 %, brûlure +50 %) ; « Il
+  n'a pas plié » consacre dès l'arrêt, double le soin et ne demande que deux
+  charges de Ferveur. Dîme, Chair marquée et Vieilles blessures (l'armure en
+  dégâts, déjà très paladin) restent.
+
+**Mesuré**, joueur increvable et IMMOBILE (la façon de jouer visée, identique
+pour les deux personnages), deux essais par ligne :
+
+| | Job (Patience) | Paladin, 1er réglage | **Paladin retenu** | Caïn |
+|---|---|---|---|---|
+| Sans Forge, horde vague 8 (30 s) | 8 à 17 | 36 à 38 | **26 à 42** | 18 à 25 |
+| Sans Forge, Golgota | 109 à 120 s | 62 s | **80 s** | 70 à 81 s |
+| Forge + 12 objets, horde vague 14 | 54 à 62 | 73 à 77 | **55 à 74** | 69 à 78 |
+| Forge + 12 objets, Lilith | 39,6 s | 30 s | **36 s** | 32,5 s |
+
+Le premier réglage (lance à 22, traversant deux corps, brûlure à 0,8) le rendait
+au moins aussi fort que Caïn partout, avec 130 PV et son armure — or il ne peut
+pas être à la fois le meilleur tank et le meilleur en dégâts, c'est l'axe qui
+distingue les trois. Retenu : lance à 19, un corps traversé, brûlure à 0,5. Caïn
+reste devant sur les boss et en fin de run ; Job prend la foule, qui est sa
+nouvelle identité. **Deux réserves** : la horde sans Forge varie énormément
+(26 et 42 pour le même réglage), il faudrait plus d'essais pour trancher ; et le
+banc immobile est le meilleur cas pour la Consécration — un joueur qui doit
+esquiver la quittera plus souvent. La parade n'est pas simulée : le Jugement
+n'y vient que des éliminations sur le sol consacré.
+
+Réglages si ça sonne faux en jeu : `CONSECRATION_RATIO`, `CONSECRATION_RAYON`,
+`JUGEMENT_RATIO`, `FERVEUR_PAR_ELIMINATION` (`character_db.gd`).
+
+## Histoire et cinématiques (0.9.0)
+
+**« Le Pari ».** Dans le livre de Job, tout commence par un pari entre Dieu et
+l'Accusateur : « retire-lui tout, et il te maudira ». L'Accusateur a perdu, et
+il veut sa revanche. Il a fait descendre trois âmes que le Ciel avait
+épargnées — un meurtrier qu'on n'a pas eu le droit de tuer, un juste brisé puis
+recollé, un fuyard sorti du feu — et parie que ce qui n'a pas plié là-haut
+pliera ici.
+
+L'histoire EXPLIQUE ce que le jeu faisait déjà, au lieu de s'y superposer :
+on meurt et on recommence parce que perdre une manche ne libère personne ; la
+Forge est l'atelier de l'Accusateur, qui arme ses propres joueurs parce qu'un
+pari trop facile ne prouve rien ; la Clé des Abysses est la seule sortie du
+pari. Chacun veut autre chose que la victoire : **Caïn une fin** (la Marque lui
+interdit de mourir), **Job une réponse** (il ne sait pas pourquoi il est là),
+**Loth quelqu'un** (sa femme, changée en sel, dont l'âme est tombée avec
+Sodome — lui qui n'a jamais su se retourner doit revenir vers le feu).
+
+**Quand elles jouent.** Entre le choix du damné et l'arène : le Pari la toute
+première fois, puis le prologue de chaque personnage la première fois qu'on le
+joue. Plus rien ensuite. Les profils existants les voient donc une fois, à leur
+prochaine partie. Options → Histoire → « Revoir » les rejoue, y compris depuis
+la pause.
+
+**On peut toujours passer.** B, Échap, Start ou le bouton « Passer » (toujours
+affiché, jamais focalisable — sinon A le presserait) coupent **toute la file**
+d'un coup : qui passe le Pari ne veut pas subir le prologue derrière. A, Entrée,
+Espace ou un clic terminent la réplique en cours, puis passent à la suivante.
+Une cinématique est comptée comme **vue dès qu'elle commence** : la passer est un
+choix, la reproposer à chaque partie punirait justement ce joueur-là.
+
+**Mise en scène**, avec les seules planches du jeu : bandes noires, caméra qui
+glisse sur chaque plan, silhouettes éteintes qu'une réplique allume, entrées en
+marchant, apparition de Lucifer avec rugissement et secousse, et la **statue de
+sel** — la planche du prêtre du pack, reteintée par un shader qui garde la
+luminance du pixel art (un `modulate` n'aurait fait que l'assombrir). Elle est
+tirée du pack par `tools/extract_assets.py`, comme les autres planches.
+
+**Le milieu : après Lilith** (vague 10, la première fois que CE personnage la
+bat). Lilith, la première femme, chassée du premier jardin pour avoir dit non,
+révèle ce que Lucifer tait : **personne là-haut n'a accepté son pari. Il joue
+seul, contre un Ciel qui se tait.** Caïn apprend que sa Marque ne vient pas de
+Lucifer, donc qu'il ne peut pas l'ôter ; Job, qu'il souffre pour un adversaire
+qui ne regarde pas ; Loth, que sa femme s'est retournée pour leurs filles
+restées dans la ville — et qu'on ne la lui rendra pas.
+
+La scène se joue **avant la boutique, jeu figé** : l'entracte compte à rebours
+vers la vague suivante, et c'est d'ordinaire la boutique qui l'arrête. Le boss
+tombé est reconnu par le nom de sa scène (`lilith`) ; une scène
+`<boss>_<personnage>` dans `StoryDB` suffit à en ajouter une après un autre
+boss. « Revoir » ne propose les scènes d'après boss qu'une fois vues : le menu
+ne divulgue pas la suite.
+
+**Erreur corrigée au banc** : pendant le fondu de sortie, la cinématique ne
+bloquait plus les entrées alors que la boutique avait déjà le focus sur
+« Vague suivante ». Qui tapotait A pour faire défiler les répliques la fermait
+sans l'avoir vue. La cinématique retient maintenant tout jusqu'à sa
+disparition, et `MenuNav` ignore A et B 0,35 s quand elle rend la main.
+
+**La fin : Lucifer, les trois sceaux, Hélel.**
+
+- **L'entrée** (vague 25) : la première fois que CE damné atteint Lucifer, jeu
+  figé dès que le boss apparaît, avant son premier coup.
+- **Sa mort** : chacun obtient ce qu'il était venu chercher — la Marque de Caïn
+  pâlit (il peut mourir, « pas tout de suite, mais je peux ») ; Job reçoit sa
+  réponse (il n'y en a jamais eu) ; le sel se fend et la femme de Loth, Édith,
+  revient. Puis Lucifer se relève dans sa lumière d'origine, et le **sceau de
+  ce damné** se brise (sauvegardé par profil). Le compteur « {sceaux} / 3 » et
+  les répliques conditionnées (`si_min`, `si_moins`) disent ce qui reste.
+- **Le choix**, après CHAQUE mort de Lucifer : « Continuer — l'enfer sans fin »
+  est toujours là ; « Franchir le portail — Hélel » ne s'ouvre qu'avec les trois
+  sceaux, et l'écran dit lesquels manquent.
+- **Hélel, fils de l'Aurore** — le nom d'avant la chute, *Hêlēl ben Šāḥar*
+  (Isaïe 14:12), que la Vulgate traduit « Lucifer ». Même grammaire d'attaques
+  que Lucifer sur trois phases, plus une quatrième, **l'Aurore** (plongeons
+  rapprochés et spirale à trois bras). 16 000 PV de base contre 10 000, mis à
+  l'échelle comme un boss de la vague en cours, sans boucle ; enragement à
+  140 s. Son sprite est celui de Lucifer **repeint en or** par un shader qui
+  garde la luminance : un `modulate` sur un chevalier noir ne donnait qu'un
+  chevalier terne. Piège rencontré : en fragment, `COLOR` contient déjà la
+  texture — la remultiplier éteignait tout l'or ; la modulation (flash des
+  coups) passe donc par le vertex.
+- **Le glitch** : les trois sceaux ont lié les trois âmes, qui n'ont plus qu'un
+  corps pour entrer. Toutes les **10 à 16 s**, un autre damné — jamais le même —
+  prend le corps, au hasard : image dédoublée rouge/cyan et tranchée en bandes
+  0,45 s, nom annoncé. Il garde les objets, les âmes et la **part** de PV (Job
+  130 → Loth 80 ne tue ni ne soigne), et arrive avec SES valeurs de base, SON
+  pouvoir et SA Forge (mesuré : Job passe à 155 PV avec ses nœuds). Le joueur
+  n'est pas remplacé : ennemis, caméra et effets tiennent une référence à lui.
+  Trois restes à purger à chaque changement, relevés avant d'écrire une ligne :
+  les jauges de pouvoir (jamais retirées), la parade de Job (une sanction en
+  cours clouait le suivant pour toujours, elle ne décompte que chez Job), et la
+  ruée de Loth (interrompue, elle laissait traverser les ennemis). Côté
+  passifs, la Marque et la fuite de Loth gardent des compteurs qui les
+  empêchaient silencieusement de se réécrire : ils repartent de zéro.
+  Le personnage d'origine revient dès que le combat s'arrête, et la sauvegarde
+  ne voit jamais passer les autres.
+- **La vraie fin** : Hélel tombe, les trois lui répondent, « Le Pari est
+  rompu » — même bilan et même versement de clés qu'une fin de run.
+
+**Hélel face à une Forge complète — le verrou de phase.** Mesuré à la vague 24,
+Forge complète pour les trois damnés, joueur increvable tenu à 180 px du boss
+(le meilleur cas possible pour lui), changements de corps actifs :
+
+| Build | Mise à mort | Changements de corps |
+|---|---|---|
+| Aucun objet | 5 à 6 % des PV en 150 s | 11 à 12 |
+| 18 objets au hasard | 112 s, ou 35 % en 150 s | 8 à 11 |
+| **Catalogue au maximum** (103 exemplaires) | **12,3 à 12,8 s** | **0** |
+
+La dernière ligne est le cas réel : c'est la build qu'une run de la vague 25
+possède déjà (voir la mesure de Lucifer, 9,1 s, plus haut). Hélel tombait avant
+le premier changement de corps — tout le sujet du combat passait à la trappe.
+
+La correction n'est ni un plafond de dégâts ni plus de PV : les PV allongent le
+combat pour tout le monde, y compris la build à 18 objets qui met déjà deux
+minutes. C'est un **plancher de durée par phase** : tant qu'une phase n'a pas
+duré **14 s**, Hélel ne descend pas sous le seuil de la suivante (ni sous 1 PV
+dans la dernière). Les coups en trop sont absorbés — éclat blanc au lieu du
+rouge — et comptent quand même pour la jauge de pression, qui sinon punirait le
+joueur qui tape sans relâche. Remesuré, catalogue au maximum : **56 s**, phases
+à 14, 28 et 42 s, **4 à 5 changements de corps**, sur trois essais. Une build
+modeste ne sent rien : ses phases durent déjà plus de 14 s. Dans l'Aurore, le
+corps change deux fois plus souvent (5 à 8 s).
+
+**Pas dans le Déchaînement** : un plancher de durée y serait un plafond côté
+joueur, contraire à ce que ce mode mesure. Hélel y suit la courbe de l'enfer.
+
+**Le Voile de l'Aurore** — un bouclier qui compte les COUPS, pas les dégâts, et
+qui est une ATTAQUE : 110 coups à porter en 6 s, sinon le **Jugement de l'Aube**
+s'abat (deux couronnes de zones annoncées et une salve en étoile, tout
+s'esquive). Brisé à temps, Hélel est sonné 2,5 s et encaisse +30 %. Anneau de
+segments autour de lui : ce qui reste à frapper, et le temps.
+
+Cadence réelle mesurée contre Hélel (coups qui touchent, par seconde, Forge
+complète) :
+
+| | Caïn | Job | Loth |
+|---|---|---|---|
+| Sans objet | 2,5 | 2,6 | 3,1 |
+| Catalogue au maximum | 36,5 | 36,4 | 36,5 |
+
+Ce que ça a corrigé dans l'intuition de départ : l'écart de coups entre builds
+est bien plus serré que l'écart de dégâts (×14 contre ~×240), mais « Loth brise
+le voile plus vite que Caïn » ne tient qu'à petite build — au maximum, les trois
+frappent exactement autant. 110 coups = ~3 s pour la build maximale.
+
+Combats complets, Voile de 110 :
+
+| Réglage | Catalogue au maximum | 18 objets |
+|---|---|---|
+| Voile toutes les 18-24 s, **PV +25 %** | 56 s, 4 voiles brisés, 0 jugement | **vivant à 200 s**, 0 brisé, 7-8 jugements |
+| Voile à chaque phase + Aurore toutes les 22-30 s, PV d'origine | **56 s**, 4 brisés, 5 changements | vivant à 200 s, **54 à 75 % des PV**, 3-4 jugements |
+
+Deux leçons. **Les PV en plus n'ont rien changé à la build maximale** (le verrou
+décide de la durée) et n'ont fait que punir la build moyenne : retirés. **Un
+voile levé partout** coûtait 6 s de dégâts à chaque fois à qui ne le brise pas :
+il ne revient en boucle que dans l'Aurore, le moment qui doit être le pire.
+
+Ce qui reste un choix assumé, à revoir si ça sonne faux en jeu : Hélel est un
+**contrôle de build**, comme les autres boss. Avec 18 objets il faut 4 à 6 min —
+au-delà de l'enragement (140 s) —, alors que la build d'une run qui atteint la
+vague 25 est plus proche du catalogue complet. Le levier, si besoin : ses PV de
+scène (16 000), qui ne touchent pas la build maximale.
+
+**Erreur trouvée au passage** : la Clé des Abysses était ajoutée à l'arène
+pendant le contact physique qui tuait Lucifer, ce que le moteur refuse
+(« Can't change this state while flushing queries »). L'ajout est différé.
+
+Le panneau de développement brise ou rend les trois sceaux, et lance le combat
+contre Hélel sur-le-champ.
+
+**Erreur corrigée au banc** : les changements de corps continuaient pendant le
+ramassage du butin, après la mort d'Hélel. Un changement tombé là restait figé
+à l'écran par la pause de la cinématique, jusque sur l'écran de victoire. Ils
+cessent maintenant à la mort du boss, et le glitch se termine même en pause.
+
+**Où ça vit.** Le texte et les plans sont des **données**
+([`story_db.gd`](scripts/story/story_db.gd)) : corriger une réplique ne touche
+pas au lecteur ([`cinematic.gd`](scripts/story/cinematic.gd)). Pendant qu'une
+cinématique joue, `MenuNav` est suspendu : l'écran de dessous ne doit pas
+bouger dans le dos du joueur.
 
 ## Manette
 

@@ -76,6 +76,21 @@ func refresh() -> void:
 		"Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre.",
 		eight_way))
 
+	# Les cinématiques ne se jouent qu'une fois par profil : il faut pouvoir
+	# les revoir sans effacer sa progression.
+	var replay := Button.new()
+	replay.name = "RevoirHistoire"
+	replay.text = "Revoir"
+	replay.theme_type_variation = &"SecondaryButton"
+	replay.custom_minimum_size = Vector2(200, 0)
+	replay.pressed.connect(func() -> void:
+		Cinematic.play(StoryDB.all_for(Characters.selected_id), func() -> void:
+			if is_instance_valid(replay) and replay.is_visible_in_tree():
+				replay.grab_focus()))
+	rows.add_child(_row("Histoire",
+		"Rejoue le Pari, le prologue de %s et les scènes déjà vues." % Characters.get_selected().display_name,
+		replay))
+
 	UIUtils.chain_focus(self)
 
 

@@ -114,7 +114,8 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
   2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
 - **Un verbe par personnage, les trois sont faits** : Loth traverse (la ruée),
-  Caïn dépense sa Marque (le Prix du sang), Job pare (le Refus de plier). Trois
+  Caïn dépense sa Marque (le Prix du sang), Job pare (le Refus de plier,
+  qui charge son Jugement de paladin depuis la 0.9.0). Trois
   règles à ne pas casser en y touchant : pas de seconde source
   d'invulnérabilité, pas d'effet proportionnel aux dégâts SUBIS (le
   Déchaînement les fait exploser), et **rien ne pare une zone annoncée** — le
@@ -123,6 +124,13 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   (porte de boss), Serpent d'airain (esquive), Corne de Moloch (risque) et
   Reliquaire (boutique). La métrique du banc ne les voit pas ; leurs effets
   sont vérifiés, leur valeur ne l'est pas.
+- **L'histoire est complète de bout en bout** (0.9.0) : le Pari, les
+  prologues, Lilith, Lucifer (entrée, fin de chacun, sceaux), le portail et
+  Hélel avec ses changements de personnage, la vraie fin. Golgota, Baal et
+  Asmodée n'ont pas encore de scène. Hélel a un **verrou de 14 s par phase**
+  et le **Voile de l'Aurore** (mesurés, voir README) ; ce qui n'est pas
+  mesuré, c'est le DANGER qu'il présente — le banc tenait le joueur
+  invincible. Avec une build moyenne (18 objets) il tient 4 à 6 min.
 - **Aucun des trois pouvoirs n'a de son.** Avec le coup encaissé et l'âme
   ramassée, ce sont les manques les plus visibles de la banque.
 - La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :

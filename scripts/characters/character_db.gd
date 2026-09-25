@@ -14,6 +14,8 @@ extends Node
 ##     fait sur la survie et la mobilité, pas sur un multiplicateur caché.
 
 signal selection_changed(character: CharacterData)
+## Le damné a changé EN COURS DE RUN (le combat contre Hélel).
+signal run_character_swapped(character: CharacterData)
 
 const CHARACTERS: Array[Dictionary] = [
 	{
@@ -42,23 +44,30 @@ const CHARACTERS: Array[Dictionary] = [
 	},
 	{
 		"id": &"job", "name": "Job", "title": "L'Éprouvé",
-		"archetype": "Survie",
+		"archetype": "Paladin",
 		"desc": "On lui a tout pris pour voir s'il plierait. Il n'a pas plié. "
-			+ "Il encaisse ce que les autres esquivent, mais frappe sans conviction.",
+			+ "Là où il se tient, le sol devient sacré.",
 		"color": Color(0.55, 0.72, 0.85),
 		"sprite": "res://assets/sprites/characters/job/job_idle.png",
 		"sprite_walk": "res://assets/sprites/characters/job/job_walk.png",
 		"sprite_offset": Vector2(0, 2.5), "sprite_scale": 3.0,
-		"max_health": 130.0, "move_speed": 218.0, "targeting_range": 355.0,
-		"weapon_damage": 12.0, "weapon_fire_rate": 3.5,
-		"weapon_projectile_speed": 700.0, "weapon_crit_chance": 0.05,
+		"max_health": 130.0, "move_speed": 218.0, "targeting_range": 330.0,
+		# LA LANCE DU JUSTE à la place de la boule de feu : moins de traits, plus
+		# lourds, qui TRAVERSENT un corps. Un paladin ne mitraille pas, il
+		# perce une ligne. DPS de départ 44, comme avant : la Consécration et la
+		# traversée lui donnent sa force de foule, pas son arme.
+		"weapon_damage": 19.0, "weapon_fire_rate": 2.2,
+		"weapon_projectile_speed": 640.0, "weapon_crit_chance": 0.05,
+		"weapon_pierce": 1,
+		"projectile": "res://scenes/projectiles/lance_sacree.tscn",
 		"starting_mods": {"armor": 12.0},
-		"passive_name": "La Patience",
-		"passive_desc": "Régénère 1.4 PV par seconde, mais uniquement après "
-			+ "3 secondes sans avoir été touché.\n"
-			+ "LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et "
-			+ "renvoie tout ce qui le touche. Rate, il reste planté.",
-		"special": &"patience",
+		"passive_name": "La Consécration",
+		"passive_desc": "Immobile un instant, il consacre le sol : ce qui y entre "
+			+ "brûle, et il s'y soigne. Sa lance traverse un ennemi.\n"
+			+ "LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et renvoie "
+			+ "ce qui le touche. Trois parades — ou des ennemis tombés sur son sol — "
+			+ "chargent le JUGEMENT : l'appui suivant libère une onde sacrée.",
+		"special": &"consecration",
 		"power": &"steadfast",
 		# Le seul a toucher la moisson des survivants a taux PLEIN : user une
 		# foule sans l'achever est ce qu'il fait, et c'est ce que la moisson
@@ -97,8 +106,42 @@ const CHARACTERS: Array[Dictionary] = [
 ## Plafonds des passifs, lus par `character_effects.gd`.
 const MARK_PER_KILL := 0.01
 const MARK_MAX := 0.25
-const PATIENCE_DELAY := 3.0
-const PATIENCE_REGEN := 1.4
+## LA CONSÉCRATION — le passif de Job depuis la 0.9.0, à la place de la
+## Patience.
+##
+## La Patience le faisait régénérer à condition de NE PAS être touché pendant
+## 3 s : le personnage le plus solide du jeu était récompensé pour attendre, et
+## c'est ce qui rendait ses runs ennuyeuses. La Consécration récompense l'inverse
+## — TENIR UNE PLACE : il s'arrête, le sol s'embrase autour de lui, ce qui y
+## entre brûle, et il s'y soigne. Il redevient celui qui tient la ligne, mais en
+## frappant. C'est aussi l'exact contraire de Loth, dont tout le passif récompense
+## le mouvement.
+##
+## La brûlure est un MULTIPLE DES DÉGÂTS D'ARME, comme le contre : elle suit
+## toute la build sans ouvrir de canal de puissance parallèle, et ne dépend en
+## rien des dégâts subis. Voir README, « Job, paladin ».
+const CONSECRATION_DELAI := 0.5
+const CONSECRATION_RAYON := 160.0
+const CONSECRATION_RATIO := 0.5
+const CONSECRATION_SOIN := 2.0
+const CONSECRATION_EXTINCTION := 1.2
+## « Terre sainte » (Forge) : rayon et brûlure.
+const TERRE_SAINTE_RAYON := 1.33
+const TERRE_SAINTE_DEGATS := 1.5
+
+## LA FERVEUR ET LE JUGEMENT. Trois parades réussies chargent le Jugement ;
+## l'appui suivant le libère au lieu de parer. La parade cesse d'être seulement
+## une défense : parer, parer, puis FRAPPER. Les ennemis tombés sur la
+## Consécration chargent aussi, par dixièmes — la parade reste la voie rapide,
+## mais celui qui ne la maîtrise pas encore n'est pas privé du Jugement.
+##
+## Comptée en COUPS PARÉS et en éliminations, jamais en dégâts subis : la règle
+## vaut pour les trois verbes.
+const FERVEUR_MAX := 3.0
+const FERVEUR_PAR_ELIMINATION := 0.1
+const JUGEMENT_RAYON := 240.0
+const JUGEMENT_RATIO := 6.0
+const JUGEMENT_RECUL := 520.0
 const FLIGHT_FIRE_RATE := 0.20
 
 ## LA RUÉE DE LOTH. Trois chiffres, et chacun répond à une question précise.
@@ -218,6 +261,10 @@ func _ready() -> void:
 		character.weapon_fire_rate = entry["weapon_fire_rate"]
 		character.weapon_projectile_speed = entry["weapon_projectile_speed"]
 		character.weapon_crit_chance = entry["weapon_crit_chance"]
+		character.weapon_pierce = entry.get("weapon_pierce", 0)
+		var projectile_path: String = entry.get("projectile", "")
+		if projectile_path != "" and ResourceLoader.exists(projectile_path):
+			character.projectile_scene = load(projectile_path)
 		character.starting_mods = entry.get("starting_mods", {})
 		character.passive_name = entry.get("passive_name", "")
 		character.passive_description = entry.get("passive_desc", "")
@@ -288,6 +335,16 @@ func select(id: StringName) -> void:
 	selected_id = id
 	SaveGame.set_last_character(id)
 	selection_changed.emit(get_selected())
+
+
+## Change de damné EN COURS DE RUN, sans toucher à la sauvegarde : `select()`
+## écrit le dernier personnage joué, et le combat contre Hélel en change toutes
+## les dix secondes. L'appelant rend le personnage d'origine à la fin.
+func swap_in_run(id: StringName) -> void:
+	if not _catalog.has(id) or id == selected_id:
+		return
+	selected_id = id
+	run_character_swapped.emit(get_selected())
 
 
 func has_special(key: StringName) -> bool:

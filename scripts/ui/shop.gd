@@ -83,8 +83,16 @@ func _ready() -> void:
 	RunState.souls_changed.connect(_on_souls_changed)
 
 
+## L'histoire passe AVANT la boutique — scène d'après boss, sceau de Lucifer,
+## choix du portail — et c'est elle qui l'ouvre ensuite, ou pas : c'est le
+## `StoryDirector` de l'arène qui décide. Sans lui, la boutique s'ouvre seule.
 func _on_wave_cleared(_wave: int) -> void:
-	if RunState.is_running:
+	if not RunState.is_running:
+		return
+	var director := get_tree().get_first_node_in_group(&"story_director")
+	if director != null:
+		director.call(&"before_shop")
+	else:
 		open()
 
 

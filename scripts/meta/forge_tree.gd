@@ -266,22 +266,27 @@ const NODES: Array[Dictionary] = [
 	},
 	{
 		"id": &"job_thorns", "branch": "Épreuve", "character": &"job",
-		"name": "Œil pour œil",
-		"desc": "Qui vous touche encaisse exactement ce qu'il vous a fait.",
+		# L'IDENTIFIANT RESTE : les profils qui l'ont acheté le gardent, avec son
+		# nouvel effet. « Œil pour œil » renvoyait les coups reçus — un effet de
+		# tank passif, qui n'a plus sa place chez le paladin (0.9.0).
+		"name": "Terre sainte",
+		"desc": "La Consécration s'étend d'un tiers et brûle moitié plus fort.",
 		# UN RETOUR ENTIER, et pas la moitié : le renvoi est un pourcentage du
 		# coup reçu, or les PV ennemis montent de 10 % par vague quand les dégâts
 		# ennemis n'en gagnent que 9,5 %. À 50 %, le nœud devenait décoratif
 		# passé la vague 10 — 15 points rendus à un ennemi qui en a 90. À 100 %,
 		# trois contacts tuent encore un imp de la vague 20.
 		"cost": 4, "requires": [&"job_old_wounds"], "mods": {},
-		"special": &"thorns_bonus", "value": 1.0,
+		"special": &"consecration_boost", "value": 1.0,
 	},
 	{
 		"id": &"job_unbroken", "branch": "Épreuve", "character": &"job",
 		"name": "Il n'a pas plié",
-		"desc": "La Patience repart après 1,5 s au lieu de 3 et régénère le double.",
+		# Même identifiant, même nom — c'est toujours la clé de voûte de sa
+		# branche —, effet réécrit pour la Consécration et le Jugement.
+		"desc": "Le sol se consacre dès l'arrêt et y soigne le double. Le Jugement ne demande que deux charges.",
 		"cost": 6, "requires": [&"job_thorns"], "mods": {},
-		"special": &"patience_boost", "value": 1.0,
+		"special": &"ferveur_rapide", "value": 1.0,
 	},
 
 	# ------------------------------- LOTH · EXODE ------------------------------
