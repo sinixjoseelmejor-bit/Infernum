@@ -140,7 +140,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 
 	if _jauge != null:
-		var reste := _dash_recharge / maxf(0.01, Characters.DASH_COOLDOWN)
+		var reste := _dash_recharge / maxf(0.01, _recharge_ruee())
 		_jauge.remplissage = clampf(1.0 - reste, 0.0, 1.0)
 
 	if _jauge_marque != null:
@@ -213,7 +213,7 @@ func _lancer_ruee() -> void:
 	if _dash_direction == Vector2.ZERO:
 		_dash_direction = Vector2.RIGHT
 	_dash_restant = Characters.DASH_TIME
-	_dash_recharge = Characters.DASH_COOLDOWN
+	_dash_recharge = _recharge_ruee()
 	_knockback = Vector2.ZERO
 	collision_mask &= ~Layers.ENEMY
 	_trace_restante = 0.0
@@ -260,7 +260,7 @@ func _avancer_parade(delta: float) -> void:
 		if _parade_fenetre <= 0.0:
 			# Fenêtre écoulée sans rien parer : c'est un coup dans le vide.
 			_parade_racine = Characters.PARADE_RACINE
-			_parade_recharge = Characters.PARADE_RECHARGE
+			_parade_recharge = _recharge_parade()
 	if _jauge_parade == null:
 		return
 	if _parade_amorce > 0.0:
@@ -271,9 +271,23 @@ func _avancer_parade(delta: float) -> void:
 		_jauge_parade.progression = _parade_fenetre / Characters.PARADE_FENETRE
 	elif _parade_recharge > 0.0:
 		_jauge_parade.etat = ParryGauge.Etat.RECHARGE
-		_jauge_parade.progression = 1.0 - _parade_recharge / Characters.PARADE_RECHARGE
+		_jauge_parade.progression = 1.0 - _parade_recharge / _recharge_parade()
 	else:
 		_jauge_parade.etat = ParryGauge.Etat.PRET
+
+
+## Serpent d'airain : les verbes reviennent plus vite. La jauge lit la MÊME
+## durée que le minuteur, sinon elle se remplirait à côté de la vraie recharge.
+func _recharge_ruee() -> float:
+	return Characters.DASH_COOLDOWN * _hate_pouvoir()
+
+
+func _recharge_parade() -> float:
+	return Characters.PARADE_RECHARGE * _hate_pouvoir()
+
+
+func _hate_pouvoir() -> float:
+	return Characters.POWER_HASTE if RunState.has_special(&"power_haste") else 1.0
 
 
 func is_parrying() -> bool:
@@ -285,7 +299,7 @@ func is_parrying() -> bool:
 ## exponentielle, et un contre proportionnel y deviendrait la réponse à tout.
 func _contrer(source: Node) -> void:
 	_parade_fenetre = 0.0
-	_parade_recharge = Characters.PARADE_RECHARGE
+	_parade_recharge = _recharge_parade()
 	var armes := get_weapons()
 	var degats: float = armes[0].get_projectile_damage() * Characters.PARADE_RATIO \
 		if not armes.is_empty() else 0.0

@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="EnemyRoster" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/waves/enemy_spawn_entry.gd" id="1_x60y7"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/imp.tscn" id="2_rph65"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hound.tscn" id="3_bxj37"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/cultist.tscn" id="4_dmswk"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/brute.tscn" id="5_02ba7"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/oeil.tscn" id="6_lyb3h"]
+[ext_resource type="Script" path="res://scripts/systems/waves/enemy_roster.gd" id="7_3vkhm"]
+
+[sub_resource type="Resource" id="Resource_q73q6"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("2_rph65")
+base_weight = 60.0
+weight_drift = -2.0
+
+[sub_resource type="Resource" id="Resource_68txd"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("3_bxj37")
+min_wave = 2
+base_weight = 25.0
+weight_drift = 1.0
+
+[sub_resource type="Resource" id="Resource_qo7fq"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("4_dmswk")
+min_wave = 3
+base_weight = 22.0
+weight_drift = 1.5
+
+[sub_resource type="Resource" id="Resource_x4ga7"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("5_02ba7")
+min_wave = 4
+base_weight = 14.0
+weight_drift = 2.0
+
+[sub_resource type="Resource" id="Resource_nn02q"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("6_lyb3h")
+min_wave = 11
+base_weight = 14.0
+weight_drift = 1.4
+design_note = "Entre à la vague 11, juste après Lilith : c'est un seuil de jeu et non d'équilibrage. Il sanctionne l'immobilité, ce qu'aucun autre ennemi ne fait ; plus tôt, il punirait un joueur qui n'a pas encore de quoi choisir où se placer. Son poids monte doucement : deux ou trois yeux suffisent à interdire de se poser, dix en feraient un jeu de couloirs. README, « L'Œil sanctionne l'immobilité »."
+
+[resource]
+script = ExtResource("7_3vkhm")
+entries = Array[ExtResource("1_x60y7")]([SubResource("Resource_q73q6"), SubResource("Resource_68txd"), SubResource("Resource_qo7fq"), SubResource("Resource_x4ga7"), SubResource("Resource_nn02q")])

@@ -10,6 +10,11 @@ const CARD_MIN_SIZE := Vector2(196, 214)
 var item: ItemData
 var cost: int = 0
 var purchased: bool = false
+## La pièce rare de l'offre : liseré épais et fond teinté de sa rareté.
+var featured: bool = false
+## Le bouton d'achat a le focus : c'est la CARTE entière qui doit se désigner,
+## pas un petit bouton au pied d'un bloc de texte.
+var _focused: bool = false
 
 var _icon: TextureRect
 var _name_label: Label
@@ -54,7 +59,8 @@ func _build() -> void:
 	title.add_child(_icon)
 
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override(&"font_size", 20)
+	_name_label.theme_type_variation = &"TitleLabel"
+	_name_label.add_theme_font_size_override(&"font_size", 30)
 	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_child(_name_label)
@@ -76,6 +82,8 @@ func _build() -> void:
 
 	_buy_button = Button.new()
 	_buy_button.pressed.connect(_on_buy_pressed)
+	_buy_button.focus_entered.connect(_set_focused.bind(true))
+	_buy_button.focus_exited.connect(_set_focused.bind(false))
 	box.add_child(_buy_button)
 
 	_refresh()
@@ -87,6 +95,17 @@ func setup(new_item: ItemData, new_cost: int) -> void:
 	purchased = false
 	if is_node_ready():
 		_refresh()
+
+
+func set_featured(value: bool) -> void:
+	featured = value
+	if is_node_ready():
+		_refresh()
+
+
+func _set_focused(value: bool) -> void:
+	_focused = value
+	_refresh()
 
 
 func set_affordable(affordable: bool) -> void:
@@ -121,6 +140,15 @@ func _refresh() -> void:
 	style.bg_color = Color(0.11, 0.05, 0.06, 0.96)
 	style.border_color = color
 	style.set_border_width_all(2)
+	if featured:
+		# Le fond prend un cinquième de la couleur de rareté, le liseré double :
+		# la carte se repère d'un coup d'œil, sans rien masquer des autres.
+		style.bg_color = style.bg_color.lerp(color, 0.2)
+		style.set_border_width_all(4)
+		_rarity_label.text = "%s  ·  PIÈCE RARE" % item.get_rarity_name().to_upper()
+	if _focused:
+		style.border_color = color.lerp(Color.WHITE, 0.5)
+		style.set_border_width_all(4)
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(2)
 	add_theme_stylebox_override(&"panel", style)

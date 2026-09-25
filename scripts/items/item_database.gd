@@ -37,7 +37,7 @@ extends Node
 signal catalog_ready
 
 const ITEMS: Array[Dictionary] = [
-	# ------------------------------ COMMUNES (6) ------------------------------
+	# ------------------------------ COMMUNES (9) ------------------------------
 	# Petits gains, sans malus : la base de n'importe quelle build.
 	{
 		"id": &"ember", "name": "Braise ardente", "rarity": 0,
@@ -62,7 +62,7 @@ const ITEMS: Array[Dictionary] = [
 	{
 		"id": &"chipped_fang", "name": "Croc ébréché", "rarity": 0,
 		"desc": "Trouve toujours le point faible.",
-		"mods": {"crit_chance": 0.06},
+		"mods": {"crit_chance": 0.09},
 	},
 	{
 		# Le rayon de ramassage n'est plus vendu : la fin de vague aspire tout le
@@ -72,8 +72,25 @@ const ITEMS: Array[Dictionary] = [
 		"desc": "Les âmes viennent à vous, et plus nombreuses.",
 		"mods": {"soul_gain_pct": 0.12},
 	},
+	{
+		"id": &"whetstone", "name": "Pierre à aiguiser", "rarity": 0,
+		"desc": "Le fil ne pardonne rien.",
+		"mods": {"crit_chance": 0.04, "crit_damage_pct": 0.15},
+	},
+	{
+		# Le seul soin accessible dès les premières boutiques. Trois piles : la
+		# survie par régénération reste un complément, pas une build à elle seule.
+		"id": &"bandages", "name": "Bandelettes", "rarity": 0,
+		"desc": "Serrées, sales, mais elles tiennent.",
+		"mods": {"regen": 0.3}, "max_stacks": 3,
+	},
+	{
+		"id": &"executioner_glove", "name": "Gant du bourreau", "rarity": 0,
+		"desc": "Il a déjà servi. Souvent.",
+		"mods": {"damage_pct": 0.08},
+	},
 
-	# -------------------------------- RARES (6) -------------------------------
+	# -------------------------------- RARES (9) -------------------------------
 	{
 		"id": &"demon_bile", "name": "Fiel de démon", "rarity": 1,
 		"desc": "Corrosif. Très corrosif.",
@@ -93,7 +110,7 @@ const ITEMS: Array[Dictionary] = [
 	{
 		"id": &"hunter_eye", "name": "Œil du chasseur", "rarity": 1,
 		"desc": "Voit plus loin, vise mieux.",
-		"mods": {"range_pct": 0.20, "crit_chance": 0.08},
+		"mods": {"range_pct": 0.20, "crit_chance": 0.11},
 	},
 	{
 		"id": &"leech", "name": "Sangsue", "rarity": 1,
@@ -107,8 +124,30 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"move_speed_pct": 0.14, "fire_rate_pct": 0.12},
 		"max_stacks": 4,
 	},
+	{
+		# La build critique AVANT les épiques : chance et dégâts réunis, payés
+		# en cadence (règle A).
+		"id": &"knuckle_rosary", "name": "Chapelet de phalanges", "rarity": 1,
+		"desc": "Chaque grain a été quelqu'un.",
+		"mods": {"crit_chance": 0.08, "crit_damage_pct": 0.30, "fire_rate_pct": -0.03},
+		"max_stacks": 3,
+	},
+	{
+		"id": &"clotted_blood", "name": "Sang caillé", "rarity": 1,
+		"desc": "Épais comme une promesse. Le soin par seconde est plafonné.",
+		"mods": {"lifesteal_pct": 0.01, "max_health_flat": 8.0},
+		"max_stacks": 2,
+	},
+	{
+		# PRÉPARER LA PORTE. Les boss sont des contrôles de DPS et rien ne s'y
+		# préparait : l'objet transfère de la puissance de la vague vers le boss.
+		"id": &"giant_bane", "name": "Fléau des géants", "rarity": 1,
+		"desc": "+30 % de dégâts aux boss et aux élites, −10 % aux autres.",
+		"mods": {},
+		"special": &"giant_bane", "max_stacks": 1,
+	},
 
-	# ------------------------------- ÉPIQUES (5) ------------------------------
+	# ------------------------------- ÉPIQUES (9) ------------------------------
 	# Objets structurants : ils orientent la build et coûtent quelque chose.
 	{
 		"id": &"trifid_shard", "name": "Éclat trifide", "rarity": 2,
@@ -145,8 +184,32 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"max_health_flat": 30.0, "armor": 14.0, "fire_rate_pct": -0.18},
 		"max_stacks": 2,
 	},
+	{
+		# Le seul objet qui touche aux VERBES : ruée et parade rechargent plus
+		# vite, le Prix du sang garde une part de la Marque. Voir `POWER_HASTE`.
+		"id": &"brazen_serpent", "name": "Serpent d'airain", "rarity": 2,
+		"desc": "Votre pouvoir revient 30 % plus vite. Caïn garde 30 % de sa Marque en la dépensant.",
+		"mods": {},
+		"special": &"power_haste", "max_stacks": 1,
+	},
+	{
+		# Un rebond RÉSERVÉ AUX CRITIQUES, pour ne pas doubler la Lance : même
+		# mécanique de perforation, même décote, mais une build critique en
+		# fait un multiplicateur que les autres n'ont pas.
+		"id": &"moloch_chain", "name": "Chaîne de Moloch", "rarity": 2,
+		"desc": "Les coups critiques traversent un ennemi de plus.",
+		"mods": {"crit_chance": 0.05},
+		"special": &"crit_bounce", "max_stacks": 1,
+	},
+	{
+		# Le tank MOBILE : l'armure sans le malus de vitesse des Écailles.
+		"id": &"penitent_cuirass", "name": "Cuirasse du pénitent", "rarity": 2,
+		"desc": "Le poids de la faute rend léger.",
+		"mods": {"armor": 22.0, "move_speed_pct": 0.08},
+		"max_stacks": 2,
+	},
 
-	# ----------------------------- LÉGENDAIRES (3) ----------------------------
+	# ----------------------------- LÉGENDAIRES (5) ----------------------------
 	# Effets uniques, non cumulables, chacun avec une vraie contrepartie.
 	{
 		"id": &"eternal_ember", "name": "Braise éternelle", "rarity": 3,
@@ -166,12 +229,27 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {},
 		"special": &"reaper_stacks", "max_stacks": 1,
 	},
+	{
+		# UN RISQUE QU'ON ACHÈTE. Les élites viennent 50 % plus souvent et
+		# valent deux fois plus d'âmes — plus de revenu, plus de danger.
+		"id": &"moloch_horn", "name": "Corne de Moloch", "rarity": 3,
+		"desc": "Les élites sont 50 % plus fréquentes et rendent deux fois plus d'âmes.",
+		"mods": {},
+		"special": &"elite_lure", "max_stacks": 1,
+	},
+	{
+		# Le second multishot, avec son prix : la portée, qui fait l'auto-visée.
+		"id": &"solomon_seal", "name": "Sceau de Salomon", "rarity": 3,
+		"desc": "+1 projectile, mais une vue plus courte.",
+		"mods": {"projectile_bonus": 1, "range_pct": -0.25},
+		"max_stacks": 1,
+	},
 
 	# ------------- À DÉBLOQUER AVEC DES CLÉS (contenu persistant) -------------
 	{
 		"id": &"thorn_mantle", "name": "Manteau d'épines", "rarity": 1,
 		"desc": "Renvoie 30 % des dégâts de contact subis.",
-		"mods": {"armor": 10.0},
+		"mods": {"armor": 14.0},
 		"special": &"thorns", "max_stacks": 1, "key_cost": 2,
 	},
 	{
@@ -185,6 +263,12 @@ const ITEMS: Array[Dictionary] = [
 		"desc": "Beaucoup plus d'âmes récoltées, au prix de la puissance.",
 		"mods": {"soul_gain_pct": 0.45, "damage_pct": -0.05},
 		"max_stacks": 1, "key_cost": 5,
+	},
+	{
+		"id": &"reliquary", "name": "Reliquaire", "rarity": 1,
+		"desc": "La première relance de chaque boutique est offerte.",
+		"mods": {},
+		"special": &"free_reroll", "max_stacks": 1, "key_cost": 3,
 	},
 ]
 

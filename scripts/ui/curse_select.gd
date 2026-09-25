@@ -7,9 +7,16 @@ extends CanvasLayer
 
 signal confirmed()
 
-@onready var list: VBoxContainer = %CurseList
+@onready var list: GridContainer = %CurseList
+@onready var scroll: ScrollContainer = %Scroll
 @onready var danger_label: Label = %DangerLabel
 @onready var start_button: Button = %StartRunButton
+
+const CURSE_COLOR := Color(0.83, 0.42, 0.92)
+const PRICE_COLOR := Color(1.0, 0.52, 0.42)
+const GAIN_COLOR := Color(0.56, 0.94, 1.0)
+## Une carte : la hauteur loge la plus longue description sur deux lignes.
+const CARD_MIN_SIZE := Vector2(380, 176)
 
 var _rows: Dictionary = {}
 
@@ -36,20 +43,76 @@ func _build() -> void:
 	_rows.clear()
 
 	for curse in Curses.CURSES:
-		var check := CheckBox.new()
-		check.text = "%s  —  %s" % [curse["name"], curse["penalty"]]
-		check.add_theme_font_size_override(&"font_size", 17)
-		check.tooltip_text = curse["desc"]
-		var id: StringName = curse["id"]
-		check.toggled.connect(func(_pressed: bool) -> void: Curses.toggle(id))
-		list.add_child(check)
-		_rows[id] = check
+		var card := _build_card(curse)
+		list.add_child(card)
+		_rows[curse["id"]] = card
+	_fit_scroll.call_deferred()
 
-		var reward := Label.new()
-		reward.text = "        en échange : " + _format_rewards(curse)
-		reward.add_theme_font_size_override(&"font_size", 13)
-		reward.add_theme_color_override(&"font_color", Color(0.56, 0.94, 1))
-		list.add_child(reward)
+
+## UNE CARTE PAR MALÉDICTION, et le prix en face du gain. L'ancienne liste
+## empilait onze barres dorées identiques, avec la récompense en petit texte
+## cyan dessous : on lisait mal ce qu'on gagnait, et plus mal encore ce qui était
+## coché. La carte cochée s'allume comme celle du personnage choisi.
+func _build_card(curse: Dictionary) -> Button:
+	var id: StringName = curse["id"]
+	var card := Button.new()
+	card.name = "malediction_%s" % id
+	card.theme_type_variation = &"CardButton"
+	card.toggle_mode = true
+	card.custom_minimum_size = CARD_MIN_SIZE
+	card.tooltip_text = curse["desc"]
+	card.toggled.connect(func(_pressed: bool) -> void: Curses.toggle(id))
+
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override(StringName("margin_" + side), 14)
+	card.add_child(margin)
+
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override(&"separation", 4)
+	margin.add_child(box)
+
+	var head := HBoxContainer.new()
+	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(head)
+	var title := _label(curse["name"], 30, CURSE_COLOR)
+	title.theme_type_variation = &"TitleLabel"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(_label("Danger %d" % int(curse.get("danger", 0)), 15, Color(0.72, 0.62, 0.7)))
+
+	var desc := _label(curse["desc"], 14, Color(0.7, 0.67, 0.68))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(desc)
+	var price := _label("Prix : %s" % curse["penalty"], 17, PRICE_COLOR)
+	price.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(price)
+	var gain := _label("Gain : %s" % _format_rewards(curse), 17, GAIN_COLOR)
+	gain.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(gain)
+	return card
+
+
+func _label(text: String, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override(&"font_size", size)
+	label.add_theme_color_override(&"font_color", color)
+	return label
+
+
+## Même règle que la Forge : la zone prend la hauteur de ses cartes, au lieu
+## d'une valeur écrite à la main qui coupe dès qu'un texte s'allonge.
+##
+## Mesurée après une image de mise en page, pour que les textes à retour à la
+## ligne aient déjà leur largeur (voir `Shop._fit_body`).
+func _fit_scroll() -> void:
+	await get_tree().process_frame
+	scroll.custom_minimum_size.y = list.get_combined_minimum_size().y
 
 
 func _format_rewards(curse: Dictionary) -> String:
@@ -77,6 +140,8 @@ func _num(value: float) -> String:
 
 
 func _refresh() -> void:
+	for id in _rows:
+		(_rows[id] as Button).set_pressed_no_signal(Curses.active.has(id))
 	var danger := Curses.get_danger()
 	if danger == 0:
 		danger_label.text = "Aucune malédiction — run de référence."

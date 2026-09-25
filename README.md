@@ -51,11 +51,28 @@ Le HUD affiche en permanence : vie, **numéro de vague**, **minuteur de la vague
 
 ### Vagues — [wave_manager.gd](scripts/systems/wave_manager.gd)
 
+Le `WaveManager` n'orchestre plus que le cycle d'une vague (combat, aspiration,
+boutique). Les chiffres vivent dans des classes à part, sous
+[`scripts/systems/waves/`](scripts/systems/waves/) :
+
+| Classe | Rôle |
+|---|---|
+| `DifficultyCurve` | PV, dégâts, vitesse, densité et élites de la piétaille, plus les deux constantes du Déchaînement |
+| `BossCurve` | mise à l'échelle des boss et renforcement de la boucle |
+| `EnemyRoster` / `EnemySpawnEntry` | types d'ennemis, vague d'entrée, poids et dérive — réglés dans [`scenes/main/enemy_roster.tres`](scenes/main/enemy_roster.tres) |
+| `LeftoverHarvest` | ce que rendent les survivants en fin de vague |
+
+Les courbes sont des **fonctions pures** : elles ne lisent aucun autoload, le
+Déchaînement et les multiplicateurs d'options arrivent en argument. C'est ce qui
+permet de les tester sans lancer de partie — voir « Tests des vagues » plus bas.
+Les commentaires du code gardent la règle et le chiffre clé, et renvoient ici
+pour les mesures.
+
 | Courbe | Formule | Note |
 |---|---|---|
 | Durée | `20 s + 2 s × (vague-1)`, max 45 s | |
-| Densité | `0.8 + 0.19 × (vague-1)` spawn/s, max 6 | |
-| PV ennemis | `× (1 + 0.10 × (vague-1))`, **+0.16/vague à partir de la 16** | additif ; la seconde pente fait retomber la marge en fin de run |
+| Densité | `0.8 + 0.19 × (vague-1)` spawn/s, max 6 (9 avec options) | |
+| PV ennemis | `× (1 + 0.10 × (vague-1))`, **+0.09/vague de plus à partir de la 16** (pente totale 0,19) | additif ; la seconde pente fait retomber la marge en fin de run |
 | Dégâts ennemis | `× (1 + 0.095 × (vague-1))` | la seule courbe qui rend la fin de run dangereuse |
 | Vitesse ennemis | `× (1 + 0.015 × (vague-1))`, max ×1.35 | |
 | Élites | à partir de la vague 4, jusqu'à 18 % (31,5 % avec options) | PV ×4, **dégâts ×1,35**, âmes ×2, 2 % de clé, 8 % de soin |
@@ -67,12 +84,43 @@ les dégâts **par coup** comptent. C'est pourquoi la courbe de dégâts ennemis
 la plus raide après celle des PV — et pourquoi les options qui ajoutent de la
 densité paient peu (voir Malédictions et Pactes).
 
-La difficulté monte **linéairement**. C'est délibéré : à la vague 20 un imp a ×3.66 PV,
-pas ×13.7 comme le donnerait un `×1.14` composé par vague. La puissance du joueur
+La pente de dégâts a été réglée par le haut : à **11 %**, une brute élite
+frappait pour **79 à la vague 20**, soit un joueur mort en une touche et demie
+quel que soit son équipement. À 9,5 %, la courbe mord sans supprimer le droit à
+l'erreur.
+
+#### Une option doit toujours coûter
+
+Relevé en écrivant les tests des vagues. La densité et les élites n'avaient
+qu'**un seul** plafond, appliqué **après** les malédictions et les pactes — celui
+censé borner les options. La vague normale l'atteignait donc d'elle-même : sans
+aucune option, les élites passaient 18 % dès la **vague 13** et touchaient 31,5 %
+à la **19**. À partir de là, « Nuée d'élites » (élites ×3, danger 4) et « Œil du
+vide » (élites ×2) **ne coûtaient plus rien** et continuaient de verser leur
+chance de clé : une récompense sans risque. Même chose, plus tard, pour
+« Horde » et « Marée montante » une fois la cadence à 9/s (vague 44, donc en
+Déchaînement).
+
+Il y a désormais **deux plafonds, dans cet ordre** : la courbe de base s'arrête à
+18 % d'élites et 6 apparitions/s, **puis** les options multiplient, jusqu'à
+31,5 % et 9/s. C'est ce que le tableau ci-dessus annonçait depuis le début.
+
+Le changement n'est pas neutre sans option, et il a été fait **avant** la
+calibration pour qu'elle en mesure l'effet. À la vague 20, élites 31,5 % → 18 % :
+
+| Par apparition, vague 20 | Avant | Après | Écart |
+|---|---|---|---|
+| PV (élite ×4) | ×1,945 | ×1,54 | **−21 %** |
+| Âmes (élite ×2) | ×1,315 | ×1,18 | −10 % |
+| Chance de clé (élite 2 %) | 0,63 % | 0,36 % | **−43 %** |
+
+La difficulté monte **linéairement**. C'est délibéré : à la vague 20 un imp a ×3,35 PV
+(seconde pente comprise), pas ×6,1 comme le donnerait un `×1.10` composé par vague. La puissance du joueur
 étant elle-même plafonnée, les deux courbes restent comparables.
 
-Les ennemis survivants sont dissipés en fin de vague, sans récompense — sinon la fin
-de vague devient un distributeur d'âmes gratuit.
+Les ennemis survivants sont dissipés en fin de vague. Ils rendent une part de
+ce qu'on leur a pris, jamais le prix plein — voir « Les survivants rendent ce
+qu'on leur a pris ».
 
 **Les tirs et les zones en cours sont dissipés aussi**, et c'est moins évident. La
 boutique met l'arbre en pause : un trait de cultiste ou une zone de boss encore
@@ -85,6 +133,23 @@ Mesuré avant correction : six traits en vol, 3 s de boutique, **10 dégâts
 encaissés à la réouverture sans que le joueur ait rien fait**. Après : zéro.
 Le conteneur ne porte que des projectiles et des télégraphes ; les âmes non
 ramassées sont enfants du conteneur d'ennemis et survivent, comme il se doit.
+
+#### Tests des vagues
+
+```bash
+godot --headless --path . res://tools/test_waves.tscn
+```
+
+[`tools/test_waves.gd`](tools/test_waves.gd) vérifie les courbes, la mise à
+l'échelle des cinq boss (vagues 5, 10, 30 et 55), le roster et la moisson. Code
+de sortie 0 si tout passe. Les valeurs attendues ont été **mesurées par banc
+sur l'ancien `WaveManager`** avant sa restructuration : un échec est un
+changement d'équilibrage, à reporter ici s'il est voulu. Contrôlé dans l'autre
+sens : les tests échouent si l'on déplace `repeat_damage_growth` de 0,20 à 0,21.
+
+Le test tourne dans une **scène** et non en `-s` : les scènes d'ennemis
+référencent des autoloads, que le mode script ne charge pas. Exclu des paquets
+joueurs avec le reste de `tools/`.
 
 ### Le soin
 
@@ -453,9 +518,9 @@ première mesure à 0,5 s n'avait rien prouvé du tout :
 | Œil vivant | 1, puis le tir part | **15** |
 | Œil tué pendant la charge | 1 → **0** en moins de 0,05 s | **0** |
 
-### Objets — 21 objets, 4 raretés
+### Objets — 36 objets, 4 raretés
 
-6 communes · 6 rares · 6 épiques · 3 légendaires, plus **3 objets à débloquer aux clés**.
+9 communes · 9 rares · 9 épiques · 5 légendaires, plus **4 objets à débloquer aux clés**.
 Tout est déclaré en données dans [item_database.gd](scripts/items/item_database.gd) :
 ajouter un objet purement statistique ne demande aucune ligne de code.
 
@@ -586,7 +651,8 @@ c'est la marge qui perdait. À reprendre séparément.
 
 Efficacité par âme dépensée, objets purement statistiques :
 
-Puissance gagnée pour 100 âmes dépensées, objets purement statistiques :
+Puissance gagnée pour 100 âmes dépensées, objets purement statistiques *(avant la
+passe de la 0.8.6, qui a remonté le Croc et l'Œil — voir plus bas)* :
 
 | Rareté | Médiane | Min | Max | Écart |
 |---|---|---|---|---|
@@ -604,6 +670,162 @@ les trois premiers étaient défensifs et creusaient un écart de ×2 sur la mé
 La métrique ne chiffre ni la portée (*Œil du chasseur*), ni le vol de vie
 (*Sangsue*), ni l'explosion (*Braise éternelle*), ni le gain d'âmes (*Aimant*,
 *Siphon*), ni la vitesse (*Semelles*) : ces objets valent plus que leur ligne.
+
+### La passe d'équilibrage de la 0.8.6 — objets et Forge
+
+Un banc temporaire a rejoué l'économie d'une run sur les vraies classes :
+courbes et roster réels, prix de boutique réels, tirage d'offres par `ItemDB`,
+portes de boss lues sur les scènes (PV, enragement, clés), nœuds de Forge réels,
+et un acheteur glouton au meilleur rapport puissance / prix. 32 runs par
+configuration.
+
+**Le banc a d'abord été validé contre les mesures déjà écrites ici**, avant de
+servir à quoi que ce soit : il retrouve *Écailles de basalte* à 17,1 (17,1
+publié), *Œil du chasseur* à 7,7 (7,7), *Sceau du gardien* à 16,6 (16,0), *Cuir
+tanné* à 19 en milieu de partie (20,5). La métrique par objet est donc fiable.
+L'économie simulée l'est moins, et c'est dit plus bas.
+
+#### Trois objets remontés dans leur fourchette
+
+Puissance marginale pour 100 âmes de prix de base, sur les builds réelles de
+l'acheteur à la vague 6 :
+
+| Objet | Avant | Après | Changement | Médiane de sa rareté |
+|---|---|---|---|---|
+| *Croc ébréché* (commune) | 10,4 | **14,8** | critique 6 % → 9 % | ~14,5 |
+| *Œil du chasseur* (rare) | 7,7 | **10,0** | critique 8 % → 11 % | ~12 |
+| *Manteau d'épines* (rare, 2 clés) | 9,9 | **13,9** | armure 10 → 14 | ~12 |
+
+Le Croc était structurellement faible : avec un multiplicateur critique de ×2,
++6 % de critique ne vaut que +6 % de DPS, quand le *Percuteur* en donne +10 % au
+même prix. Aucun des deux critiques ne sature le plafond à lui seul (5 piles :
+45 % et 55 % pour 60 %). Le *Manteau* se paie en clés : il ne pouvait pas valoir
+moins qu'une rare ordinaire. L'*Œil* reste sous la médiane, et c'est voulu — sa
+portée, que la métrique ne voit pas, fait le reste.
+
+Laissés tels quels, et pourquoi : *Éclat trifide* vaut ×2 la médiane des épiques
+en début de partie puis retombe à 12 à la vague 12, c'est l'exception multishot
+assumée ; *Horloge damnée* et *Culasse infernale* s'effondrent quand la cadence
+sature son plafond, c'est la pression anti-monobuild voulue ; *Duvet de phénix*
+est le dernier des épiques sur la métrique mais rend **2,2 coups par vague** à la
+vague 12, quatre fois le soin de fin de vague.
+
+À la pièce, les épiques valent 8 à 13 % de puissance contre 2 à 5 % aux
+communes. Comme chaque pièce renchérit toutes les suivantes (terme quadratique
+du prix), acheter moins d'objets plus forts reste rentable : la rareté paie.
+
+#### La Forge fait ce qu'elle promet
+
+Forge complète, personnage nu :
+
+| | DPS | PV effectifs | Puissance | Tronc seul |
+|---|---|---|---|---|
+| Caïn | ×1,96 | ×1,55 | **×1,75** | ×1,69 |
+| Job | ×2,51 | ×1,62 | **×2,01** | ×1,63 |
+| Loth | ×2,36 | ×1,58 | **×1,93** | ×1,72 |
+
+C'est exactement le « ≈ ×2 de DPS » sur lequel les boss sont calibrés (voir « Les
+boss sont des contrôles de build »), **sans compter** les nœuds d'effet (âmes de
+départ, remise, étal, seconde chance…), que la métrique ne voit pas. Job et Loth
+gagnent davantage par leur branche, et c'est le but : le DPS forgé de Job (≈ 110)
+rejoint celui de Caïn (≈ 118) alors qu'il part de 44 contre 60. **Aucune valeur
+de Forge n'a été changée.**
+
+En runs simulées, la Forge complète franchit Lucifer et le Golgota de la boucle
+32 fois sur 32 pour les trois personnages ; sans Forge, Caïn et Loth butent
+surtout sur Lilith. Le tronc commun seul suffit presque (29 à 31 runs sur 32
+pour Caïn et Loth) : la branche propre ne change pas le boss atteint, elle
+change la façon d'y arriver.
+
+#### Douze objets de plus, et pourquoi douze
+
+Le défaut ouvert depuis la 0.5.0 : une run complète finissait avec **tout le
+catalogue**, et les dernières boutiques n'étaient plus des décisions. Pour qu'une
+bonne run ne possède plus que 60 à 70 % des objets, il fallait environ
+35 objets. Au-delà, la dilution rend les builds aléatoires : un épique donné
+apparaîtrait pour la première fois vers la vague 19 sans relance, contre 9,5
+aujourd'hui. Douze ajouts, dans les proportions existantes :
+
+| Objet | Rareté | Effet | Le trou qu'il comble |
+|---|---|---|---|
+| Pierre à aiguiser | commune | +4 % crit, +15 % dégâts crit | les dégâts critiques n'existaient qu'en épique |
+| Bandelettes | commune | +0,3 PV/s, 3 piles | aucun soin accessible tôt |
+| Gant du bourreau | commune | +8 % dégâts | aucune commune en pourcentage de dégâts |
+| Chapelet de phalanges | rare | +8 % crit, +30 % dégâts crit, −3 % cadence | une build critique avant les épiques |
+| Sang caillé | rare | +1 % vol de vie, +8 PV, 2 piles | vol de vie et PV réunis |
+| Fléau des géants | rare | +30 % aux boss et élites, −10 % aux autres | les boss sont des portes de DPS, rien ne s'y préparait |
+| Serpent d'airain | épique | pouvoir 30 % plus rapide ; Caïn garde 30 % de sa Marque | aucun objet ne touchait aux verbes |
+| Chaîne de Moloch | épique | les critiques traversent un corps de plus, +5 % crit | un multiplicateur propre aux builds critiques |
+| Cuirasse du pénitent | épique | +22 armure, +8 % vitesse, 2 piles | un tank mobile |
+| Corne de Moloch | légendaire | élites ×1,5 plus fréquentes, ×2 d'âmes | une build économique qui se paie en risque |
+| Sceau de Salomon | légendaire | +1 projectile, −25 % de portée | un second multishot, payé en portée |
+| Reliquaire | rare, 3 clés | première relance de chaque boutique offerte | un objet de précision de build |
+
+**La Chaîne de Moloch devait faire rebondir tous les tirs.** C'était inutile :
+la perforation se rebraque déjà sur l'ennemi suivant, elle aurait doublé la
+*Lance de Longin*. Réservée aux critiques, elle réutilise la même mécanique et
+la même décote, mais n'a de valeur que dans une build critique.
+
+**Le Serpent d'airain ne pouvait pas raccourcir le Prix du sang** : ce pouvoir ne
+se recharge pas avec le temps mais avec la Marque. Il en garde donc 30 % après
+usage, ce qui revient au même raccourcissement.
+
+**Deux règles d'équilibrage sont enfreintes, sciemment.** La *Pierre à aiguiser*
+touche deux axes multiplicatifs (chance et dégâts critiques) sans malus : en
+commune, et à 4 % de chance, l'ensemble reste sous la médiane de sa rareté. Le
+*Sceau de Salomon* ajoute un projectile hors de l'*Éclat trifide*, que la règle
+E réservait à lui seul ; la taxe multishot globale le borne de la même façon, et
+il paie en portée.
+
+Les six effets ont été **déclenchés à la main**, comme les nœuds de Forge :
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Fléau, trait de 100 sur un commun | 90 | **90** |
+| Fléau, trait de 100 sur une élite | 130 | **130** |
+| Chaîne, tir critique | un corps de plus | **+1** *(0 sur un tir normal)* |
+| Serpent, ruée / parade | 1,54 s / 2,8 s | **1,54 s / 2,8 s** |
+| Corne, élites à la vague 8 | ×1,5 | **×1,5**, plafond des options tenu |
+| Reliquaire, cinq relances | 0, 1, 2, 10, 20 | **0, 1, 2, 10, 20** |
+| Serpent sur Caïn, 20 éliminations dépensées | 6 gardées | **6** |
+
+**Mesuré en banc, 96 runs par configuration, ancien catalogue contre nouveau :**
+
+| | Distincts en fin de run | Lucifer battu, tronc seul (Job) | Clés par run, Forge complète |
+|---|---|---|---|
+| 24 objets | 15,5 à 16,6 sur 24 **(65-69 %)** | 88 / 96 | 33,4 à 34,7 |
+| 36 objets | 18,4 à 19,5 sur 36 **(51-54 %)** | 83 / 96 | 32,9 à 33,9 |
+
+Le catalogue ne sature plus, et rien d'autre ne bouge : sans Forge, les trois
+personnages font aussi bien ou légèrement mieux ; avec la Forge complète, 94 à
+96 runs sur 96 vont au bout dans les deux cas. La seule baisse porte sur le
+**Golgota de la boucle**, après Lucifer, pour une Forge incomplète — le combat de
+fin de partie durci, pas la progression.
+
+**Trois nouveaux objets ont été relevés après la première mesure** : la *Pierre à
+aiguiser* (2,2 → 10,6 à vide — des dégâts critiques seuls ne valent rien à 8 %
+de chance), le *Chapelet* (4,2 → 9,2, son malus de cadence mangeait tout) et la
+*Cuirasse* (armure 18 → 22). Trop faibles, ils diluaient la boutique : Job
+n'atteignait plus la vague 30 qu'une fois sur trois avec le tronc de Forge.
+
+Le *Fléau*, le *Serpent*, la *Corne* et le *Reliquaire* ne se chiffrent pas avec
+la métrique : ils changent la porte de boss, l'esquive, le risque ou la boutique.
+À juger en jeu.
+
+#### Ce que le banc ne sait pas, et ce qui reste à vérifier en jeu
+
+- **Il n'esquive pas et ne meurt qu'à l'enragement d'un boss.** Les clés et les
+  boss franchis sont donc une **borne haute** : un profil neuf y complète sa
+  Forge en 5 à 8 runs, là où la conception vise une douzaine — un vrai joueur,
+  qui meurt aussi sous les coups, sera plus lent. À confirmer sur des profils
+  réels avant de toucher au rythme des clés.
+- **Job ne franchit Golgota avant l'enragement que 14 fois sur 32 sans Forge.**
+  Cohérent avec la mesure déjà écrite (80 à 100 s contre 60 s d'enragement).
+  Pour Job, la porte est un seuil d'endurance et non de mort : il est bâti pour
+  tenir un boss enragé. Rien n'a été changé ; c'est **le premier point à
+  vérifier en jeu**, manette en main.
+- Les nœuds et objets d'effet — seconde chance, soin après boss, vol de vie,
+  vitesse, portée, gain d'âmes — ne se chiffrent pas avec cette métrique.
 
 ### Archétypes, ~10 objets sur Caïn
 
@@ -825,7 +1047,9 @@ sans options, ×13-15 en cumulant tout.
 La run est donc **conçue pour se terminer**, vers la vague 15-20 pour un bon joueur
 (le DPS requis est une borne haute : on peut esquiver au lieu de tout tuer).
 Pour allonger ou raccourcir les runs, les leviers sont
-`spawns_per_second_growth` (0.22) et `health_growth` (0.14) dans `wave_manager.gd`.
+`spawns_per_second_growth` et `health_growth` dans
+[`difficulty_curve.gd`](scripts/systems/waves/difficulty_curve.gd) *(0.22 et 0.14 à
+l'époque de cette mesure, 0.19 et 0.10 aujourd'hui)*.
 
 ## Le logo du studio, au lancement
 
@@ -878,7 +1102,8 @@ scène : le retour est instantané.
 ### L'illustration du titre, et pourquoi elle reste un JPEG
 
 Le menu porte une illustration plein écran, `menu.jpg` — un gouffre en flammes
-vu de dessus — et le titre est composé en **Alagard**, une police pixel.
+vu de dessus — et le titre est composé en **Jersey 10**, une police pixel sous
+licence OFL (Alagard jusqu'à la 0.8.6, retirée faute de licence vérifiable).
 
 **Le JPEG a d'abord été suspecté, puis mesuré, puis gardé.** Le réflexe, sur du
 pixel art, est de convertir : le JPEG code par blocs de 8×8 en fréquence, donc il
@@ -913,14 +1138,35 @@ leur propre fond opaque, et les libellés ont reçu un contour, donc la lisibili
 lave est la plus vive et que s'affiche la ligne de profil, la plus petite de
 l'écran.
 
-Le titre est en **112 px**, un multiple de 16 : Alagard est dessinée sur une
-grille de 16 px, et une taille non multiple ferait tomber ses traits entre deux
-pixels. Pour la même raison, son import coupe le **lissage**, le **hinting** et
-le **positionnement sous-pixel** — trois réglages faits pour les polices
-vectorielles, et qui ne savent qu'abîmer une police pixel.
+Le titre est en **160 px**, un multiple de 10 : Jersey 10 est dessinée sur une
+grille de 10, et une taille non multiple ferait tomber ses traits entre deux
+pixels — d'où des titres en 50 ou 60, et des boutons en 30 (20 dans les cases de
+la Forge). Elle paraît plus petite qu'une police vectorielle à taille égale :
+toutes les tailles de bouton ont été remontées d'environ un tiers. Pour la même
+raison, son import coupe le **lissage**, le **hinting** et le **positionnement
+sous-pixel** — trois réglages faits pour les polices vectorielles, et qui ne
+savent qu'abîmer une police pixel.
 
-Les quatre sous-écrans posent leur propre voile à 92 %, ce qui laisse deviner le
-gouffre derrière eux sans jamais disputer la lecture.
+**Une police pour les titres et les boutons, pas pour les paragraphes.** Les
+descriptions longues restent dans la police par défaut : un paragraphe entier en
+pixel fatigue l'œil. La police vit dans le thème (`Button`, `CheckButton`,
+`OptionButton`, et la variation `TitleLabel` pour les titres) : aucun écran ne
+la charge lui-même.
+
+Trois candidates ont été comparées sur le fond du menu, avec les vrais textes :
+Alagard, **Jacquard 24** (une vraie gothique, superbe en logo mais illisible
+en petites capitales — « OPTIONS » ne se lisait plus) et **Jersey 10**, retenue
+pour sa lisibilité à toutes les tailles.
+
+Les quatre sous-écrans posent leur propre voile à **80 %** (92 % avant la 0.8.6,
+qui effaçait l'illustration). À 80 % le titre et les boutons du hub
+transparaissaient autour des panneaux les plus courts — des blocs rouges
+au-dessus de Profils. Le hub **s'efface donc tant qu'un sous-écran est ouvert** ;
+l'illustration et les braises restent.
+
+Des **braises** montent du gouffre (`CPUParticles2D`, 70 carrés de 2 à 5 px,
+7 s de vie), entre le voile et les boutons : peu nombreuses et lentes, elles se
+remarquent au second regard sans disputer la lecture.
 
 ### Options
 
@@ -958,6 +1204,23 @@ Deux choses ont demandé du travail plutôt qu'une copie :
   rouge de Caïn et le violet des pactes sont illisibles. Elles passent par une
   variation de thème `CardButton` — panneau sombre à liseré doré, qui s'allume
   à la sélection.
+
+### Trois boutons, trois rôles
+
+Jusqu'à la 0.8.6, tous les boutons du jeu étaient le même rectangle doré :
+Commencer, Retour, les onze malédictions, les nœuds de Forge — et **Effacer**,
+en doré plein sur le profil actif. L'action la plus destructrice de l'interface
+était la plus visible. Trois variations de thème, désormais :
+
+| Variation | Aspect | Usage |
+|---|---|---|
+| `Button` | doré plein | l'action principale de l'écran, une seule si possible |
+| `SecondaryButton` | sombre, liseré doré qui s'allume au survol | Retour, Forge Éternelle, Valeurs par défaut, nœuds acquis |
+| `DangerButton` | rouge sombre, jamais mis en avant | Effacer un profil, Abandonner la run |
+
+Appliqué partout, écrans de jeu compris : à la fin de run, « Nouvelle run » est
+le seul bouton doré (Forge et Menu passent en secondaire) ; à la pause,
+« Reprendre » est doré, « Options » secondaire, « Abandonner la run » en danger.
 
 Le HUD gagne trois icônes : cœur, pièce, cadenas. Le kit n'a pas de clé ; le
 cadenas est ce qu'elles ouvrent.
@@ -1062,14 +1325,50 @@ relevées écran par écran après coup.
 
 | Écran | Panneau | Contenu / place |
 |---|---|---|
-| Boutique | 880 × 706 | 445 à 514 / **560** |
+| Boutique | 1120 × ~620 | **mesurée sur son contenu**, entre 360 et 780 |
 | Objets (colonne de gauche) | 330 × 706 | 642 pour 9 objets / 632 — elle défile, et c'est normal |
-| Malédictions | 760 × 668 | 380 / **396** |
-| Choix du personnage | 860 × 599 | 288 / 300 |
-| Forge Éternelle | 940 × 946 | 538 / **552**  ·  127 / **142** |
+| Malédictions | 1240 × ~620 | **mesurée sur son contenu**, grille de 3 × 2 cartes |
+| Choix du personnage | 1320 × ~700 | cartes 400 × **480** (texte coupé à 288) |
+| Forge Éternelle | 1560 × ~1000 | **mesurée sur son contenu** (voir ci-dessous) |
 | Options | 820 × 493 | 335 / 340 |
 | Profils | 820 × 478 | 266 / 270 |
 | Fin de run | 700 × 451 | 127 / **148** |
+
+**La boutique aussi se mesure sur son contenu depuis la 0.8.6**, et la mesure a
+eu un piège. Les noms d'objets en Jersey ont gagné une ligne : à 880 px de large,
+« Chapelet de phalanges » en prenait trois et les pactes passaient sous le bord.
+Le panneau passe à 1120 px. Mesurée tout de suite après la reconstruction, la
+zone prenait pourtant son plafond, avec un grand vide sous les pactes : les
+textes à retour à la ligne n'avaient **pas encore leur largeur** et réclamaient
+une ligne par mot. On mesure donc après **une image de mise en page** — même garde
+sur les malédictions.
+
+**La pièce rare de l'offre est mise en valeur** : liseré doublé, fond teinté de sa
+rareté, mention « PIÈCE RARE ». Seulement si elle est épique ou légendaire, et
+strictement plus rare que les trois autres — un marqueur qui s'allumerait à
+chaque boutique ne signalerait plus rien.
+
+**Le HUD n'avait aucun contour**, d'où une vague peu lisible sur le sol sombre de
+l'arène. Vague (50 px), chronomètre, âmes, clés, éliminations, nom de boss et
+annonces passent en Jersey avec un contour sombre de 5 à 12 px selon la taille.
+
+**Les malédictions sont des cartes depuis la 0.8.6.** L'ancienne liste empilait
+onze barres dorées identiques, la récompense en petit texte cyan dessous : on
+lisait mal ce qu'on gagnait, et plus mal encore ce qui était coché. Chaque
+malédiction est une carte à cocher — nom, danger, description, **prix** en rouge
+en face du **gain** en cyan — et la carte cochée s'allume comme celle du
+personnage choisi. La grille se mesure sur son contenu, comme la Forge.
+
+**La Forge se mesure elle-même depuis la 0.8.6.** Réglée à la main, sa zone
+coupait l'arbre dès qu'un nœud gagnait une ligne, et le défaut est revenu à
+chaque retouche d'habillage. Après chaque reconstruction, l'arbre prend
+exactement sa hauteur minimale, et la liste des objets la sienne, bornée à
+180 px. C'est aussi devenu un **vrai arbre** : chaque nœud est rangé à sa
+profondeur (un de plus que son prérequis le plus profond), des traits relient
+prérequis et nœuds — dorés quand le chemin est ouvert —, trois états se lisent
+sans lire un mot (acquis, achetable, verrouillé), et une barre de détail donne la
+description entière du nœud survolé ou sélectionné. Les cases tronquent leur
+texte avec des points de suspension au lieu de le couper.
 
 Deux listes se mesurent au **pire cas**, pas à ce qu'on voit à l'écran par
 défaut : les objets à débloquer de la Forge et de la fin de run n'affichent que
@@ -1568,7 +1867,8 @@ ailleurs le seul boss rencontré sans build — d'où les 17 de dégâts d'écra
 six coups au lieu de quatre sur un réservoir de 85 PV. Les suivants gardent les
 leurs : à la vague 10 le joueur a déjà des PV et de l'armure.
 
-Leurs PV **suivent la vague** (`× (1 + 0.09 × (vague − 5))`, dégâts `× (1 + 0.04 × …)`).
+Leurs PV **suivent la vague** (`× (1 + 0.09 × (vague − 5))`, dégâts : voir « Les
+attaques des boss suivent la vague » ci-dessous).
 Sans cela, ils étaient figés pendant que le DPS du joueur était multiplié par 22
 entre les vagues 5 et 20 : Asmodée tombait en **4,3 s** et Lucifer en **4,0 s**,
 donc ni l'un ni l'autre n'atteignait jamais sa phase 2 (déclenchée à 50 % de PV),
@@ -1587,6 +1887,30 @@ Les cinq combats tiennent maintenant dans une fourchette de 17 à 21 s : les deu
 phases et plusieurs décharges de la jauge de pression sont garanties. L'enragement
 à 100 s reste ce qu'il doit être — un filet contre le joueur qui traîne, pas une
 phase attendue.
+
+#### Les attaques des boss suivent la vague
+
+Seul le dégât de **contact** montait, et deux fois moins vite que la piétaille
+(4 % contre 9,5 % par vague). Les dégâts d'**attaque** — foudre, braise, salves,
+tout ce qui blesse réellement le joueur — ne montaient pas du tout : une attaque
+de Lucifer à la vague 25 valait **0,55 coup** quand un marteau de Golgota à la
+vague 5 en valait **1,7**. Le boss le plus tardif était le moins dangereux du jeu.
+
+Contact et attaques suivent maintenant la pente de dégâts de la piétaille,
+ramenée à la vague 5 sur laquelle les valeurs de chaque boss sont écrites
+(`BossCurve.threat_multiplier`).
+
+#### Les boss sont des contrôles de build
+
+Chaque scène fixe ses PV et son `enrage_time` pour qu'un DPS insuffisant fasse
+durer le combat jusqu'à l'enragement — et c'est là que la run se termine. Seuils
+visés, en multiples du DPS de départ (≈ 60) : Golgota ×1,25, Lilith ×3, Baal ×5,
+Asmodée ×7, Lucifer ×9. Sans Forge, une bonne build franchit Lilith et bute sur
+Baal ; la Forge complète (≈ ×2 de DPS) porte jusqu'à Lucifer.
+
+Mesuré en partie réelle avant ce réglage, build faible et mort neutralisée :
+**116 s** pour Baal et **542 s** pour Lucifer. C'est précisément ce que
+l'enragement transforme désormais en mort.
 
 *(Les temps datent de ce calibrage, mesurés sur une build qui progresse
 normalement. La colonne « PV de scène » est relue sur les scènes : c'est elle qui
@@ -1718,7 +2042,7 @@ répétitions tiennent dans ±3 %.
 #### Le Déchaînement s'applique aussi aux boss — il ne s'appliquait pas
 
 Les boss ont leur propre courbe de PV et ne passent **jamais** par
-`get_health_multiplier()`. C'est voulu : leur difficulté est celle de leur
+`DifficultyCurve.health_multiplier()`. C'est voulu : leur difficulté est celle de leur
 palier, pas celle de la vague. Mais l'exponentielle du Déchaînement n'est pas un
 palier — c'est la réponse de l'enfer à un joueur sans plafond — et les boss en
 étaient exemptés **par accident**. Leurs PV montaient linéairement pendant que
@@ -1974,7 +2298,7 @@ par **1,08**.
 
 Le joueur domine largement jusqu'à la trentaine, puis la courbe le rattrape vers
 la vague 36-38. **Premier réglage**, à bouger après avoir joué : `PUISSANCE_DECHAINEE`
-et `DEGATS_DECHAINES` dans [`wave_manager.gd`](scripts/systems/wave_manager.gd)
+et `DEGATS_DECHAINES` dans [`difficulty_curve.gd`](scripts/systems/waves/difficulty_curve.gd)
 sont les deux seuls chiffres à toucher pour allonger ou raccourcir la course.
 
 Les dégâts montent aussi, et pas seulement les PV : des ennemis à ×1 800 de PV
@@ -2003,9 +2327,9 @@ sélection de personnage.
 
 | Branche | Nœuds | Effets |
 |---|---|---|
-| **Fer** | Braise de forge → Trempe / Mécanisme huilé → Fil rasoir → Acier noir | +12 % dégâts, +5 % cadence, +4 % crit |
-| **Chair** | Cuir cousu → Plaques rivetées / Souffle lent → Carcasse épaisse → Écaille de forge | +18 PV, +16 armure, +0.3 PV/s |
-| **Cendre** | Braises tièdes → Pas léger / Appel des âmes → Augure → Coffre de forge | +8 % âmes, +4 % vitesse, +40 % ramassage, +1 chance, 60 âmes au départ |
+| **Fer** | Braise de forge → Trempe / Mécanisme huilé → Fil rasoir → Acier noir → Fer qui traverse → Colère | +27 % dégâts, +6 % cadence, +5 % crit, +1 perforation |
+| **Chair** | Cuir cousu → Plaques rivetées / Souffle lent → Carcasse épaisse → Écaille de forge / Repos du vainqueur → Seconde chance | +25 PV, +20 armure, +0,4 PV/s, +2 coups de soin par boss, une seconde chance par run |
+| **Cendre** | Braises tièdes → Pas léger / Marchandage → Augure → Coffre de forge / Étal élargi → Clé du geôlier | +8 % âmes, +5 % vitesse, −10 % en boutique, +1 chance, 60 âmes au départ, +1 objet en boutique, +1 clé par boss |
 
 Chaque nœud a des prérequis ; **66 clés** pour ouvrir le tronc commun, **82**
 avec la branche du personnage.
@@ -2211,6 +2535,10 @@ C'est la liste `Forge.NODES` qui fait foi.
 
 ### Pourquoi ça ne trivialise pas le début de partie
 
+*(Cette section mesure l'ANCIEN arbre, avant le triplement du budget. L'arbre
+actuel vaut ×1,75 à ×2,01 de puissance — voir « La passe d'équilibrage de la
+0.8.6 ».)*
+
 Impact de l'arbre **complet**, mesuré sur la vraie arme :
 
 | | Sans Forge | Forge complète | Ratio |
@@ -2384,6 +2712,42 @@ sans tester :
 3. **La croix directionnelle n'était pas liée au déplacement**, seulement les
    axes du stick gauche.
 
+### Naviguer dans les menus (0.8.6)
+
+Les menus se jouaient à la manette, mais mal. Six défauts, corrigés par
+l'autoload [`MenuNav`](scripts/ui/menu_navigator.gd) plutôt qu'écran par écran :
+
+| Défaut | Correction |
+|---|---|
+| Une direction tenue ne se répétait pas : onze appuis pour onze malédictions | Répétition après **0,36 s**, puis un pas toutes les **0,09 s** (mesuré : 11 pas en 1,2 s de maintien) |
+| Le stick en diagonale faisait deux pas | Seul l'axe dominant compte, avec hystérésis (départ à 0,6, arrêt à 0,35, changement d'axe à ×1,5) |
+| L'anneau haut/bas suivait l'ordre de l'arbre : dans une grille, « bas » allait à **droite** | Voisin cherché par **géométrie** dans les quatre directions ; au bord, on repart du côté opposé (horizontalement, seulement sur la même ligne) |
+| Aucune zone de défilement ne suivait le focus | Le focus clavier/manette ramène toujours son contrôle dans le champ |
+| **A est aussi la ruée** : la boutique s'ouvre focus sur « Vague suivante », un joueur qui ruait la fermait sans l'avoir vue — même risque sur l'écran de fin | Un écran qui surgit sur la partie ignore A et B pendant **0,35 s** ; une direction tenue en jouant n'y fait aucun pas avant d'être relâchée |
+| Le style de focus était celui du survol, plein : posé sur une carte cochée, il **masquait** qu'elle l'était | Un **anneau** clair, sans fond, par-dessus l'état du bouton (intérieur sur les cartes, que les zones de défilement rognaient) |
+
+Et quelques gestes qu'on attend d'une manette :
+
+- **Gauche/droite règlent** un curseur ou une liste déroulante des options, au
+  lieu de quitter la ligne.
+- **Se poser sur une carte de personnage le choisit** — pas au survol de la
+  souris, où glisser vers « Commencer » en travers d'une carte la choisirait.
+- **Les nœuds verrouillés de la Forge prennent le focus** pour afficher leur
+  détail : la manette ne pouvait lire que les nœuds achetables. La navigation
+  étant géométrique, les traverser ne coûte plus rien.
+- **Une carte de boutique s'allume en entier** quand son bouton d'achat a le
+  focus, et chaque pas fait un petit clic (`survol`, le clic du menu 11 dB plus
+  bas).
+- **À la souris, le focus suit le survol** : sinon deux boutons brillent à la
+  fois et on ne sait plus lequel A activerait.
+- **Toutes les manettes branchées** sont écoutées : les liaisons visaient la
+  manette 0, et une manette vue en 1 (Steam Input, pilote tiers) ne pouvait ni
+  valider ni revenir.
+
+Un curseur libre piloté au stick a été écarté : plus lent qu'un saut de bouton
+en bouton sur des écrans de cinq à trente contrôles, et le focus restait de
+toute façon indispensable pour A.
+
 ### Le stick droit vise
 
 C'est ce qui rend le jeu réellement twin-stick. L'auto-visée ne change pas : le
@@ -2455,6 +2819,7 @@ scripts/
   bosses/     boss.gd                     socle : phases + anti-kite
               golgota.gd · lilith.gd · baal.gd · asmodee.gd · lucifer.gd
   systems/    wave_manager.gd · drop_system.gd (autoload) · item_effects.gd
+              waves/                      courbes, boss, roster, moisson
               curse_system.gd (autoload)   malédictions de run
               wave_modifiers.gd (autoload) pactes de vague
               character_effects.gd        passifs des personnages
@@ -3511,8 +3876,9 @@ qu'un accent de couleur, et il survit à la réduction.
   `projectile_scene`. Le `TargetingSystem` et les stats sont injectés automatiquement.
 - **Un ennemi** : sous-classer `enemy.gd` et surcharger `_update_movement()` pour un
   nouveau comportement (ou juste une scène avec d'autres exports pour une variante de
-  stats), puis l'ajouter à `WaveManager.enemy_scenes` avec sa vague d'apparition et
-  son poids.
+  stats), puis lui ajouter une entrée dans `scenes/main/enemy_roster.tres` avec sa
+  vague d'apparition, son poids et sa dérive. Les tests des vagues vérifient le
+  nombre de types : les mettre à jour.
 - **Un personnage** : une entrée dans `Characters.CHARACTERS`. Le menu et les
   cartes se construisent tout seuls. Pour un passif, ajouter un `special` et le
   gérer dans `character_effects.gd` — en le plafonnant, et en n'appelant

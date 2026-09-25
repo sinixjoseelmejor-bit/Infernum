@@ -52,6 +52,16 @@ var crit_damage_bonus: float = 0.0
 ## chaque objet ramassé plutôt que lu sur un autoload à chaque tir — l'arme tire
 ## plusieurs fois par seconde et ne doit pas interroger le monde pour ça.
 var untaxed: bool = false
+## Chaîne de Moloch : un coup critique traverse un corps de plus.
+var crit_bounce: bool = false
+## Fléau des géants : multiplicateurs selon la cible, posés sur chaque trait.
+var giant_multiplier: float = 1.0
+var common_multiplier: float = 1.0
+
+## Fléau des géants. Fixe, et non proportionnel à quoi que ce soit : c'est une
+## préparation aux portes de boss, payée sur tout le reste de la vague.
+const GIANT_BANE_BONUS := 1.30
+const GIANT_BANE_MALUS := 0.90
 
 var targeting: TargetingSystem
 ## Direction visée fournie par le porteur (déplacement du joueur en général).
@@ -120,6 +130,10 @@ func apply_stats(stats: PlayerStats) -> void:
 	crit_chance_bonus = stats.get_crit_chance()
 	crit_damage_bonus = stats.get_crit_damage_pct()
 	untaxed = stats.uncapped
+	crit_bounce = stats.has_special(&"crit_bounce")
+	var bane := stats.has_special(&"giant_bane")
+	giant_multiplier = GIANT_BANE_BONUS if bane else 1.0
+	common_multiplier = GIANT_BANE_MALUS if bane else 1.0
 
 
 func fire(target: Node2D) -> void:
@@ -160,7 +174,9 @@ func fire(target: Node2D) -> void:
 		projectile.is_crit = is_crit
 		projectile.knockback = knockback
 		projectile.homing_speed_deg = projectile_homing_deg
-		projectile.pierce = pierce + pierce_bonus
+		projectile.pierce = pierce + pierce_bonus + (1 if is_crit and crit_bounce else 0)
+		projectile.giant_multiplier = giant_multiplier
+		projectile.common_multiplier = common_multiplier
 		# Déchaînée, la décote par corps traversé disparaît : perforation 3 vaut
 		# alors ×4 de dégâts sur une file, au lieu de ×2,34.
 		projectile.pierce_falloff = 0.0 if untaxed else PlayerStats.PIERCE_DAMAGE_TAX

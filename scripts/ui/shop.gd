@@ -58,6 +58,14 @@ const SELL_RATIO := 0.5
 @onready var sell_row: VBoxContainer = %SellRow
 @onready var reroll_button: Button = %RerollButton
 @onready var continue_button: Button = %ContinueButton
+@onready var body_scroll: ScrollContainer = %BodyScroll
+@onready var body: VBoxContainer = body_scroll.get_child(0)
+
+## Plancher et plafond de la zone de l'offre. Le plafond garde la boutique dans
+## l'écran (1080 unités logiques au minimum) ; entre les deux, elle prend
+## exactement la hauteur de son contenu.
+const BODY_MIN_HEIGHT := 360.0
+const BODY_MAX_HEIGHT := 780.0
 
 var _cards: Array[ItemCard] = []
 var _pact_buttons: Array[Button] = []
@@ -130,10 +138,47 @@ func get_item_cost(item: ItemData) -> int:
 
 
 func get_reroll_cost() -> int:
-	if _rerolls < REROLL_COSTS.size():
-		return REROLL_COSTS[_rerolls]
-	var beyond := _rerolls - REROLL_COSTS.size() + 1
+	# Reliquaire : la première relance de chaque boutique est offerte, et la
+	# suite de la table reprend là où elle en était — il décale, il n'efface pas.
+	var free := 1 if RunState.has_special(&"free_reroll") else 0
+	if _rerolls < free:
+		return 0
+	var paid := _rerolls - free
+	if paid < REROLL_COSTS.size():
+		return REROLL_COSTS[paid]
+	var beyond := paid - REROLL_COSTS.size() + 1
 	return roundi(REROLL_COSTS[-1] * pow(REROLL_COST_GROWTH, beyond))
+
+
+## LA PIÈCE RARE DE L'OFFRE est mise en valeur — mais seulement si elle est
+## épique ou mieux, et strictement plus rare que toutes les autres. Un marqueur
+## qui s'allumerait à chaque boutique ne signalerait plus rien.
+func _feature_rarest(offer: Array[ItemData]) -> void:
+	var best := -1
+	var count := 0
+	for item in offer:
+		if int(item.rarity) > best:
+			best = int(item.rarity)
+			count = 1
+		elif int(item.rarity) == best:
+			count += 1
+	if best < int(ItemData.Rarity.EPIC) or count != 1:
+		return
+	for card in _cards:
+		if int(card.item.rarity) == best:
+			card.set_featured(true)
+
+
+## Même règle que la Forge et les malédictions : les noms d'objets en Jersey
+## ont gagné une ligne, et une hauteur écrite à la main coupait les pactes.
+##
+## On mesure APRÈS une image de mise en page : avant, les textes à retour à la
+## ligne n'ont pas encore leur largeur et réclament une ligne par mot — la zone
+## prenait alors son plafond, avec un grand vide sous les pactes.
+func _fit_body() -> void:
+	await get_tree().process_frame
+	body_scroll.custom_minimum_size.y = clampf(
+		body.get_combined_minimum_size().y, BODY_MIN_HEIGHT, BODY_MAX_HEIGHT)
 
 
 func _roll_offer() -> void:
@@ -150,6 +195,8 @@ func _roll_offer() -> void:
 		offer_row.add_child(card)
 		card.setup(item, get_item_cost(item))
 		_cards.append(card)
+	_feature_rarest(offer)
+	_fit_body.call_deferred()
 
 	if offer.is_empty():
 		var label := Label.new()

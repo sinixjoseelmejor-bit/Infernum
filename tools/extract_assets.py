@@ -132,6 +132,18 @@ ITEM_ICONS = {
     "thorn_mantle": 891,     # cape verte
     "phoenix_down": 1178,    # plume rouge
     "void_siphon": 1195,     # orbe noire
+    "whetstone":             562,  # pierre grise en barre
+    "bandages":              669,  # linge blanc
+    "executioner_glove":     294,  # gant de cuir
+    "knuckle_rosary":        1164, # os
+    "clotted_blood":         1189, # goutte de sang
+    "giant_bane":            61,   # marteau rouge
+    "brazen_serpent":        679,  # serpent d or enroule
+    "moloch_chain":          597,  # maillons de chaine
+    "penitent_cuirass":      224,  # plastron d acier
+    "moloch_horn":           1182, # corne
+    "solomon_seal":          169,  # medaille d or
+    "reliquary":             718,  # coffret de bois
 }
 UI = os.path.join(SPR, "ui")
 MASTER = 1024

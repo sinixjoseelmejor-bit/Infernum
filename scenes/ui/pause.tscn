@@ -39,9 +39,10 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="Title" type="Label" parent="Center/Panel/Layout"]
+theme_type_variation = &"TitleLabel"
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 60
 text = "PAUSE"
 horizontal_alignment = 1
 
@@ -63,12 +64,14 @@ layout_mode = 2
 text = "Reprendre"
 
 [node name="OptionsButton" type="Button" parent="Center/Panel/Layout"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "Options"
 
 [node name="QuitButton" type="Button" parent="Center/Panel/Layout"]
+theme_type_variation = &"DangerButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2

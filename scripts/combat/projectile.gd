@@ -28,6 +28,10 @@ var is_crit: bool = false
 var direction: Vector2 = Vector2.RIGHT
 var source: Node = null
 var target: Node2D = null
+## Fléau des géants : les boss et les élites encaissent `giant_multiplier`, le
+## reste `common_multiplier`. Neutres (1,0) pour tout autre tireur.
+var giant_multiplier: float = 1.0
+var common_multiplier: float = 1.0
 
 var _remaining_pierce: int = 0
 var _hit: Array[int] = []
@@ -82,6 +86,9 @@ func _resolve_hit(node: Node2D) -> void:
 	# vol) : passer une référence morte lève une erreur de type côté appelé.
 	var origin: Node = source if is_instance_valid(source) else null
 	var dealt := damage * pow(1.0 - pierce_falloff, float(_hit.size() - 1))
+	if giant_multiplier != common_multiplier:
+		var giant: bool = node.is_in_group(Groups.BOSSES) or node.get(&"is_elite") == true
+		dealt *= giant_multiplier if giant else common_multiplier
 	node.call(&"apply_damage", dealt, origin, direction * knockback)
 	GameEvents.damage_dealt.emit(dealt, global_position, is_crit)
 	if origin != null and origin.is_in_group(Groups.PLAYER):

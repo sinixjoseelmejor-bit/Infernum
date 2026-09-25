@@ -132,8 +132,9 @@ func _on_power_requested() -> void:
 	# LA MARQUE EST DÉPENSÉE, et c'est le prix. On remet les ÉLIMINATIONS à zéro
 	# plutôt que le bonus : c'est le compteur qui fait foi, comme au changement
 	# de vague, pour que le compte reste juste si le plafond change en cours de
-	# run.
-	_wave_kills = 0
+	# run. Le Serpent d'airain en garde une part : c'est sa « recharge ».
+	var gardee := Characters.PRIX_MARQUE_GARDEE if RunState.has_special(&"power_haste") else 0.0
+	_wave_kills = int(_wave_kills * gardee)
 	_mark_bonus = -1.0
 	_appliquer_marque()
 

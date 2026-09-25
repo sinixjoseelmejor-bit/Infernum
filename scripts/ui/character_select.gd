@@ -15,6 +15,12 @@ signal forge_requested()
 @onready var forge_button: Button = %CharForgeButton
 @onready var back_button: Button = %CharBackButton
 
+## Mesurées sur la plus longue des trois descriptions, à la taille de police
+## ci-dessous : à remesurer si l'une d'elles s'allonge.
+const CARD_MIN_SIZE := Vector2(400, 480)
+## Hauteur visée du portrait ; le facteur réel est l'entier juste en dessous.
+const PORTRAIT_HEIGHT := 176.0
+
 var _cards: Dictionary = {}
 
 
@@ -65,9 +71,19 @@ func _build_card(character: CharacterData) -> Button:
 	# — sur le doré du kit, les noms colorés des personnages sont illisibles.
 	card.theme_type_variation = &"CardButton"
 	card.toggle_mode = true
-	card.custom_minimum_size = Vector2(240, 288)
+	# La HAUTEUR porte le texte : un Label en autowrap ne réclame qu'une ligne,
+	# c'est la carte qui doit prévoir la place de la description entière. À 288
+	# elle était coupée au milieu d'une phrase pour les trois personnages.
+	card.custom_minimum_size = CARD_MIN_SIZE
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.pressed.connect(func() -> void: Characters.select(character.id))
+	# À la manette, se poser sur une carte CHOISIT le personnage : il n'y a rien
+	# d'autre à faire sur une carte, et un appui sur A de plus avant de pouvoir
+	# descendre sur « Commencer » était un pas pour rien. Pas au survol de la
+	# souris : glisser vers le bouton en travers d'une autre carte la choisirait.
+	card.focus_entered.connect(func() -> void:
+		if not MenuNav.is_mouse_mode():
+			Characters.select(character.id))
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -84,27 +100,32 @@ func _build_card(character: CharacterData) -> Button:
 	if character.portrait != null:
 		var portrait := TextureRect.new()
 		portrait.texture = character.portrait
-		portrait.custom_minimum_size = Vector2(0, 96)
+		# Agrandi d'un facteur ENTIER : à un facteur quelconque, un pixel sur deux
+		# serait plus large que son voisin et le personnage paraîtrait déformé.
+		var source := character.portrait.get_size()
+		var facteur := maxf(1.0, floorf(PORTRAIT_HEIGHT / maxf(1.0, source.y)))
+		portrait.custom_minimum_size = source * facteur
+		portrait.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.stretch_mode = TextureRect.STRETCH_SCALE
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		# Pixel art : sans Nearest, la carte affiche une bouillie floue.
 		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		box.add_child(portrait)
 
-	box.add_child(_label(character.display_name, 26, character.color, 1))
-	box.add_child(_label(character.title, 14, Color(0.78, 0.74, 0.72), 1))
-	box.add_child(_label(character.archetype.to_upper(), 13, character.color, 1))
+	box.add_child(_label(character.display_name, 32, character.color, 1))
+	box.add_child(_label(character.title, 17, Color(0.82, 0.78, 0.76), 1))
+	box.add_child(_label(character.archetype.to_upper(), 15, character.color, 1))
 	# L'état de SA Forge, sur SA carte. Les clés sont communes au profil mais les
 	# nœuds ne le sont pas : choisir un personnage, c'est aussi choisir dans quel
 	# investissement on repart, et ça doit se voir avant de cliquer.
 	var avancement := Forge.get_progress_for(character.id)
 	var branche: String = String(Forge.BRANCHES_PERSO.get(character.id, ""))
 	box.add_child(_label("Forge %d/%d  ·  branche %s" % [
-		avancement.x, avancement.y, branche], 11, Color(0.68, 0.64, 0.62), 1))
+		avancement.x, avancement.y, branche], 14, Color(0.72, 0.68, 0.66), 1))
 	box.add_child(HSeparator.new())
 
-	var desc := _label(character.description, 12, Color(0.72, 0.7, 0.7), 0)
+	var desc := _label(character.description, 16, Color(0.78, 0.76, 0.76), 0)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(desc)

@@ -12,7 +12,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.01, 0.015, 0.92)
+color = Color(0.04, 0.01, 0.015, 0.8)
 
 [node name="Center" type="MarginContainer" parent="."]
 anchors_preset = 15
@@ -37,8 +37,9 @@ theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Center/Panel/Layout"]
 layout_mode = 2
+theme_type_variation = &"TitleLabel"
 theme_override_colors/font_color = Color(0.88, 0.85, 0.83, 1)
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 50
 text = "OPTIONS"
 horizontal_alignment = 1
 
@@ -58,6 +59,7 @@ layout_mode = 2
 theme_override_constants/separation = 14
 
 [node name="OptionsResetButton" type="Button" parent="Center/Panel/Layout/Buttons"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -65,6 +67,7 @@ size_flags_horizontal = 3
 text = "Valeurs par défaut"
 
 [node name="OptionsCloseButton" type="Button" parent="Center/Panel/Layout/Buttons"]
+theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2

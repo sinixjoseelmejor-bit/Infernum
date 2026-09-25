@@ -1,193 +1,82 @@
 class_name WaveManager
 extends Node2D
-## Vagues successives : densité et difficulté croissantes, boutique entre deux.
+## Enchaîne les vagues : combat, aspiration du butin, boutique, vague suivante.
 ##
-## ÉQUILIBRAGE — toute la montée en puissance est LINÉAIRE, jamais exponentielle.
-## Les PV ennemis gagnent +14 % de la valeur de base par vague (additif), pas
-## ×1.14 par vague : à la vague 20, un imp a ×3.66 PV et non ×13.7. La puissance
-## du joueur monte elle aussi de façon plafonnée : les deux courbes restent
-## comparables au lieu de diverger.
+## Ce script orchestre, les chiffres vivent ailleurs :
+## - `DifficultyCurve` — PV, dégâts, vitesse, densité et élites de la piétaille ;
+## - `BossCurve` — mise à l'échelle des boss et renforcement de la boucle ;
+## - `EnemyRoster` — types d'ennemis et tirage (`scenes/main/enemy_roster.tres`) ;
+## - `LeftoverHarvest` — ce que rendent les survivants en fin de vague.
+## Raisonnement et mesures : README, « Vagues » et « Boss ».
 
 enum State { IDLE, RUNNING, INTERMISSION, COLLECTING }
 
+## Taux de moisson si aucun personnage n'est sélectionné (celui de Caïn et Loth).
+const FALLBACK_LEFTOVER_RATIO := 0.25
+## CORNE DE MOLOCH (légendaire) : les élites viennent plus souvent et valent
+## davantage. Un risque qu'on achète — elles passent par le même plafond que les
+## malédictions (31,5 %), donc l'objet ne se cumule pas sans fin avec elles.
+const ELITE_LURE_CHANCE_MULT := 1.5
+const ELITE_LURE_SOUL_MULT := 2
+
+@export var curve: DifficultyCurve = DifficultyCurve.new()
+@export var boss_curve: BossCurve = BossCurve.new()
+@export var roster: EnemyRoster
+
 @export_group("Rythme des vagues")
-@export var wave_base_duration: float = 20.0
-@export var wave_duration_growth: float = 2.0
-@export var wave_max_duration: float = 45.0
+@export var first_wave_delay: float = 1.5
 ## Pause après une vague survécue (la boutique s'ouvre pendant ce temps).
 @export var intermission_duration: float = 2.0
 ## Garde-fou de la phase d'aspiration. Au-delà, ce qui reste est encaissé
 ## d'office : la boutique ne doit JAMAIS rester fermée à cause d'une âme
 ## injoignable, un blocage vaudrait bien pire qu'une âme perdue.
 @export var collect_timeout: float = 3.0
-## Soin de fin de vague, exprimé en COUPS ENCAISSABLES et non en points de vie.
-##
-## POURQUOI PAS EN PV. Mesuré sur l'ancienne valeur fixe de 5 PV : elle valait
-## 6,2 coups à la vague 3 et 0,7 à la vague 20. Les dégâts ennemis montent de
-## 11 % par vague, les PV du joueur non — un soin libellé en PV va donc
-## mécaniquement à contresens de la difficulté, généreux quand le jeu est facile
-## et dérisoire quand il mord. Libellé en coups, il garde la même valeur.
-##
-## Sans cela, la moindre erreur se payait jusqu'à la fin de la run : les seules
-## sources de soin étaient des objets qu'il fallait choisir au détriment des
-## dégâts. Une run pouvait être condamnée dès la vague 6 sans l'être vraiment,
-## le joueur traînant vingt vagues avec 12 PV. C'est un plancher de confort,
-## pas une régénération : 5 PV ne rattrapent pas une vague mal jouée.
+
+@export_group("Soin et moisson")
+## Soin de fin de vague, en COUPS ENCAISSABLES et non en PV : un soin libellé en
+## PV va à contresens de la difficulté (l'ancien valait 6,2 coups à la vague 3 et
+## 0,7 à la vague 20). Un plancher de confort, pas une régénération. README,
+## « Le soin ne se compte pas en PV ».
 @export var wave_clear_heal_hits: float = 0.5
-## ÉCHELLE GLOBALE de la moisson des survivants. 0 = l'ancien comportement
-## (les survivants ne rendent rien).
-##
-## Le taux lui-même est PAR PERSONNAGE et vit dans le catalogue
-## (`CharacterData.leftover_ratio`) : Job à 0,5, Caïn et Loth à 0,25. Ce chiffre
-## n'est là que pour désactiver ou atténuer la mécanique d'un coup.
-@export_range(0.0, 2.0, 0.05) var leftover_soul_scale: float = 1.0
-## Dégâts de référence d'un coup ennemi, avant multiplicateur de vague : entre
-## le chien (6) et le brute (16). Sert d'unité au soin.
-@export var reference_hit_damage: float = 11.0
-## Un boss se gagne rarement intact : sans ce supplément, le survivre revenait à
-## entamer la suite avec les restes, et la punition dépassait la récompense.
-## Soin supplémentaire à la mort d'un boss, en coups lui aussi.
+## Supplément à la mort d'un boss, en coups lui aussi : un boss se gagne rarement
+## intact, et sans lui la punition dépassait la récompense.
 @export var boss_clear_heal_hits: float = 1.5
-@export var first_wave_delay: float = 1.5
+## Dégâts d'un coup ennemi avant multiplicateur de vague, entre le chien (6) et
+## la brute (16). C'est l'unité du soin.
+@export var reference_hit_damage: float = 11.0
+## ÉCHELLE GLOBALE de la moisson des survivants (0 = désactivée). Le taux
+## lui-même est par personnage : `CharacterData.leftover_ratio`.
+@export_range(0.0, 2.0, 0.05) var leftover_soul_scale: float = 1.0
 
-@export_group("Densité")
-@export var base_spawns_per_second: float = 0.8
-@export var spawns_per_second_growth: float = 0.19
-@export var max_spawns_per_second: float = 6.0
+@export_group("Apparitions")
 @export var max_alive: int = 160
-
-@export_group("Difficulté")
-## Additif : +12 % des PV de base par vague écoulée.
-##
-## MESURÉ : à 14 %, la marge du joueur (ses dégâts possibles divisés par ceux
-## qu'il faudrait pour tuer tout ce qui apparaît) restait collée à 0,90 de la
-## vague 6 à la vague 21 — quinze vagues de tapis roulant, sans escalade ni
-## récompense, et 10 % de chaque vague qui survit et s'accumule jusqu'à saturer
-## l'arène. La courbe descend donc, et la montée est reportée en fin de partie.
-@export var health_growth: float = 0.10
-## Supplément appliqué à partir de `late_wave` : c'est lui qui fait retomber la
-## marge après la vague 15, pour qu'une run finisse par se conclure au lieu de
-## s'étirer indéfiniment à l'équilibre.
-@export var late_health_growth: float = 0.09
-@export var late_wave: int = 16
-## Les i-frames du joueur (0,5 s) bornent les dégâts entrants à 2 coups/seconde :
-## la seule courbe qui rend vraiment la fin de run dangereuse est celle-ci, et
-## elle était la plus plate du jeu (+7 %/vague contre +14 % de PV et +27 %
-## d'ennemis). Les PV effectifs devenaient un problème résolu dès la vague 8.
-## MESURÉ : à 11 %, un brute élite frappait pour 79 à la vague 20 — soit un
-## joueur mort en une touche et demie, quel que soit son équipement. C'est la
-## courbe qui rend la fin de run dangereuse, elle doit mordre, mais pas
-## supprimer le droit à l'erreur.
-@export var damage_growth: float = 0.095
-@export var speed_growth: float = 0.015
-@export var max_speed_multiplier: float = 1.35
-@export var elite_start_wave: int = 4
-@export var elite_chance_growth: float = 0.02
-@export var max_elite_chance: float = 0.18
-
-@export_group("Boss")
-## Un boss toutes les N vagues. La vague ne se termine PAS au chronomètre : elle
-## se termine quand le boss tombe. C'est ce qui en fait une vraie porte.
-@export var boss_scenes: Array[PackedScene] = []
-@export var boss_wave_interval: int = 5
-## Les ennemis normaux continuent d'arriver, mais au ralenti : le boss reste
-## lisible sans que le joueur puisse l'affronter dans une arène vide.
-##
-## 0.35 était trop : l'auto-visée classant par distance, les renforts captaient la
-## moitié du DPS du joueur et le combat de boss durait le double. Ils restent
-## présents — ils ne sont pas là pour faire des dégâts mais pour occuper le sol.
-@export var boss_add_spawn_ratio: float = 0.25
-## AU-DELÀ DU DERNIER BOSS, LE CYCLE REBOUCLE — et c'était la partie ratée.
-##
-## Le renforcement s'appliquait aux PV PROPRES de chaque boss, or le roster va
-## de 3 800 (Golgota) à 10 000 (Lucifer), soit un écart de ×2,6. Chaque tour de
-## boucle rejouait donc cette dent de scie depuis le bas : le boss qui suivait
-## Lucifer était le plus faible du jeu depuis quinze vagues. Mesuré, build de
-## fin de partie, en morts présentées au joueur (169 PV) :
-##
-##   Lucifer vague 25   28 000 PV    9,1 s   0,52 mort
-##   Golgota vague 30   17 908 PV    5,9 s   0,31 mort  ← moins menaçant
-##   Lilith  vague 35   30 044 PV   10,5 s   0,74 mort  ← toujours moins
-##   ...
-##   Lucifer vague 50   73 225 PV   26,3 s   3,60 morts
-##   Golgota vague 55   39 710 PV   14,5 s   0,92 mort  ← divisé par quatre
-##
-## EN BOUCLE, AUCUN BOSS NE DESCEND SOUS LE RÉSERVOIR DU DERNIER. C'est un
-## PLANCHER, pas un remplacement : les boss déjà au-dessus gardent le leur.
-## La première version remplaçait la base par celle du dernier et supprimait
-## bien la dent de scie — mais elle ABAISSAIT les vagues 40 à 50, dont les bases
-## propres (7 900 à 10 000) étaient supérieures. Mesuré, un durcissement qui
-## rendait la moitié de la boucle plus facile :
-##
-##   Baal vague 40    47 538 → 41 500 PV    18,9 → 13,3 s
-##   Lucifer vague 50 73 225 → 50 500 PV    26,3 → 17,9 s
-##
-## Leur identité reste la leur — patterns, phases, sanction anti-kite : seul le
-## réservoir est relevé.
-##
-## Les PV ne sont pas le bon levier au-delà : ils allongent le combat, ils ne le
-## rendent pas plus dur. Le renforcement par tour porte donc AUSSI sur ce qui
-## MENACE — les dégâts et la cadence d'attaque.
-@export var boss_repeat_health_growth: float = 0.45
-@export var boss_repeat_damage_growth: float = 0.20
-## Cadence d'attaque des rencontres répétées : les intervalles se resserrent,
-## le préavis des zones annoncées ne bouge pas.
-##
-## LE PLAFOND EST CALCULÉ, PAS CHOISI. Les 0,4 s d'invulnérabilité du joueur
-## bornent les dégâts entrants à 2,5 coups par seconde, et Baal — le boss le
-## plus dense du jeu — produit déjà 1,94 zone par seconde. 1,94 × 1,25 = 2,43 :
-## on reste sous le plafond. À ×1,30 on passait à 2,52 et le combat cessait
-## d'être esquivable, ce qui est la seule règle que les boss n'ont pas le droit
-## d'enfreindre.
-@export var boss_repeat_attack_growth: float = 0.15
-@export var boss_repeat_attack_max: float = 1.25
-## Les PV des boss étaient FIXES alors que le DPS du joueur grandit à chaque
-## vague : Asmodée tombait sans jamais atteindre sa phase 2 (45 % de PV) ni son
-## enragement (100 s). Cette courbe rend au combat la durée pour laquelle les
-## patterns sont écrits.
-##
-## LES BOSS SONT DES CONTRÔLES DE BUILD. Chaque scène de boss fixe ses PV et son
-## `enrage_time` de sorte qu'un DPS insuffisant fasse durer le combat jusqu'à
-## l'enragement (dégâts ×1,6, pression ×2) — et c'est là que la run se termine.
-## Le seuil de DPS visé, en multiples du DPS de départ (≈ 60) : Golgota ×1,25,
-## Lilith ×3, Baal ×5, Asmodée ×7, Lucifer ×9. Sans Forge, une bonne build
-## franchit Lilith et bute sur Baal ; la Forge complète (≈ ×2 de DPS) porte
-## jusqu'à Lucifer. C'est la boucle « rejouer pour aller plus loin ».
-##
-## Mesuré en partie réelle avant ce réglage : 116 s pour Baal et 542 s pour
-## Lucifer avec une build faible et la mort neutralisée — c'est précisément ce
-## que l'enragement transforme désormais en mort.
-@export var boss_wave_health_growth: float = 0.09
-
-@export_group("Placement")
 @export var min_spawn_distance: float = 480.0
 @export var max_spawn_distance: float = 700.0
 
-## Roster : chaque entrée déclare à partir de quelle vague le type apparaît et
-## son poids relatif (croissant ou décroissant avec les vagues).
-##
-## L'ŒIL entre à la vague 11, juste après Lilith, et c'est un seuil de jeu et
-## non d'équilibrage : il sanctionne l'immobilité, ce qu'aucun autre ennemi ne
-## fait. L'introduire plus tôt punirait un joueur qui n'a pas encore de quoi
-## choisir où se placer. Son poids monte doucement, il ne doit jamais devenir
-## l'ennemi principal — deux ou trois yeux dans l'arène suffisent à interdire
-## de se poser, dix en feraient un jeu de couloirs.
-@export var enemy_scenes: Array[PackedScene] = []
-@export var enemy_min_wave: Array[int] = [1, 2, 3, 4, 11]
-@export var enemy_base_weight: Array[float] = [60.0, 25.0, 22.0, 14.0, 14.0]
-@export var enemy_weight_drift: Array[float] = [-2.0, 1.0, 1.5, 2.0, 1.4]
+@export_group("Boss")
+## Un boss toutes les `boss_wave_interval` vagues. Sa vague ne se termine PAS au
+## chronomètre mais à sa mort : c'est ce qui en fait une vraie porte.
+@export var boss_scenes: Array[PackedScene] = []
+@export var boss_wave_interval: int = 5
+## Les renforts continuent d'arriver au quart de la cadence : ils occupent le
+## sol sans voler le DPS du joueur (à 0,35, le combat durait le double). README,
+## « Les renforts volaient le combat ».
+@export var boss_add_spawn_ratio: float = 0.25
 
 var target: Node2D
 var container: Node
 
 var state: State = State.IDLE
-var _collect_time: float = 0.0
 var wave: int = 0
+## Temps restant de la vague ou de l'entracte — ou, en vague de boss, durée
+## ÉCOULÉE du combat : le chronomètre y compte vers le haut.
 var time_left: float = 0.0
 
+var _collect_time: float = 0.0
 var _spawn_accumulator: float = 0.0
 var _boss: Node2D = null
-var _last_boss_health: float = 0.0
+## Cache de `_last_boss_base_health()` : 0 tant qu'il n'a pas été lu.
+var _last_boss_health_cache: float = 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -218,9 +107,7 @@ func _process(delta: float) -> void:
 		State.COLLECTING:
 			_process_collect(delta)
 		State.INTERMISSION:
-			time_left = maxf(0.0, time_left - delta)
-			if time_left <= 0.0:
-				_begin_wave()
+			_process_intermission(delta)
 		State.IDLE:
 			pass
 
@@ -233,44 +120,10 @@ func has_living_boss() -> bool:
 	return is_instance_valid(_boss) and not _boss.is_queued_for_deletion()
 
 
-func _process_wave(delta: float) -> void:
-	if is_boss_wave():
-		# Le chronomètre ne clôt pas une vague de boss : seule sa mort le fait.
-		time_left += delta
-		if not has_living_boss():
-			_end_wave()
-			return
-	else:
-		time_left = maxf(0.0, time_left - delta)
-		if time_left <= 0.0:
-			_end_wave()
-			return
-
-	var rate := get_spawn_rate()
-	if is_boss_wave():
-		rate *= boss_add_spawn_ratio
-	_spawn_accumulator += rate * delta
-	while _spawn_accumulator >= 1.0:
-		_spawn_accumulator -= 1.0
-		if get_tree().get_nodes_in_group(Groups.ENEMIES).size() < max_alive:
-			spawn_one()
-
-
-func _begin_wave() -> void:
-	wave += 1
-	RunState.wave = wave
-	state = State.RUNNING
-	time_left = 0.0 if is_boss_wave() else get_wave_duration()
-	_spawn_accumulator = 0.0
-	_boss = null
-	DropSystem.reset_wave_budget()
-	GameEvents.wave_started.emit(wave)
-	if is_boss_wave():
-		# Une clé garantie en ATTEIGNANT chaque boss. Elle était versée à la fin
-		# de la vague : une run qui mourait sur Golgota rentrait avec zéro clé, et
-		# le joueur pour qui la Forge est faite ne pouvait jamais la commencer.
-		RunState.add_keys(1)
-		_spawn_boss()
+## Ce que coûte un coup ennemi moyen à la vague courante. C'est l'unité dans
+## laquelle le soin est libellé — le butin l'interroge aussi.
+func get_hit_damage() -> float:
+	return reference_hit_damage * _enemy_damage_multiplier()
 
 
 ## Saute directement à une vague donnée.
@@ -283,45 +136,159 @@ func _begin_wave() -> void:
 ## Un boss en cours est annoncé mort avant d'être effacé : sans ça sa barre de
 ## vie resterait à l'écran, l'interface n'ayant aucun autre moyen d'apprendre
 ## qu'il a disparu.
-func dev_jump_to_wave(target: int) -> void:
-	for boss in get_tree().get_nodes_in_group(&"bosses"):
+func dev_jump_to_wave(target_wave: int) -> void:
+	for boss in get_tree().get_nodes_in_group(Groups.BOSSES):
 		GameEvents.boss_died.emit(boss)
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
 		enemy.queue_free()
 	_boss = null
-	wave = maxi(0, target - 1)
+	wave = maxi(0, target_wave - 1)
 	state = State.INTERMISSION
 	_begin_wave()
 
 
+# --- Cycle d'une vague ---
+
+func _process_intermission(delta: float) -> void:
+	time_left = maxf(0.0, time_left - delta)
+	if time_left <= 0.0:
+		_begin_wave()
+
+
+func _begin_wave() -> void:
+	wave += 1
+	RunState.wave = wave
+	state = State.RUNNING
+	time_left = 0.0 if is_boss_wave() else curve.wave_duration(wave)
+	_spawn_accumulator = 0.0
+	_boss = null
+	DropSystem.reset_wave_budget()
+	GameEvents.wave_started.emit(wave)
+	if is_boss_wave():
+		# Une clé garantie en ATTEIGNANT chaque boss, et non à sa mort : une run
+		# qui mourait sur Golgota rentrait sans clé, et ne pouvait jamais
+		# commencer la Forge qui lui était destinée.
+		RunState.add_keys(1)
+		_spawn_boss()
+
+
+func _process_wave(delta: float) -> void:
+	if _advance_wave_clock(delta):
+		_end_wave()
+		return
+	_process_spawns(delta)
+
+
+## Fait avancer le chronomètre de la vague et dit si elle est terminée.
+func _advance_wave_clock(delta: float) -> bool:
+	if is_boss_wave():
+		time_left += delta
+		return not has_living_boss()
+	time_left = maxf(0.0, time_left - delta)
+	return time_left <= 0.0
+
+
+## La vague tombe : on nettoie, on soigne, puis on ASPIRE le butin. La boutique
+## n'ouvrira qu'une fois la carte vide — voir `_process_collect`.
+func _end_wave() -> void:
+	state = State.COLLECTING
+	_collect_time = 0.0
+	_clear_leftovers()
+	_heal_target(_wave_clear_heal_hits())
+
+
+## TOUT LE BUTIN REJOINT LE JOUEUR AVANT LA BOUTIQUE, pour être dépensable à
+## celle qui s'ouvre au lieu d'attendre la suivante. README, « L'aspiration de
+## fin de vague ».
+##
+## Répété à chaque image plutôt qu'une fois : un ennemi mourant au même instant
+## dépose encore ses âmes en différé.
+func _process_collect(delta: float) -> void:
+	_collect_time += delta
+	var pickups := get_tree().get_nodes_in_group(Groups.PICKUPS)
+	if pickups.is_empty():
+		_start_intermission()
+		return
+
+	var expired := _collect_time >= collect_timeout
+	for node in pickups:
+		var pickup := node as Pickup
+		if pickup == null:
+			continue
+		if expired:
+			pickup.collect()
+		else:
+			pickup.rush()
+	if expired:
+		_start_intermission()
+
+
+func _start_intermission() -> void:
+	state = State.INTERMISSION
+	time_left = intermission_duration
+	GameEvents.wave_cleared.emit(wave)
+
+
+# --- Apparitions ---
+
+func _process_spawns(delta: float) -> void:
+	var rate := curve.spawn_rate(wave, Curses.get_spawn_rate_mult() * WaveMods.get_spawn_rate_mult())
+	if is_boss_wave():
+		rate *= boss_add_spawn_ratio
+	_spawn_accumulator += rate * delta
+	if _spawn_accumulator < 1.0:
+		return
+	# Compté une fois par image et tenu à jour à la main, plutôt que de
+	# parcourir le groupe avant chaque apparition.
+	var alive := get_tree().get_nodes_in_group(Groups.ENEMIES).size()
+	while _spawn_accumulator >= 1.0:
+		_spawn_accumulator -= 1.0
+		if alive < max_alive and spawn_one() != null:
+			alive += 1
+
+
+func spawn_one() -> Node2D:
+	if not is_instance_valid(target) or roster == null or roster.is_empty():
+		return null
+	var scene := roster.pick(wave, _rng.randf())
+	if scene == null:
+		return null
+
+	var enemy := scene.instantiate() as Node2D
+	enemy.global_position = _random_ring_position()
+	var scalable := enemy as Enemy
+	if scalable != null:
+		scalable.target = target
+		scalable.apply_wave_scaling(
+			_enemy_health_multiplier(), _enemy_damage_multiplier(), _enemy_speed_multiplier()
+		)
+		if _rng.randf() < _elite_chance():
+			scalable.make_elite()
+			if RunState.has_special(&"elite_lure"):
+				scalable.soul_value *= ELITE_LURE_SOUL_MULT
+	container.add_child(enemy)
+	return enemy
+
+
+## Quel boss affronter à `boss_wave` : `x` est son rang dans le roster, `y` le
+## nombre de tours de roster déjà bouclés.
+static func boss_rotation(boss_wave: int, interval: int, roster_size: int) -> Vector2i:
+	@warning_ignore("integer_division")
+	var encounter := boss_wave / interval - 1
+	@warning_ignore("integer_division")
+	return Vector2i(encounter % roster_size, encounter / roster_size)
+
+
 func _spawn_boss() -> void:
-	var index := wave / boss_wave_interval - 1
-	var loops := index / boss_scenes.size()
-	var scene: PackedScene = boss_scenes[index % boss_scenes.size()]
-	var boss := scene.instantiate() as Boss
+	var slot := boss_rotation(wave, boss_wave_interval, boss_scenes.size())
+	var loops := slot.y
+	var boss := boss_scenes[slot.x].instantiate() as Boss
 	if boss == null:
 		push_error("WaveManager : boss_scenes doit contenir des scènes de type Boss.")
 		return
 	boss.target = target
-	var elapsed := float(wave - boss_wave_interval)
-	# Premier tour : chaque boss porte son propre réservoir, c'est lui qui le
-	# situe dans l'échelle. Rencontre répétée : il ne peut plus passer sous celui
-	# du dernier boss du roster, sinon la boucle rejoue la dent de scie depuis
-	# son point le plus bas.
-	var base_health := boss.max_health
-	if loops > 0:
-		base_health = maxf(base_health, _last_boss_base_health())
-	boss.max_health = base_health * (1.0 + boss_wave_health_growth * elapsed)
-	boss.max_health *= get_unleashed_health_factor(wave)
-	var threat := get_boss_threat_multiplier(wave)
-	boss.contact_damage *= threat
-	boss.attack_damage_multiplier = threat
-	if loops > 0:
-		boss.max_health *= 1.0 + boss_repeat_health_growth * loops
-		boss.contact_damage *= 1.0 + boss_repeat_damage_growth * loops
-		boss.attack_damage_multiplier *= 1.0 + boss_repeat_damage_growth * loops
-		boss.attack_speed_multiplier = minf(
-			1.0 + boss_repeat_attack_growth * loops, boss_repeat_attack_max)
+	var floor_health := _last_boss_base_health() if loops > 0 else 0.0
+	boss_curve.apply(boss, wave, loops, floor_health, boss_wave_interval, curve, RunState.unleashed)
 	boss.global_position = _random_ring_position()
 	container.add_child(boss)
 	_boss = boss
@@ -334,357 +301,109 @@ func _spawn_boss() -> void:
 ## silence. Une instance nue ne déclenche aucun `_ready` — elle n'entre jamais
 ## dans l'arbre.
 func _last_boss_base_health() -> float:
-	if _last_boss_health > 0.0:
-		return _last_boss_health
-	var probe := boss_scenes[boss_scenes.size() - 1].instantiate() as Boss
+	if _last_boss_health_cache > 0.0:
+		return _last_boss_health_cache
+	var probe := boss_scenes[-1].instantiate() as Boss
 	if probe == null:
 		return 0.0
-	_last_boss_health = probe.max_health
+	_last_boss_health_cache = probe.max_health
 	probe.free()
-	return _last_boss_health
-
-
-## La vague tombe : on nettoie, on verse la clé, puis on ASPIRE le butin. La
-## boutique n'ouvrira qu'une fois la carte vide — voir `_process_collect`.
-func _end_wave() -> void:
-	state = State.COLLECTING
-	_collect_time = 0.0
-	_clear_leftovers()
-	if is_instance_valid(target) and target.has_method(&"heal"):
-		var hits := wave_clear_heal_hits
-		if is_boss_wave():
-			hits += boss_clear_heal_hits + Forge.get_special_total(&"boss_heal_hits")
-		if hits > 0.0:
-			target.call(&"heal", hits * get_hit_damage())
-	# (La clé garantie des vagues de boss est versée à l'ARRIVÉE du boss, dans
-	# `_begin_wave` : mourir contre lui doit quand même rapporter quelque chose.)
-
-
-## TOUT LE BUTIN REJOINT LE JOUEUR AVANT LA BOUTIQUE.
-##
-## Les âmes au sol n'étaient PAS perdues — vérifié : elles survivent au nettoyage
-## de fin de vague et à la vague suivante, sans durée de vie. Le problème était
-## autre : elles n'étaient pas DÉPENSABLES à la boutique qui venait de s'ouvrir.
-## Elles attendaient que le joueur repasse dessus pendant la vague suivante, et
-## ne comptaient qu'à la boutique d'après. Le joueur devait donc arbitrer entre
-## finir sa tournée de ramassage et se battre, ce qui punissait surtout les fins
-## de vague chargées — celles où il y a le plus à ramasser.
-##
-## L'appel est répété à chaque image plutôt que fait une fois : du butin peut
-## encore apparaître après l'appel initial, un ennemi mourant au même instant
-## déposant ses âmes en différé.
-func _process_collect(delta: float) -> void:
-	_collect_time += delta
-	var pickups := get_tree().get_nodes_in_group(Groups.PICKUPS)
-	if pickups.is_empty():
-		_start_intermission()
-		return
-
-	var expired := _collect_time >= collect_timeout
-	for pickup in pickups:
-		if not (pickup is Pickup):
-			continue
-		if expired:
-			(pickup as Pickup).collect()
-		else:
-			(pickup as Pickup).rush()
-	if expired:
-		_start_intermission()
-
-
-func _start_intermission() -> void:
-	state = State.INTERMISSION
-	time_left = intermission_duration
-	GameEvents.wave_cleared.emit(wave)
-
-
-## Les survivants de la vague sont dissipés — en rendant CE QU'ON LEUR A PRIS.
-##
-## LE DÉFAUT QUE ÇA CORRIGE. Les âmes ne tombaient que des éliminations, donc
-## les dégâts partiels ne valaient rien : on pouvait enlever 90 % des points de
-## vie de quarante ennemis et rentrer avec zéro. Or c'est exactement la
-## situation d'un joueur dont la build ne tue plus assez vite — et comme les
-## âmes achètent les objets qui font les dégâts, il ne pouvait pas s'en sortir.
-## Moins de dégâts, moins d'âmes, moins d'objets, moins de dégâts.
-##
-## LA MESURE NE CHANGE RIEN QUAND TOUT VA BIEN, et c'est sa qualité principale :
-## un joueur qui tue tout n'a aucun survivant, donc ne touche pas une âme de
-## plus. Aucun recalibrage de l'économie, aucun canal de puissance nouveau en
-## fin de partie. Le filet ne se déclenche que dans le cas qu'il vise.
-##
-## JAMAIS AU PRIX PLEIN, sinon grignoter vaudrait autant qu'achever et
-## l'incitation à finir ses cibles disparaîtrait. Ce n'est pas davantage un
-## distributeur gratuit : on est payé au prorata des dégâts réellement infligés,
-## et seulement d'eux.
-##
-## LE TAUX DÉPEND DU PERSONNAGE (`CharacterData.leftover_ratio`) : Job à 50 %,
-## Caïn et Loth à 25 %. Mesurée à taux uniforme, la moisson profitait le MOINS à
-## celui pour qui elle avait été écrite — elle paie les dégâts répartis sur des
-## cibles qui survivent, donc elle va à qui arrose, pas à qui encaisse. Elle
-## reste une sortie de secours pour les trois, mais c'est à Job qu'elle s'adresse.
-##
-## LES TIRS ET LES ZONES AUSSI, et c'est le point important. La boutique met
-## l'arbre en pause : un trait de cultiste ou une zone de boss encore en l'air
-## quand la vague tombe y reste figé, puis repart à la fermeture de la
-## boutique — sur un joueur qui regardait l'interface et n'a aucun moyen de
-## l'anticiper. La durée de vie des projectiles ne le sauve pas : son minuteur
-## est gelé lui aussi, donc ils attendent aussi longtemps que la boutique reste
-## ouverte. Mesuré avant correction : six traits en vol, 3 s de boutique, et le
-## joueur encaissait à la réouverture sans avoir rien fait.
-##
-## Le conteneur ne porte QUE des projectiles et des télégraphes ; les âmes non
-## ramassées sont enfants du conteneur d'ennemis et survivent, comme il se doit.
-func _clear_leftovers() -> void:
-	# Le reliquat est CUMULÉ d'un ennemi à l'autre avant d'être versé : arrondir
-	# par ennemi ferait disparaître la récolte entière (un imp vaut 3 âmes, donc
-	# 0,75 âme à moitié entamé, donc zéro après arrondi — quarante fois zéro).
-	var reliquat := 0.0
-	var recolte := 0
-	var survivants := 0
-	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
-		var noeud := enemy as Node2D
-		if noeud == null:
-			continue
-		var du := _ames_arrachees(noeud)
-		if du > 0.0:
-			survivants += 1
-			reliquat += du
-			if reliquat >= 1.0:
-				var entier := floori(reliquat)
-				reliquat -= float(entier)
-				# Versé SUR PLACE, là où l'ennemi tombe : la phase d'aspiration
-				# qui suit ramène tout au joueur, et les orbes disent d'où elles
-				# viennent au lieu d'apparaître sous ses pieds.
-				DropSystem.spawn_drops(container, noeud.global_position, entier, 0.0, 0.0)
-				recolte += entier
-		noeud.queue_free()
-	RunState.leftover_souls = recolte
-	RunState.leftover_count = survivants
-	for container in get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER):
-		for child in container.get_children():
-			child.queue_free()
-
-
-## Ce qu'un ennemi rend en disparaissant : sa valeur en âmes, au prorata des
-## points de vie qu'il a perdus, et de moitié.
-##
-## Lu sur les PV et non sur un compteur de dégâts tenu à part : c'est la même
-## information, et un compteur parallèle finirait par mentir (soins d'ennemis,
-## remises à l'échelle de vague, élites redimensionnées après coup).
-func _ames_arrachees(enemy: Node2D) -> float:
-	if leftover_soul_scale <= 0.0:
-		return 0.0
-	var personnage := Characters.get_selected()
-	var taux: float = leftover_soul_scale * (personnage.leftover_ratio if personnage != null else 0.25)
-	if taux <= 0.0:
-		return 0.0
-	var brut: Variant = enemy.get(&"soul_value")
-	var vie := enemy.get(&"health") as Health
-	if brut == null or vie == null or vie.max_health <= 0.0:
-		return 0.0
-	var valeur := float(brut)
-	if valeur <= 0.0:
-		return 0.0
-	var part := clampf(1.0 - vie.current / vie.max_health, 0.0, 1.0)
-	return valeur * part * taux
-
-
-# --- Courbes de difficulté (toutes additives) ---
-
-func get_wave_duration() -> float:
-	return minf(wave_base_duration + wave_duration_growth * (wave - 1), wave_max_duration)
-
-
-## Les multiplicateurs optionnels (malédictions, pacte de vague) s'appliquent
-## PAR-DESSUS la courbe de base. Ils ne modifient pas la courbe elle-même : une
-## run sans malédiction ni pacte reste exactement la run de référence.
-func get_spawn_rate() -> float:
-	var base := base_spawns_per_second + spawns_per_second_growth * (wave - 1)
-	var modded := base * Curses.get_spawn_rate_mult() * WaveMods.get_spawn_rate_mult()
-	return minf(modded, max_spawns_per_second * 1.5)
-
-
-## DÉCHAÎNEMENT : les PV des ennemis montent en PUISSANCE, et non plus
-## linéairement.
-##
-## Sans ça, le mode ne serait pas un défi mais une promenade. La build du joueur
-## atteint environ ×200 de dégâts contre ×39 aujourd'hui, alors que la courbe
-## normale ajoute 10 % de PV par vague — à la vague 40 les ennemis ont ×4,9 de
-## PV et le joueur ×200 de dégâts. Casser le jeu n'est amusant que s'il reste
-## quelque chose à casser : la courbe déchaînée double les PV toutes les six
-## vagues et finit par rattraper n'importe quelle build.
-##
-## CALIBRÉE SUR LES DPS MESURÉS, pas sur une intuition. En déchaîné, la build
-## vaut ×8 à 20 objets, ×32 à 40, ×190 à 80, ×1 256 à 160 — le mode ne change
-## presque rien avant 40 objets, puisque c'est là que les plafonds commencent à
-## mordre en régime normal. En comptant ~3,5 objets par vague, le joueur passe
-## ×450 vers la vague 30 et ×950 vers la 40.
-##
-## À 1,15 par vague, les ennemis valent ×265 à la vague 30 et ×1 310 à la 40 :
-## le joueur mène largement jusqu'à la trentaine, puis la courbe le rattrape
-## vers la vague 36-38. C'est la forme voulue — on casse le jeu, on en profite
-## longtemps, et l'enfer finit par répondre.
-##
-## PREMIER RÉGLAGE, à bouger après avoir joué : c'est le seul chiffre à toucher
-## pour rendre la course plus longue ou plus courte.
-const PUISSANCE_DECHAINEE := 1.15
-
-## Les dégâts montent aussi, plus doucement. Sans eux la fin de partie serait
-## seulement SPONGIEUSE : des ennemis à ×1 300 de PV qui ne tuent pas ne font pas
-## une run difficile, ils font une run qu'on abandonne d'ennui. Le joueur
-## déchaîné monte jusqu'à 90 % de réduction et un vol de vie sans budget : il
-## faut de quoi passer au travers.
-const DEGATS_DECHAINES := 1.08
-
-func get_health_multiplier() -> float:
-	var base := 1.0 + health_growth * (wave - 1)
-	if wave >= late_wave:
-		base += late_health_growth * (wave - late_wave + 1)
-	if RunState.unleashed:
-		base *= pow(PUISSANCE_DECHAINEE, wave)
-	return base * Curses.get_enemy_health_mult() * WaveMods.get_enemy_health_mult()
-
-
-## Les dégâts d'un boss dans l'unité du jeu : le « coup » de
-## `reference_hit_damage`, qui grandit de `damage_growth` à chaque vague. Les
-## valeurs écrites dans chaque boss sont calibrées sur la vague du premier
-## palier, et cette fonction les y ramène.
-##
-## LE DÉFAUT QU'ELLE CORRIGE : seul le dégât de CONTACT montait, et deux fois
-## moins vite que la piétaille (4 % contre 9,5 % par vague). Les dégâts
-## d'ATTAQUE — foudre, braise, salves, tout ce qui blesse réellement le joueur —
-## ne montaient pas du tout. Une attaque de Lucifer vague 25 valait 0,55 coup
-## quand un marteau de Golgota vague 5 en valait 1,7 : le boss le plus tardif
-## était le moins dangereux du jeu.
-func get_boss_threat_multiplier(at_wave: int) -> float:
-	var reference := 1.0 + damage_growth * (boss_wave_interval - 1)
-	var base := (1.0 + damage_growth * maxf(0.0, at_wave - 1.0)) / reference
-	return base * get_unleashed_damage_factor(at_wave)
-
-
-## LE DÉCHAÎNEMENT S'APPLIQUE AUSSI AUX BOSS, et il ne s'appliquait pas.
-##
-## Les boss ont leur propre courbe et ne passent jamais par
-## `get_health_multiplier()` / `get_damage_multiplier()` : c'est voulu, leur
-## difficulté est celle de leur palier et non celle de la vague. Mais
-## l'exponentielle du Déchaînement n'est pas un palier, c'est la réponse de
-## l'enfer à un joueur sans plafond — et les boss en étaient exemptés par
-## accident. Leurs PV montaient linéairement pendant que ceux d'une brute
-## étaient multipliés par 1,15 à chaque vague. Mesuré, avant correction :
-##
-##   vague 30   Golgota  47 125 PV   une brute     31 285 PV
-##   vague 40   Baal     60 175 PV   une brute    172 370 PV
-##   vague 55   Golgota 104 500 PV   une brute  1 961 660 PV   ← x19
-##
-## À partir de la trentaine, le boss était la chose la MOINS solide de l'écran,
-## dans le mode dont c'est précisément le terrain de jeu : le Déchaînement est
-## un défi de classement, on y pousse aussi loin que possible, et une vague de
-## boss y était devenue un repos.
-##
-## Le facteur appliqué est EXACTEMENT celui de la piétaille. Ce n'est pas une
-## valeur choisie : multiplier les deux par la même chose laisse le rapport
-## boss/piétaille identique à ce qu'il est en régime normal, à chaque vague. Un
-## chiffre propre aux boss aurait redessiné ce rapport sans que personne ne
-## l'ait décidé.
-##
-## Les deux prennent la vague en ARGUMENT : `get_boss_threat_multiplier` en
-## accepte une, et retomber en douce sur la vague courante ferait mentir tout
-## appel qui interroge une autre vague que celle qui tourne.
-func get_unleashed_health_factor(at_wave: int) -> float:
-	return pow(PUISSANCE_DECHAINEE, at_wave) if RunState.unleashed else 1.0
-
-
-func get_unleashed_damage_factor(at_wave: int) -> float:
-	return pow(DEGATS_DECHAINES, at_wave) if RunState.unleashed else 1.0
-
-
-func get_damage_multiplier() -> float:
-	var base := 1.0 + damage_growth * (wave - 1)
-	if RunState.unleashed:
-		base *= pow(DEGATS_DECHAINES, wave)
-	return base * Curses.get_enemy_damage_mult() * WaveMods.get_enemy_damage_mult()
-
-
-func get_speed_multiplier() -> float:
-	var base := minf(1.0 + speed_growth * (wave - 1), max_speed_multiplier)
-	return base * Curses.get_enemy_speed_mult() * WaveMods.get_enemy_speed_mult()
-
-
-## Ce que coûte un coup ennemi moyen à la vague courante. C'est l'unité dans
-## laquelle le soin est libellé, et la seule qui suive la difficulté.
-func get_hit_damage() -> float:
-	return reference_hit_damage * get_damage_multiplier()
-
-
-func get_elite_chance() -> float:
-	var from_wave := 1 if Curses.starts_elites_immediately() else elite_start_wave
-	if wave < from_wave:
-		return 0.0
-	var base := elite_chance_growth * (wave - from_wave + 1)
-	var modded := base * Curses.get_elite_mult() * WaveMods.get_elite_mult()
-	# Les élites valent 3 fois plus d'âmes et portent toute la chance de clé :
-	# à 54 % (l'ancien plafond), elles devenaient la majorité des apparitions et
-	# le revenu d'une run maudite dépassait celui d'une run normale de ×6.
-	return minf(modded, max_elite_chance * 1.75)
-
-
-func spawn_one() -> Node2D:
-	if not is_instance_valid(target) or enemy_scenes.is_empty():
-		return null
-	var scene := _pick_scene()
-	if scene == null:
-		return null
-
-	var enemy := scene.instantiate() as Node2D
-	enemy.global_position = _random_ring_position()
-	if enemy is Enemy:
-		var e := enemy as Enemy
-		e.target = target
-		e.apply_wave_scaling(
-			get_health_multiplier(), get_damage_multiplier(), get_speed_multiplier()
-		)
-		if _rng.randf() < get_elite_chance():
-			e.make_elite()
-	container.add_child(enemy)
-	return enemy
-
-
-func _pick_scene() -> PackedScene:
-	var total := 0.0
-	var weights: Array[float] = []
-	for i in enemy_scenes.size():
-		var w := 0.0
-		if wave >= _min_wave(i):
-			w = maxf(0.0, _base_weight(i) + _weight_drift(i) * (wave - _min_wave(i)))
-		weights.append(w)
-		total += w
-	if total <= 0.0:
-		return enemy_scenes[0]
-
-	var roll := _rng.randf() * total
-	for i in enemy_scenes.size():
-		roll -= weights[i]
-		if roll <= 0.0:
-			return enemy_scenes[i]
-	return enemy_scenes[0]
-
-
-func _min_wave(i: int) -> int:
-	return enemy_min_wave[i] if i < enemy_min_wave.size() else 1
-
-
-func _base_weight(i: int) -> float:
-	return enemy_base_weight[i] if i < enemy_base_weight.size() else 10.0
-
-
-func _weight_drift(i: int) -> float:
-	return enemy_weight_drift[i] if i < enemy_weight_drift.size() else 0.0
+	return _last_boss_health_cache
 
 
 func _random_ring_position() -> Vector2:
 	var angle := _rng.randf_range(0.0, TAU)
 	var distance := _rng.randf_range(min_spawn_distance, max_spawn_distance)
 	return target.global_position + Vector2.RIGHT.rotated(angle) * distance
+
+
+# --- Fin de vague : soin et moisson ---
+
+## Le socle, plus le supplément de boss et sa part de Forge quand c'est un boss
+## qui vient de tomber.
+func _wave_clear_heal_hits() -> float:
+	var hits := wave_clear_heal_hits
+	if is_boss_wave():
+		hits += boss_clear_heal_hits + Forge.get_special_total(&"boss_heal_hits")
+	return hits
+
+
+func _heal_target(hits: float) -> void:
+	if hits <= 0.0 or not is_instance_valid(target) or not target.has_method(&"heal"):
+		return
+	target.call(&"heal", hits * get_hit_damage())
+
+
+## Les survivants sont dissipés en rendant ce qu'on leur a pris (voir
+## `LeftoverHarvest`), et les tirs et zones encore en l'air avec eux.
+##
+## Ces derniers surtout : la boutique met l'arbre en pause, un trait figé
+## repartirait à sa fermeture sur un joueur qui regardait l'interface — mesuré,
+## 10 dégâts encaissés à la réouverture sans rien avoir fait. Le conteneur de
+## projectiles ne porte QUE des tirs et des télégraphes ; les âmes non ramassées
+## sont enfants du conteneur d'ennemis et survivent.
+func _clear_leftovers() -> void:
+	var harvest := LeftoverHarvest.new()
+	var ratio := _leftover_ratio()
+	for node in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		var enemy := node as Node2D
+		if enemy == null:
+			continue
+		var whole_souls := harvest.add(_souls_owed_by(enemy, ratio))
+		if whole_souls > 0:
+			# Versé SUR PLACE : l'aspiration qui suit ramène tout au joueur, et
+			# les orbes disent d'où elles viennent.
+			DropSystem.spawn_drops(container, enemy.global_position, whole_souls, 0.0, 0.0)
+		enemy.queue_free()
+	RunState.leftover_souls = harvest.souls
+	RunState.leftover_count = harvest.survivors
+	for projectile_container in get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER):
+		for child in projectile_container.get_children():
+			child.queue_free()
+
+
+func _leftover_ratio() -> float:
+	if leftover_soul_scale <= 0.0:
+		return 0.0
+	var character := Characters.get_selected()
+	var character_ratio: float = character.leftover_ratio if character != null else FALLBACK_LEFTOVER_RATIO
+	return leftover_soul_scale * character_ratio
+
+
+func _souls_owed_by(enemy: Node2D, ratio: float) -> float:
+	if ratio <= 0.0:
+		return 0.0
+	var raw_soul_value: Variant = enemy.get(&"soul_value")
+	var health := enemy.get(&"health") as Health
+	if raw_soul_value == null or health == null:
+		return 0.0
+	return LeftoverHarvest.souls_owed(float(raw_soul_value), health.current, health.max_health, ratio)
+
+
+# --- Courbes de la vague courante, malédictions et pactes compris ---
+#
+# Les multiplicateurs optionnels s'appliquent PAR-DESSUS la courbe de base :
+# une run sans malédiction ni pacte reste exactement la run de référence.
+
+func _enemy_health_multiplier() -> float:
+	return curve.health_multiplier(wave, RunState.unleashed) \
+		* Curses.get_enemy_health_mult() * WaveMods.get_enemy_health_mult()
+
+
+func _enemy_damage_multiplier() -> float:
+	return curve.damage_multiplier(wave, RunState.unleashed) \
+		* Curses.get_enemy_damage_mult() * WaveMods.get_enemy_damage_mult()
+
+
+func _enemy_speed_multiplier() -> float:
+	return curve.speed_multiplier(wave) \
+		* Curses.get_enemy_speed_mult() * WaveMods.get_enemy_speed_mult()
+
+
+func _elite_chance() -> float:
+	var lure := ELITE_LURE_CHANCE_MULT if RunState.has_special(&"elite_lure") else 1.0
+	return curve.elite_chance(wave, Curses.starts_elites_immediately(),
+		Curses.get_elite_mult() * WaveMods.get_elite_mult() * lure)
 
 
 func _on_player_died(_player: Node2D) -> void:

@@ -95,7 +95,7 @@ apparition d'un boss, objet obtenu, clic d'interface.
 **`MusicGameplay2.ogg` est à rattacher.** La seconde musique d'arène a été
 déposée dans le même dossier que les autres, mais on ne sait pas si elle vient
 du même lot — donc si le `LICENSE.txt` ci-dessus la couvre. À confirmer avant
-toute diffusion publique, au même titre que la police Alagard et `menu.jpg`. Si
+toute diffusion publique, au même titre que `menu.jpg`. Si
 elle vient d'ailleurs, sa licence peut être plus étroite que celle qui autorise
 le versionnement de ce dossier.
 
@@ -184,17 +184,21 @@ images versionnées ici avec les effets sonores.
 Le procédé des deux découpes, et la mesure qui les justifie, sont détaillés dans
 [`README.md`](README.md).
 
-### Police du titre — Alagard
+### Police de l'interface — Jersey 10
 
-`assets/fonts/alagard.ttf`, utilisée pour le mot INFERNUM du menu et nulle part
-ailleurs. La table `name` du fichier porte un seul crédit : **Pix3M**, version
-001.000. Elle ne contient **ni chaîne de licence ni URL**.
+`assets/fonts/Jersey10-Regular.ttf`, pour le logo INFERNUM, les titres d'écran
+et tous les boutons. **SIL Open Font License 1.1**, texte complet dans
+[`assets/fonts/Jersey10-OFL.txt`](assets/fonts/Jersey10-OFL.txt).
 
-**À vérifier avant une sortie publique.** Alagard circule comme police pixel
-gratuite, mais « gratuite » n'est pas une licence : il faut retrouver la source
-de distribution et ce qu'elle autorise exactement avant de livrer le fichier
-dans un exécutable. Tant que ce n'est pas fait, la police reste dans un dépôt
-privé, comme le reste.
+> Copyright 2023 The Soft Type Project Authors
+> (https://github.com/scfried/soft-type-jersey)
+
+Téléchargée depuis le dépôt officiel Google Fonts (`ofl/jersey10`). L'OFL
+autorise l'usage commercial et l'embarquement dans un exécutable ; elle impose
+de livrer la licence avec la police et interdit seulement de **vendre la police
+seule**. Elle remplace **Alagard**, retirée du projet en 0.8.6 faute de licence
+vérifiable — sa table `name` ne portait qu'un crédit, « Pix3M », sans chaîne de
+licence ni URL.
 
 ### Illustration du menu titre
 
