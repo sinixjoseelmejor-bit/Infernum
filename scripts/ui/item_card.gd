@@ -12,6 +12,9 @@ var cost: int = 0
 var purchased: bool = false
 ## La pièce rare de l'offre : liseré épais et fond teinté de sa rareté.
 var featured: bool = false
+## Le bouton d'achat a le focus : c'est la CARTE entière qui doit se désigner,
+## pas un petit bouton au pied d'un bloc de texte.
+var _focused: bool = false
 
 var _icon: TextureRect
 var _name_label: Label
@@ -79,6 +82,8 @@ func _build() -> void:
 
 	_buy_button = Button.new()
 	_buy_button.pressed.connect(_on_buy_pressed)
+	_buy_button.focus_entered.connect(_set_focused.bind(true))
+	_buy_button.focus_exited.connect(_set_focused.bind(false))
 	box.add_child(_buy_button)
 
 	_refresh()
@@ -96,6 +101,11 @@ func set_featured(value: bool) -> void:
 	featured = value
 	if is_node_ready():
 		_refresh()
+
+
+func _set_focused(value: bool) -> void:
+	_focused = value
+	_refresh()
 
 
 func set_affordable(affordable: bool) -> void:
@@ -136,6 +146,9 @@ func _refresh() -> void:
 		style.bg_color = style.bg_color.lerp(color, 0.2)
 		style.set_border_width_all(4)
 		_rarity_label.text = "%s  ·  PIÈCE RARE" % item.get_rarity_name().to_upper()
+	if _focused:
+		style.border_color = color.lerp(Color.WHITE, 0.5)
+		style.set_border_width_all(4)
 	style.set_corner_radius_all(6)
 	style.set_content_margin_all(2)
 	add_theme_stylebox_override(&"panel", style)

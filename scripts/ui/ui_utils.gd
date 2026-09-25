@@ -44,17 +44,11 @@ static func restore_focus(root: Node, captured: Dictionary, fallback: Control) -
 		list[0].grab_focus()
 
 
-## Boucle le focus sur un écran.
+## Boucle le focus sur un écran, pour Tab et les gâchettes LB / RB.
 ##
-## Godot résout les voisins par GÉOMÉTRIE : depuis le contrôle le plus bas d'un
-## panneau, « bas » ne trouve rien et le focus ne bouge pas. Or tous ces écrans
-## s'ouvrent sur leur bouton de retour, qui est justement en bas — le premier
-## réflexe à la manette, pousser vers le bas, ne faisait donc RIEN. L'écran
-## passait pour bloqué alors qu'il suffisait de remonter.
-##
-## Les voisins haut/bas sont donc câblés explicitement, en anneau. Gauche et
-## droite restent géométriques : ce sont elles qui règlent la valeur d'un
-## curseur, les recâbler empêcherait de modifier les options.
+## Les quatre directions ne passent PAS par ici : `MenuNav` cherche le voisin
+## par géométrie et repart du bord opposé. L'ancien anneau haut/bas suivait
+## l'ordre de l'arbre, et dans une grille « bas » passait à la carte de droite.
 static func chain_focus(root: Node) -> void:
 	var list := focusable_controls(root)
 	if list.size() < 2:
@@ -63,15 +57,18 @@ static func chain_focus(root: Node) -> void:
 		var control := list[i]
 		var previous := list[(i - 1 + list.size()) % list.size()]
 		var next := list[(i + 1) % list.size()]
-		control.focus_neighbor_top = previous.get_path()
-		control.focus_neighbor_bottom = next.get_path()
 		control.focus_previous = previous.get_path()
 		control.focus_next = next.get_path()
 
 
 ## Contrôles réellement atteignables à la manette, dans l'ordre de l'arbre.
-## Un bouton désactivé est exclu : le laisser focalisable oblige à traverser les
-## douze nœuds verrouillés de la Forge pour atteindre le seul qu'on peut ouvrir.
+## Un bouton désactivé est exclu, sauf s'il porte la méta `INSPECTABLE` : il ne
+## fait rien, mais il a quelque chose à MONTRER — un nœud de Forge verrouillé
+## affiche son détail au focus, et sans ça la manette ne pouvait lire que les
+## nœuds achetables. La navigation étant géométrique, les traverser ne coûte
+## plus rien.
+const INSPECTABLE := &"inspectable"
+
 static func focusable_controls(root: Node) -> Array[Control]:
 	var out: Array[Control] = []
 	_collect_focusable(root, out)
@@ -84,7 +81,7 @@ static func _collect_focusable(node: Node, out: Array[Control]) -> void:
 		if not control.is_visible_in_tree():
 			return
 		var usable := control.focus_mode != Control.FOCUS_NONE
-		if usable and control is Button and (control as Button).disabled:
+		if usable and control is Button and (control as Button).disabled 				and not control.has_meta(INSPECTABLE):
 			usable = false
 		if usable:
 			out.append(control)

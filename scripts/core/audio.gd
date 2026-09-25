@@ -107,6 +107,9 @@ const MUSIC_GAIN := {
 ## 16 voix mobilisées en permanence pendant les tirs.
 const SFX := {
 	&"clic": {"file": "StoneSoundForButtonMenuSelect.ogg", "vol": -6.0, "pitch": 0.05, "gap": 0.04, "voix": 2},
+	# Le pas du focus à la manette : le même caillou que le clic, bien plus bas —
+	# on le fait dix fois de suite en descendant une liste.
+	&"survol": {"file": "StoneSoundForButtonMenuSelect.ogg", "vol": -17.0, "pitch": 0.08, "gap": 0.03, "voix": 2},
 	&"objet": {"file": "chooseUpgradeSound.ogg", "vol": -3.0, "pitch": 0.0, "gap": 0.08, "voix": 2},
 	&"tir": {"file": "Fireball.ogg", "vol": -15.0, "pitch": 0.12, "gap": 0.06, "voix": 4, "duree": 0.5},
 	&"mort": {"file": "smallRoar1sec.ogg", "vol": -9.0, "pitch": 0.16, "gap": 0.07, "voix": 3},

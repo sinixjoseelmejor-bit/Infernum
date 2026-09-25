@@ -42,12 +42,15 @@ func open() -> void:
 	visible = true
 	_rebuild()
 	# Premier nœud ouvrable plutôt que « Retour » : à la manette, on arrive là
-	# où il y a quelque chose à faire.
-	var reachable := UIUtils.focusable_controls(self)
-	if reachable.is_empty():
-		close_button.grab_focus()
-	else:
-		reachable[0].grab_focus()
+	# où il y a quelque chose à faire. À défaut, le premier nœud, pour lire.
+	var first: Control = null
+	for control in UIUtils.focusable_controls(branches_row):
+		if control is Button and not (control as Button).disabled:
+			first = control
+			break
+		if first == null:
+			first = control
+	(first if first != null else close_button).grab_focus()
 
 
 func close() -> void:
@@ -282,8 +285,9 @@ func _build_node_tile(node: Dictionary) -> Control:
 		button.text = "%d clés" % int(node["cost"])
 		button.disabled = not Forge.can_unlock(id)
 		button.pressed.connect(func() -> void: Forge.unlock(id))
-	if button.disabled:
-		button.focus_mode = Control.FOCUS_NONE
+	# Désactivé mais focalisable : à la manette, c'est le seul moyen de lire le
+	# détail d'un nœud qu'on ne peut pas encore ouvrir.
+	button.set_meta(UIUtils.INSPECTABLE, true)
 	box.add_child(button)
 
 	var detailler := func() -> void: _show_detail(node)

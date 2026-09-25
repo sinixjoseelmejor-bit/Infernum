@@ -2712,6 +2712,42 @@ sans tester :
 3. **La croix directionnelle n'était pas liée au déplacement**, seulement les
    axes du stick gauche.
 
+### Naviguer dans les menus (0.8.6)
+
+Les menus se jouaient à la manette, mais mal. Six défauts, corrigés par
+l'autoload [`MenuNav`](scripts/ui/menu_navigator.gd) plutôt qu'écran par écran :
+
+| Défaut | Correction |
+|---|---|
+| Une direction tenue ne se répétait pas : onze appuis pour onze malédictions | Répétition après **0,36 s**, puis un pas toutes les **0,09 s** (mesuré : 11 pas en 1,2 s de maintien) |
+| Le stick en diagonale faisait deux pas | Seul l'axe dominant compte, avec hystérésis (départ à 0,6, arrêt à 0,35, changement d'axe à ×1,5) |
+| L'anneau haut/bas suivait l'ordre de l'arbre : dans une grille, « bas » allait à **droite** | Voisin cherché par **géométrie** dans les quatre directions ; au bord, on repart du côté opposé (horizontalement, seulement sur la même ligne) |
+| Aucune zone de défilement ne suivait le focus | Le focus clavier/manette ramène toujours son contrôle dans le champ |
+| **A est aussi la ruée** : la boutique s'ouvre focus sur « Vague suivante », un joueur qui ruait la fermait sans l'avoir vue — même risque sur l'écran de fin | Un écran qui surgit sur la partie ignore A et B pendant **0,35 s** ; une direction tenue en jouant n'y fait aucun pas avant d'être relâchée |
+| Le style de focus était celui du survol, plein : posé sur une carte cochée, il **masquait** qu'elle l'était | Un **anneau** clair, sans fond, par-dessus l'état du bouton (intérieur sur les cartes, que les zones de défilement rognaient) |
+
+Et quelques gestes qu'on attend d'une manette :
+
+- **Gauche/droite règlent** un curseur ou une liste déroulante des options, au
+  lieu de quitter la ligne.
+- **Se poser sur une carte de personnage le choisit** — pas au survol de la
+  souris, où glisser vers « Commencer » en travers d'une carte la choisirait.
+- **Les nœuds verrouillés de la Forge prennent le focus** pour afficher leur
+  détail : la manette ne pouvait lire que les nœuds achetables. La navigation
+  étant géométrique, les traverser ne coûte plus rien.
+- **Une carte de boutique s'allume en entier** quand son bouton d'achat a le
+  focus, et chaque pas fait un petit clic (`survol`, le clic du menu 11 dB plus
+  bas).
+- **À la souris, le focus suit le survol** : sinon deux boutons brillent à la
+  fois et on ne sait plus lequel A activerait.
+- **Toutes les manettes branchées** sont écoutées : les liaisons visaient la
+  manette 0, et une manette vue en 1 (Steam Input, pilote tiers) ne pouvait ni
+  valider ni revenir.
+
+Un curseur libre piloté au stick a été écarté : plus lent qu'un saut de bouton
+en bouton sur des écrans de cinq à trente contrôles, et le focus restait de
+toute façon indispensable pour A.
+
 ### Le stick droit vise
 
 C'est ce qui rend le jeu réellement twin-stick. L'auto-visée ne change pas : le

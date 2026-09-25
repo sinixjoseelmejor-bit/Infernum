@@ -77,6 +77,13 @@ func _build_card(character: CharacterData) -> Button:
 	card.custom_minimum_size = CARD_MIN_SIZE
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.pressed.connect(func() -> void: Characters.select(character.id))
+	# À la manette, se poser sur une carte CHOISIT le personnage : il n'y a rien
+	# d'autre à faire sur une carte, et un appui sur A de plus avant de pouvoir
+	# descendre sur « Commencer » était un pas pour rien. Pas au survol de la
+	# souris : glisser vers le bouton en travers d'une autre carte la choisirait.
+	card.focus_entered.connect(func() -> void:
+		if not MenuNav.is_mouse_mode():
+			Characters.select(character.id))
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
