@@ -263,6 +263,26 @@ func _construire_outils() -> void:
 	reset.pressed.connect(func() -> void: _reinitialiser(reset))
 	ligne_p.add_child(reset)
 
+	# Hélel se mérite en abattant Lucifer avec les trois damnés : trois runs
+	# complètes pour vérifier un combat, c'est trop. Le portail s'ouvre ici.
+	var ligne_h := HBoxContainer.new()
+	ligne_h.add_theme_constant_override(&"separation", 8)
+	_boite.add_child(ligne_h)
+	ligne_h.add_child(_bouton("Briser les trois sceaux", func() -> void:
+		for character in Characters.get_all():
+			SaveGame.break_seal(character.id)
+		_dire("trois sceaux brisés : le portail s'ouvrira à la mort de Lucifer")))
+	ligne_h.add_child(_bouton("Rendre les sceaux", func() -> void:
+		SaveGame.dev_clear_seals()
+		_dire("sceaux rendus")))
+	ligne_h.add_child(_bouton("Combattre Hélel maintenant", func() -> void:
+		var director := get_tree().get_first_node_in_group(&"story_director")
+		if director == null:
+			_dire("seulement dans l'arène, run lancée")
+			return
+		fermer()
+		director.call(&"dev_start_helel")))
+
 	_journal = _texte("")
 	_journal.add_theme_color_override(&"font_color", Color(0.55, 0.85, 0.6))
 	_boite.add_child(_journal)

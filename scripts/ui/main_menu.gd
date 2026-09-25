@@ -99,8 +99,15 @@ func _refresh_meta() -> void:
 		SaveGame.best_wave, SaveGame.total_runs]
 
 
+## L'histoire se raconte ici, entre le choix du damné et l'arène : le Pari la
+## toute première fois, puis le prologue de chaque personnage la première fois
+## qu'on le joue. Rien du tout ensuite — et tout se passe à tout moment.
 func _on_start_requested() -> void:
-	get_tree().change_scene_to_file(ARENA_SCENE)
+	var file := StoryDB.pending_for(Characters.selected_id)
+	if file.is_empty():
+		get_tree().change_scene_to_file(ARENA_SCENE)
+		return
+	Cinematic.play(file, func() -> void: get_tree().change_scene_to_file(ARENA_SCENE))
 
 
 func _on_quit_pressed() -> void:

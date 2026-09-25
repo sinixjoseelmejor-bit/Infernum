@@ -121,7 +121,9 @@ func _on_died(source: Node) -> void:
 	if not SaveGame.abyss_key:
 		var cle := CLE_DES_ABYSSES.instantiate() as Node2D
 		cle.global_position = global_position
-		get_parent().add_child(cle)
+		# Différé : la mort tombe souvent PENDANT un contact physique (projectile), et
+		# ajouter une aire à ce moment-là est refusé par le moteur.
+		get_parent().add_child.call_deferred(cle)
 	super(source)
 
 

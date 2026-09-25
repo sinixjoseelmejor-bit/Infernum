@@ -51,12 +51,27 @@ var _mouse_mode: bool = false
 ## on repart de là plutôt que de rester sans rien.
 var _last_rect: Rect2
 var _last_scope: Node
+## Une cinématique joue par-dessus un écran : elle prend la main sur A, B et les
+## directions, et l'écran dessous ne doit pas bouger dans le dos du joueur.
+var _suspended: int = 0
 
 
 ## Vrai quand la dernière entrée venait de la souris. Un écran s'en sert pour
 ## ne pas réagir au simple survol comme à un choix fait à la manette.
 func is_mouse_mode() -> bool:
 	return _mouse_mode
+
+
+func suspend() -> void:
+	_suspended += 1
+
+
+func resume() -> void:
+	_suspended = maxi(0, _suspended - 1)
+	# Même règle qu'un écran qui surgit sur la partie : le A qui finissait la
+	# cinématique ne doit pas presser le premier bouton de l'écran rendu.
+	if _suspended == 0:
+		_grace_until = _clock + INPUT_GRACE
 
 
 func _ready() -> void:
@@ -74,6 +89,8 @@ func _on_focus_changed(control: Control) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _suspended > 0:
+		return
 	if event is InputEventMouseMotion:
 		_mouse_mode = true
 		_focus_hovered()
@@ -110,7 +127,7 @@ func _process(delta: float) -> void:
 	if owner != null:
 		_last_rect = owner.get_global_rect()
 		_last_scope = _scope_of(owner)
-	var active := owner != null or _scope_alive()
+	var active := _suspended == 0 and (owner != null or _scope_alive())
 	if not active:
 		# Rien à naviguer : la direction tenue en jouant ne doit pas faire faire
 		# un pas à l'écran qui va s'ouvrir. On attend qu'elle soit relâchée.

@@ -41,10 +41,21 @@ func _on_player_died(_player: Node2D) -> void:
 	_show(summary)
 
 
-func _show(summary: Dictionary) -> void:
+## LA VRAIE FIN : Hélel est tombé. Même bilan, même versement des clés — c'est
+## une fin de run — mais on ne l'annonce pas comme une mort.
+func show_victory() -> void:
+	if _open:
+		return
+	_open = true
+	var summary := RunState.get_summary()
+	RunState.end_run()
+	_show(summary, "LE PARI EST ROMPU")
+
+
+func _show(summary: Dictionary, title: String = "VOUS ÊTES MORT") -> void:
 	visible = true
 	get_tree().paused = true
-	title_label.text = "VOUS ÊTES MORT"
+	title_label.text = title
 	summary_label.text = "Vague %d  ·  %d éliminations  ·  %s\n%d objets  ·  %d clés récoltées" % [
 		summary["wave"],
 		summary["kills"],

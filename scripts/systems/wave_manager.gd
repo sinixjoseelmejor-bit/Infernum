@@ -75,6 +75,10 @@ var time_left: float = 0.0
 var _collect_time: float = 0.0
 var _spawn_accumulator: float = 0.0
 var _boss: Node2D = null
+## LE COMBAT AU-DELÀ DU PORTAIL (Hélel). Hors roster et hors boucle : il se
+## lance à la demande de l'histoire, sur la vague en cours, et se termine
+## comme une vague de boss — à la mort du boss.
+var _final_scene: PackedScene = null
 ## Cache de `_last_boss_base_health()` : 0 tant qu'il n'a pas été lu.
 var _last_boss_health_cache: float = 0.0
 var _rng := RandomNumberGenerator.new()
@@ -113,7 +117,40 @@ func _process(delta: float) -> void:
 
 
 func is_boss_wave() -> bool:
+	if _final_scene != null:
+		return true
 	return not boss_scenes.is_empty() and wave > 0 and wave % boss_wave_interval == 0
+
+
+func is_final_fight() -> bool:
+	return _final_scene != null
+
+
+## Ouvre le combat contre `scene` sur la vague en cours : la piétaille est
+## effacée, le boss arrive, et les renforts reprennent au rythme d'une vague de
+## boss. Mis à l'échelle comme un boss de CETTE vague, sans boucle : c'est sa
+## propre valeur de base qui le rend plus dur que Lucifer.
+func start_final_fight(scene: PackedScene) -> void:
+	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
+		enemy.queue_free()
+	_final_scene = scene
+	state = State.RUNNING
+	time_left = 0.0
+	_spawn_accumulator = 0.0
+	var boss := scene.instantiate() as Boss
+	if boss == null:
+		push_error("WaveManager : le combat final attend une scène de type Boss.")
+		_final_scene = null
+		return
+	boss.target = target
+	boss_curve.apply(boss, wave, 0, 0.0, boss_wave_interval, curve, RunState.unleashed)
+	boss.global_position = _random_ring_position()
+	container.add_child(boss)
+	_boss = boss
+
+
+func end_final_fight() -> void:
+	_final_scene = null
 
 
 func has_living_boss() -> bool:

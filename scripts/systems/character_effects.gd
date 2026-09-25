@@ -26,10 +26,15 @@ var _player: Player
 var _wave_kills: int = 0
 var _mark_bonus: float = 0.0
 
-# Job — La Patience et la Dîme
+# Job — La Consécration et la Dîme
+## Temps passé immobile HORS d'une Consécration (le nom est historique : il
+## comptait le temps sans être touché, du temps de la Patience).
 var _time_since_hit: float = 0.0
 var _regen_carry: float = 0.0
 var _dime_carry: float = 0.0
+var _zone: Consecration
+## La Consécration se pose aux pieds, comme tout ce qui touche le sol.
+const PIEDS := 34.0
 
 # Loth — Ne pas se retourner
 var _was_moving: bool = false
@@ -40,6 +45,7 @@ func _ready() -> void:
 	GameEvents.enemy_died.connect(_on_enemy_died)
 	GameEvents.wave_started.connect(_on_wave_started)
 	GameEvents.power_requested.connect(_on_power_requested)
+	Characters.run_character_swapped.connect(_on_character_swapped)
 	_bind_player(get_tree().get_first_node_in_group(Groups.PLAYER))
 
 
@@ -50,18 +56,39 @@ func _bind_player(node: Node2D) -> void:
 	# La Patience se remet à zéro au moindre coup encaissé.
 	if not _player.health.damaged.is_connected(_on_player_damaged):
 		_player.health.damaged.connect(_on_player_damaged)
+	if not _player.jugement_rendu.is_connected(_on_jugement):
+		_player.jugement_rendu.connect(_on_jugement)
+
+
+## Nouveau damné en cours de run : tous les compteurs repartent de zéro. Deux
+## sont indispensables, et silencieux s'ils restent : la Marque ne réécrit pas
+## un bonus égal à celui qu'elle croit avoir posé, et la fuite de Loth ne se
+## pose qu'au passage arrêt -> mouvement. Avec les bonus effacés par la run,
+## des compteurs périmés laisseraient le mauvais bonus en place.
+func _on_character_swapped(_character: CharacterData) -> void:
+	_wave_kills = 0
+	_mark_bonus = 0.0
+	_time_since_hit = 0.0
+	_regen_carry = 0.0
+	_dime_carry = 0.0
+	_was_moving = false
+	_eteindre_consecration(0.3)
 
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(_player) or _player.health.is_dead:
+		_eteindre_consecration(0.3)
 		return
-	_process_patience(delta)
+	_process_consecration(delta)
 	_process_flight()
 
 
 # --- Caïn : +1 % de dégâts par élimination, plafonné, remis à zéro par vague ---
 
 func _on_enemy_died(_enemy: Node2D, _position: Vector2) -> void:
+	# Job : un ennemi tombé sur le sol consacré nourrit la Ferveur.
+	if is_instance_valid(_zone) and is_instance_valid(_player) and _zone.contient(_position):
+		_player.add_ferveur(Characters.FERVEUR_PAR_ELIMINATION)
 	if not Characters.has_special(&"mark_of_cain"):
 		return
 	_wave_kills += 1
@@ -179,27 +206,63 @@ func _on_wave_started(_index: int) -> void:
 
 # --- Job : régénération conditionnée à ne pas avoir été touché ---------------
 
-func _process_patience(delta: float) -> void:
-	if not Characters.has_special(&"patience"):
+## LA CONSÉCRATION (voir `Characters.CONSECRATION_*`). Une seule zone à la fois :
+## tant que Job s'y tient elle est entretenue et le soigne ; il en sort, elle
+## s'éteint seule, et il en pose une nouvelle en s'arrêtant ailleurs. Petits pas
+## à l'intérieur permis : c'est la ZONE qu'on quitte qui compte, pas le geste.
+func _process_consecration(delta: float) -> void:
+	if not Characters.has_special(&"consecration"):
+		_eteindre_consecration(0.3)
 		return
-	# « Il n'a pas plié » : le délai tombe de moitié et la régénération double.
-	var boost := Forge.get_special_total(&"patience_boost") > 0.0
-	var delai := Characters.PATIENCE_DELAY * (0.5 if boost else 1.0)
-	var regen := Characters.PATIENCE_REGEN * (2.0 if boost else 1.0)
-	# `invulnerability_time` remet le compteur : on lit les PV plutôt qu'un signal.
-	_time_since_hit += delta
-	if _time_since_hit < delai:
+	var pieds := _player.global_position + Vector2(0.0, PIEDS)
+	var terre_sainte := Forge.get_special_total(&"consecration_boost") > 0.0
+	var inebranlable := Forge.get_special_total(&"ferveur_rapide") > 0.0
+	if is_instance_valid(_zone) and _zone.contient(pieds) and not _player.is_dashing():
+		_zone.entretenir()
+		_regen_carry += Characters.CONSECRATION_SOIN * (2.0 if inebranlable else 1.0) * delta
+		if _regen_carry >= 1.0:
+			var whole := floorf(_regen_carry)
+			_regen_carry -= whole
+			_player.health.heal(whole)
+	else:
+		_eteindre_consecration(Characters.CONSECRATION_EXTINCTION)
+		var immobile: bool = _player.move_input == Vector2.ZERO
+		_time_since_hit = _time_since_hit + delta if immobile else 0.0
+		var delai := 0.0 if inebranlable else Characters.CONSECRATION_DELAI
+		if immobile and _time_since_hit >= delai:
+			_poser_consecration(pieds)
+	if is_instance_valid(_zone):
+		_zone.degats_par_s = _degats_arme() * Characters.CONSECRATION_RATIO \
+			* (Characters.TERRE_SAINTE_DEGATS if terre_sainte else 1.0)
+
+
+func _poser_consecration(at: Vector2) -> void:
+	_eteindre_consecration(0.3)
+	var bacs := get_tree().get_nodes_in_group(Groups.PROJECTILE_CONTAINER)
+	if bacs.is_empty():
 		return
-	_regen_carry += regen * delta
-	if _regen_carry >= 1.0:
-		var whole := floorf(_regen_carry)
-		_regen_carry -= whole
-		_player.health.heal(whole)
+	_zone = Consecration.new()
+	_zone.rayon = Characters.CONSECRATION_RAYON * (Characters.TERRE_SAINTE_RAYON \
+		if Forge.get_special_total(&"consecration_boost") > 0.0 else 1.0)
+	_zone.auteur = _player
+	bacs[0].add_child(_zone)
+	_zone.global_position = at
+	_time_since_hit = 0.0
+
+
+func _eteindre_consecration(duree: float) -> void:
+	if is_instance_valid(_zone):
+		_zone.relacher(duree)
+	_zone = null
+
+
+## Le Jugement consacre le sol où il tombe, sur-le-champ.
+func _on_jugement(at: Vector2) -> void:
+	if Characters.has_special(&"consecration"):
+		_poser_consecration(at + Vector2(0.0, PIEDS))
 
 
 func _on_player_damaged(amount: float, _source: Node) -> void:
-	_time_since_hit = 0.0
-	_regen_carry = 0.0
 	_verser_dime(amount)
 
 

@@ -51,6 +51,16 @@ var _dechaine: Dictionary = {}
 ## fête pas ; un objet qu'on voit tomber et qu'on va chercher, si.
 var abyss_key: bool = false
 
+## Cinématiques déjà vues : { &"le_pari": true }. PASSER une cinématique la
+## compte comme vue — la reproposer à chaque partie punirait justement celui
+## qui a choisi de ne pas la regarder.
+var _story_seen: Dictionary = {}
+
+## LES TROIS SCEAUX, un par damné : { "cain": true }. Un sceau se brise quand CE
+## personnage abat Lucifer. Les trois brisés, le portail vers Hélel s'ouvre —
+## le pari ne se rompt qu'à trois, parce qu'il portait sur les trois.
+var _seals: Dictionary = {}
+
 
 func _ready() -> void:
 	var index := ConfigFile.new()
@@ -123,6 +133,10 @@ func load_profile(slot: int, notify: bool = true) -> void:
 		abyss_key = bool(config.get_value("meta", "abyss_key", false))
 		for id in config.get_value("meta", "unlocked", []):
 			_unlocked[StringName(id)] = true
+		for id in config.get_value("meta", "story_seen", []):
+			_story_seen[StringName(id)] = true
+		for perso in config.get_value("meta", "seals", []):
+			_seals[String(perso)] = true
 		var dechaine_lu: Dictionary = config.get_value("meta", "dechaine", {})
 		for perso in dechaine_lu:
 			_dechaine[String(perso)] = bool(dechaine_lu[perso])
@@ -166,6 +180,8 @@ func _reset_memory() -> void:
 	_unlocked.clear()
 	_forge.clear()
 	_dechaine.clear()
+	_story_seen.clear()
+	_seals.clear()
 
 
 # --- Déblocages et monnaie ---------------------------------------------------
@@ -308,6 +324,41 @@ func unlock_item(item: ItemData) -> bool:
 	return true
 
 
+func has_seal(personnage: StringName) -> bool:
+	return _seals.has(String(personnage))
+
+
+## Retourne true si le sceau vient de se briser : l'appelant ne l'annonce
+## qu'une fois.
+func break_seal(personnage: StringName) -> bool:
+	if _seals.has(String(personnage)):
+		return false
+	_seals[String(personnage)] = true
+	save_game()
+	return true
+
+
+## Panneau de développement : rend les trois sceaux.
+func dev_clear_seals() -> void:
+	_seals.clear()
+	save_game()
+
+
+func seal_count() -> int:
+	return _seals.size()
+
+
+func has_seen_story(id: StringName) -> bool:
+	return _story_seen.has(id)
+
+
+func mark_story_seen(id: StringName) -> void:
+	if _story_seen.has(id):
+		return
+	_story_seen[id] = true
+	save_game()
+
+
 func set_last_character(id: StringName) -> void:
 	last_character = id
 	save_game()
@@ -330,6 +381,14 @@ func save_game() -> void:
 	config.set_value("meta", "last_character", String(last_character))
 	config.set_value("meta", "unlocked", _unlocked.keys())
 	config.set_value("meta", "abyss_key", abyss_key)
+	var vues: Array[String] = []
+	for id in _story_seen:
+		vues.append(String(id))
+	config.set_value("meta", "story_seen", vues)
+	var sceaux: Array[String] = []
+	for perso in _seals:
+		sceaux.append(String(perso))
+	config.set_value("meta", "seals", sceaux)
 	# Les clés du dictionnaire écrit sont des String : un ConfigFile relit les
 	# StringName comme des String, autant l'écrire tel qu'il sera relu.
 	var forge_ecrit := {}

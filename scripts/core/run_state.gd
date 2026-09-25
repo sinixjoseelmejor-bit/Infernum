@@ -92,6 +92,17 @@ func reset_run() -> void:
 	run_reset.emit()
 
 
+## Le damné a changé en cours de run : ses modificateurs de départ remplacent
+## ceux du précédent, ses bonus de passif repartent de zéro, et la Forge — lue
+## en direct sur le personnage sélectionné — suit d'elle-même. Les objets, les
+## âmes et les clés appartiennent à la run, pas au personnage : ils restent.
+func swap_character() -> void:
+	var character := Characters.get_selected()
+	character_mods = character.starting_mods.duplicate() if character != null else {}
+	character_bonus.clear()
+	recompute_stats()
+
+
 func end_run() -> void:
 	if not is_running:
 		return

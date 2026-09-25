@@ -48,6 +48,10 @@ extends Resource
 @export var weapon_projectile_speed: float = 720.0
 @export var weapon_crit_chance: float = 0.05
 @export var weapon_crit_multiplier: float = 2.0
+## Ennemis traversés par chaque tir, avant les objets.
+@export var weapon_pierce: int = 0
+## Projectile propre au personnage ; vide = celui de l'arme (la boule de feu).
+@export var projectile_scene: PackedScene
 
 @export_group("Déplacement")
 ## Donne à ce personnage la ruée (touche `dash`). Un booléen et non un

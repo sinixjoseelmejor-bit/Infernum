@@ -34,6 +34,12 @@ func _ready() -> void:
 	curse_select.connect(&"confirmed", waves.start)
 	curse_select.call(&"open")
 
+	# L'histoire autour des boss : entrées, sceaux, portail, Hélel.
+	var director := StoryDirector.new()
+	director.name = "StoryDirector"
+	director.setup(player, waves, %Shop, game_over)
+	add_child(director)
+
 	_monter_panneau_dev()
 
 

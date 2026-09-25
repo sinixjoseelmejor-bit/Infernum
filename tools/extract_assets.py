@@ -57,6 +57,8 @@ ENTITIES = [
     ("bosses",     "baal",    P02, "Demon_C",        "_", "Walk"),
     ("bosses",     "asmodee", P02, "Demon_E",        "_", "Walk"),
     ("bosses",     "lucifer", P02, "Black Knight_C", "_", "Walk"),
+    # Cinematiques : la femme de Loth, changee en sel. Teintee en jeu, pas ici.
+    ("story",      "femme_sel", P13, "Priest",       "-", "Walk"),
 ]
 
 ICONS = ["heart", "coin", "lock", "star", "gear", "close"]
