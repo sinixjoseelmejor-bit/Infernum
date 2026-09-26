@@ -7,6 +7,10 @@
 [ext_resource type="PackedScene" path="res://scenes/enemies/brute.tscn" id="5_02ba7"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/oeil.tscn" id="6_lyb3h"]
 [ext_resource type="Script" path="res://scripts/systems/waves/enemy_roster.gd" id="7_3vkhm"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/chauve_souris.tscn" id="8_bat"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/slime_lave.tscn" id="9_slime"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/feu_follet.tscn" id="10_follet"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/invocatrice.tscn" id="11_invoc"]
 
 [sub_resource type="Resource" id="Resource_q73q6"]
 script = ExtResource("1_x60y7")
@@ -43,6 +47,38 @@ base_weight = 14.0
 weight_drift = 1.4
 design_note = "Entre à la vague 11, juste après Lilith : c'est un seuil de jeu et non d'équilibrage. Il sanctionne l'immobilité, ce qu'aucun autre ennemi ne fait ; plus tôt, il punirait un joueur qui n'a pas encore de quoi choisir où se placer. Son poids monte doucement : deux ou trois yeux suffisent à interdire de se poser, dix en feraient un jeu de couloirs. README, « L'Œil sanctionne l'immobilité »."
 
+[sub_resource type="Resource" id="Resource_bat"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("8_bat")
+min_wave = 6
+base_weight = 16.0
+weight_drift = 0.8
+design_note = "Entre à la vague 6, juste après Golgota : le joueur a appris à se servir du décor, elle lui rappelle qu'il n'est pas un mur. Elle vole au-dessus des obstacles et de la lave. README, « Quatre ennemis de plus »."
+
+[sub_resource type="Resource" id="Resource_slime"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("9_slime")
+min_wave = 8
+base_weight = 14.0
+weight_drift = 1.0
+design_note = "Entre à la vague 8 : assez tard pour que les premières builds de foule (perforation, multishot) existent, et c'est à elles qu'il sert de cible. Il se divise une fois à sa mort. README, « Quatre ennemis de plus »."
+
+[sub_resource type="Resource" id="Resource_follet"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("10_follet")
+min_wave = 13
+base_weight = 9.0
+weight_drift = 0.6
+design_note = "Entre à la vague 13, après l'Œil : il pose une zone annoncée là où il arrive, c'est la brique des boss et elle demande qu'on sache déjà se placer. Poids bas — trois zones à la fois font un choix, dix font un mur. README, « Quatre ennemis de plus »."
+
+[sub_resource type="Resource" id="Resource_invoc"]
+script = ExtResource("1_x60y7")
+scene = ExtResource("11_invoc")
+min_wave = 16
+base_weight = 5.0
+weight_drift = 0.4
+design_note = "Entre à la vague 16, après Baal, et rare : une seule suffit à reconstruire la mêlée tant qu'elle vit. Ses imps ne rapportent rien et tombent en cendre avec elle. README, « Quatre ennemis de plus »."
+
 [resource]
 script = ExtResource("7_3vkhm")
-entries = Array[ExtResource("1_x60y7")]([SubResource("Resource_q73q6"), SubResource("Resource_68txd"), SubResource("Resource_qo7fq"), SubResource("Resource_x4ga7"), SubResource("Resource_nn02q")])
+entries = Array[ExtResource("1_x60y7")]([SubResource("Resource_q73q6"), SubResource("Resource_68txd"), SubResource("Resource_qo7fq"), SubResource("Resource_x4ga7"), SubResource("Resource_nn02q"), SubResource("Resource_bat"), SubResource("Resource_slime"), SubResource("Resource_follet"), SubResource("Resource_invoc")])

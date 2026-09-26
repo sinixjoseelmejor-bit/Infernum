@@ -47,6 +47,11 @@ const DEATH_VFX := preload("res://scenes/vfx/mort.tscn")
 @export_range(0.0, 1.0, 0.01) var key_chance: float = 0.0
 @export_range(0.0, 1.0, 0.01) var heal_chance: float = 0.0
 
+@export_group("Terrain")
+## La lave ne le brûle pas : il vole au-dessus (chauve-souris, feu follet) ou
+## il en est fait (slime de lave). Lu par `Carte`.
+@export var insensible_lave: bool = false
+
 @export_group("Élite")
 @export var elite_health_multiplier: float = 4.0
 ## Combiné à la courbe de dégâts, 1.6 faisait de l'élite un ennemi qui tue en
@@ -98,6 +103,10 @@ var _pas_de_brulure: bool = false
 var _entrave: float = 0.0
 var _entrave_restante: float = 0.0
 var _tween_flash: Tween
+## Multiplicateurs de vague reçus (PV, dégâts, vitesse), transmis à ce qu'il
+## engendre. Neutres pour un ennemi posé à la main.
+var _echelle_vague := Vector3.ONE
+var _cendre_a_naitre: bool = false
 
 var _knockback: Vector2 = Vector2.ZERO
 var _contact_timer: float = 0.0
@@ -107,6 +116,9 @@ var _rayon_corps: float = 16.0
 
 
 func _ready() -> void:
+	if _cendre_a_naitre:
+		queue_free()
+		return
 	add_to_group(Groups.ENEMIES)
 	health.max_health = max_health
 	health.current = max_health
@@ -129,6 +141,38 @@ func apply_wave_scaling(health_mult: float, damage_mult: float, speed_mult: floa
 	max_health *= health_mult
 	contact_damage *= damage_mult
 	move_speed *= speed_mult
+	_echelle_vague = Vector3(health_mult, damage_mult, speed_mult)
+
+
+## Fait naître un ennemi à côté de soi — les enfants du slime, les invocations
+## de l'invocatrice.
+##
+## IL HÉRITE DE LA COURBE DE VAGUE DU PARENT. Les renforts des boss ne la
+## suivent pas, et ils n'en ont pas besoin : un boss a sa propre courbe. Un
+## ennemi ordinaire qui en engendre d'autres, si : sans ça, un slime de la
+## vague 20 lâcherait des enfants de la vague 1, et une invocatrice des imps
+## qui meurent d'un regard.
+##
+## Posé en différé : on est souvent au milieu d'un rappel de physique (une
+## mort), où ajouter un corps au monde est refusé.
+func engendrer(scene: PackedScene, at: Vector2) -> Enemy:
+	var enfant := scene.instantiate() as Enemy
+	if enfant == null:
+		return null
+	# Né dans une statue, il y resterait coincé : on l'écarte d'un pas vers le
+	# parent, qui n'y est jamais — la même règle que les renforts des boss.
+	if Carte.courante != null and (enfant.collision_mask & Layers.WORLD) != 0:
+		for _pas in 6:
+			if Carte.courante.libre(at, 30.0):
+				break
+			at = at.move_toward(global_position, 40.0)
+	enfant.apply_wave_scaling(_echelle_vague.x, _echelle_vague.y, _echelle_vague.z)
+	enfant.target = target
+	enfant.position = at
+	var conteneur := get_parent()
+	if conteneur != null:
+		conteneur.add_child.call_deferred(enfant)
+	return enfant
 
 
 func make_elite() -> void:
@@ -357,6 +401,20 @@ func _spawn_death_effect() -> void:
 	# La position se pose APRÈS l'entrée dans l'arbre : hors de l'arbre, un nœud
 	# n'a pas de parent, donc `global_position` n'y veut rien dire de fiable.
 	effet.global_position = global_position
+
+
+## Disparaître en cendre : l'image de la mort, sans ce qu'une mort déclenche —
+## ni butin, ni signal, donc ni Marque, ni explosion, ni feu propagé. Pour les
+## corps qu'on REPREND plutôt qu'on ne tue (les imps d'une invocatrice
+## abattue).
+func retourner_en_cendre() -> void:
+	# Appelé tout juste né, avant son entrée différée dans le monde : il part
+	# dès qu'il y arrive.
+	if not is_inside_tree():
+		_cendre_a_naitre = true
+		return
+	_spawn_death_effect()
+	queue_free()
 
 
 func _on_died(_source: Node) -> void:

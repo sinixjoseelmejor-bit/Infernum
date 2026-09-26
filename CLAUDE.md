@@ -177,6 +177,11 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   de Moïse, dont la fréquence dépend du personnage. Soufre + Feu grégeois est
   la paire la plus forte du jeu (+81 %), c'est voulu — à surveiller. Pas de
   son pour la brûlure ni l'entrave.
+- **Les quatre ennemis de la 0.9.2** (chauve-souris, slime de lave, feu
+  follet, invocatrice ; voir README) : mécaniques sondées, et la difficulté
+  des vagues mesurée inchangée. Pas mesuré : le danger réel du feu follet
+  pour un joueur qui esquive, et celui d'une invocatrice qu'on laisse vivre.
+  Pas de son propre à chacun (ils prennent ceux de tout le monde).
 - **La carte de l'enfer** (0.9.1, voir README) : ses règles sont testées et le
   contournement mesuré, mais deux choses ne le sont pas — le **danger réel de la
   lave** dans une run (aucun banc ne l'évite ni ne la cherche) et l'effet des
