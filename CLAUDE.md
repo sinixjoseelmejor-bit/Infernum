@@ -93,6 +93,11 @@ godot --headless --path . res://tools/test_carte.tscn
 - La dernière lance les **tests de la carte** : règles de jouabilité et de
   composition sur 6 480 parcelles, poches fermées, part de lave à l'écran. À relancer après toute
   retouche de `scripts/world/`. Il demande les planches extraites.
+- **Bande-annonce** : `godot --path . --fixed-fps 60 --write-movie
+  build/bande-annonce/infernum_en.avi res://tools/bande_annonce.tscn ++ en`
+  (`++ fr`), avec un `override.cfg` temporaire pour le 1080p. Elle écrit
+  dans le profil : sauvegarder avant, comparer et rendre après. Vérifier
+  qu'aucun plan n'est sorti noir. Voir README, « La bande-annonce ».
 - **Traductions** : `python tools/traductions.py` après toute retouche d'un
   texte affiché (code de sortie 1 s'il en manque une ou si un gabarit `%d` est
   faux). Le français est la langue source et sert de clé : un texte composé

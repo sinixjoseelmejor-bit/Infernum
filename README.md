@@ -4688,6 +4688,63 @@ qu'un accent de couleur, et il survit à la réduction.
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.
 
+### La bande-annonce, tournée dans le jeu (0.9.1)
+
+[`tools/bande_annonce.gd`](tools/bande_annonce.gd) tourne une bande-annonce de
+70 s, sans logiciel de montage. Le script joue la vraie partie et pose les
+cartons par-dessus. Godot enregistre ensuite chaque image avec son **Movie
+Maker**, son compris.
+
+```bash
+godot --path . --fixed-fps 60 --write-movie build/bande-annonce/infernum_en.avi res://tools/bande_annonce.tscn ++ en
+```
+
+`++ fr` donne la version française.
+
+| Temps | Plan |
+|---|---|
+| 0 – 9,6 s | cartons de l'histoire (« Le Ciel a fait un pari »…), puis Lucifer sort de l'ombre et rugit |
+| 9,65 s | le titre, sur l'attaque de la musique |
+| 13,6 – 25,6 s | Caïn et le Prix du sang, Job et le Jugement, Loth et ses ruées |
+| 25,6 – 36,6 s | « L'enfer n'a pas de portes », une vague, puis les profondeurs et la lave |
+| 36,6 – 48,6 s | les cinq boss, de Golgota à Lucifer (Hélel est gardé secret) |
+| 48,6 – 54,6 s | la boutique et la Forge |
+| 54,6 – 62,6 s | le Déchaînement, avec tout le catalogue au maximum |
+| 62,6 – 70 s | le titre et « Bientôt disponible » |
+
+Décisions et mesures :
+
+- **Une seule arène pour tout le tournage.** Les trois damnés se relaient
+  par le changement de personnage en cours de partie du combat contre Hélel.
+  Les ennemis restent donc à l'écran d'un plan à l'autre. Ce qui se prépare
+  entre deux plans (saut de vague, apparition d'un boss) passe sous un
+  carton ou un noir de quelques images, jeu accéléré jusqu'à ×8 et son coupé.
+- **La musique fait le montage.** Les six pistes ont été mesurées sur leur
+  enveloppe RMS. « Cyber Wolf » a une intro calme (-18 dB), un trou à 8,1 s
+  (-25 dB), puis une attaque à 9,65 s (-12 dB) : le titre tombe dessus.
+- **Le mix est propre à la vidéo**, sans toucher aux réglages du joueur. Le
+  premier rendu sortait à -16/-17 dB RMS, avec des crêtes à -2,2 dBFS. Le son
+  est monté de 3 dB, et un limiteur tient les crêtes sous -1 dBFS.
+- **Toujours en fenêtre 16/9.** En plein écran sur un écran 21/9, le jeu se
+  calait sur 2560 × 1080 et la vidéo rognait les deux colonnes du HUD.
+- **La taille de la vidéo est celle de la fenêtre**, et `--resolution` est
+  ignoré. Pour du 1080p, un `override.cfg` temporaire à la racine fixe
+  `display/window/size/window_width_override=1920` (et la hauteur à 1080) et
+  `editor/movie_writer/mjpeg_quality=0.95`. On le supprime après le rendu.
+- **Un rendu peut sortir noir.** C'est arrivé une fois sur deux rendus
+  enchaînés, sans erreur, et la relance était bonne. Vérifier les plans de
+  jeu dans l'AVI avant de le livrer.
+- **Le tournage écrit dans le profil actif** : l'histoire y est marquée vue
+  (pour qu'aucune cinématique ne coupe un plan) et le nom par défaut est
+  réécrit dans la langue de la vidéo. Il faut sauvegarder avant, comparer et
+  rendre après.
+
+L'AVI (MJPEG, environ 750 Mo) se convertit en MP4 H.264 + AAC, 16 Mbit/s,
+avec le transcodeur intégré à Windows (`Windows.Media.Transcoding`), sans rien
+installer. Cela prend 12 s et donne environ 95 Mo. La musique est une piste
+Pixabay, comme les autres musiques d'arène : sa page d'origine est à
+consigner avec les autres sources avant une diffusion.
+
 ## Étendre
 
 - **Un objet statistique** : une entrée dans `ITEMS` de `item_database.gd`. Les clés de
