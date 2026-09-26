@@ -128,7 +128,7 @@ func _test_unleashed_boss_ratio() -> void:
 
 func _test_roster() -> void:
 	var roster := load(ROSTER_PATH) as EnemyRoster
-	_check("roster chargé, 5 types", roster != null and roster.entries.size() == 5)
+	_check("roster chargé, 9 types", roster != null and roster.entries.size() == 9)
 	if roster == null:
 		return
 	var imp := roster.entries[0].scene
@@ -144,6 +144,18 @@ func _test_roster() -> void:
 	for i in old_weights.size():
 		_near("poids vague 20, type %d" % i, roster.entries[i].weight_at(20), old_weights[i])
 	_near("l'imp ne descend pas sous zéro", roster.entries[0].weight_at(60), 0.0)
+	# Les quatre de la 0.9.2 : absents avant leur vague, présents à leur vague.
+	var entrees := [[5, 6, 16.0], [6, 8, 14.0], [7, 13, 9.0], [8, 16, 5.0]]
+	for e in entrees:
+		var type: EnemySpawnEntry = roster.entries[e[0]]
+		_near("type %d absent vague %d" % [e[0], e[1] - 1], type.weight_at(e[1] - 1), 0.0)
+		_near("type %d entre vague %d" % [e[0], e[1]], type.weight_at(e[1]), e[2])
+	var jusqua_5 := true
+	for i in 100:
+		var tire := roster.pick(5, i / 100.0)
+		for k in range(4, 9):
+			jusqua_5 = jusqua_5 and tire != roster.entries[k].scene
+	_check("vague 5 : aucun des nouveaux types, ni l'Œil", jusqua_5)
 
 	var late := EnemySpawnEntry.new()
 	late.scene = PackedScene.new()

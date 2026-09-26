@@ -890,6 +890,8 @@ func _bruler_si_besoin(delta: float) -> void:
 		var ennemi := noeud as Node2D
 		if ennemi == null or ennemi.is_queued_for_deletion() or ennemi.is_in_group(Groups.BOSSES):
 			continue
+		if ennemi.get(&"insensible_lave") == true:
+			continue
 		if not en_lave(ennemi.global_position + Vector2(0.0, PIED_ENNEMI)):
 			continue
 		var sante := ennemi.get_node_or_null(^"Health") as Health

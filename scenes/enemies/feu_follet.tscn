@@ -1,0 +1,40 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/feu_follet.gd" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/feu_follet/feu_follet_idle.png" id="2_sprite"]
+[ext_resource type="Script" path="res://scripts/components/health.gd" id="3_health"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/feu_follet/feu_follet_walk.png" id="90_walk"]
+[ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feu_follet"]
+radius = 12.0
+
+[node name="FeuFollet" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 4
+collision_mask = 0
+motion_mode = 1
+script = ExtResource("1_enemy")
+move_speed = 115.0
+contact_damage = 14.0
+max_health = 18.0
+soul_value = 2
+insensible_lave = true
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sprite")
+texture_filter = 1
+scale = Vector2(2.0, 2.0)
+offset = Vector2(0, 7.5)
+hframes = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_feu_follet")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 18.0
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("91_anim")
+idle_texture = ExtResource("2_sprite")
+walk_texture = ExtResource("90_walk")
