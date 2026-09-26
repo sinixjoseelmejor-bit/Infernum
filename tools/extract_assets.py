@@ -150,6 +150,19 @@ ITEM_ICONS = {
     "moloch_horn":           1182, # corne
     "solomon_seal":          169,  # medaille d or
     "reliquary":             718,  # coffret de bois
+    # 0.9.2
+    "sulfur":              1121, # soufre jaune en mottes
+    "tartarus_chains":     779,  # chaine de fer
+    "david_sling":         1113, # laniere enroulee
+    "samson_jaw":          1185, # molaire
+    "greek_fire":          902,  # fiole de feu
+    "sodom_salt":          552,  # cristaux blancs
+    "golgotha_nail":       924,  # pointe de fer
+    "salamander_skin":     1045, # salamandre rouge
+    "thirty_pieces":       1158, # piece d argent
+    "censer":              937,  # encensoir d or
+    "moses_staff":         841,  # baton de bois
+    "jericho_trumpet":     844,  # cor d or
 }
 UI = os.path.join(SPR, "ui")
 MASTER = 1024

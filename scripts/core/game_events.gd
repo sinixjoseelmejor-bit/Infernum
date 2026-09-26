@@ -44,6 +44,12 @@ signal camera_shake_requested(strength: float)
 ## un passif. Le joueur appuie, celui que ça concerne répond.
 signal power_requested()
 
+## POUVOIR UTILISÉ, lui : émis par celui qui a répondu, et seulement si le
+## pouvoir est réellement parti — ruée achevée, parade armée, Jugement rendu,
+## Prix du sang payé. Un appui sans effet (Marque trop basse, recharge en
+## cours) n'émet rien. C'est à lui que les objets s'accrochent (Bâton de Moïse).
+signal pouvoir_utilise(at: Vector2)
+
 ## Nouvelle à afficher en grand, au centre de l'écran. Réservée à ce qui change
 ## la partie pour de bon — il n'y en a qu'une aujourd'hui, la Clé des Abysses.
 ## Un bandeau qui servirait à tout ne serait plus lu.

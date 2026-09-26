@@ -144,6 +144,7 @@ func _on_power_requested() -> void:
 	var centre: Vector2 = _player.global_position
 	_effet_prix_du_sang(centre)
 	Audio.play(&"prix_du_sang")
+	GameEvents.pouvoir_utilise.emit(centre)
 	GameEvents.damage_dealt.emit(degats, centre, false)
 	GameEvents.request_shake(5.0)
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):

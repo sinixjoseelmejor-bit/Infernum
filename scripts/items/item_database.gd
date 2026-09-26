@@ -90,7 +90,7 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"damage_pct": 0.08},
 	},
 
-	# -------------------------------- RARES (9) -------------------------------
+	# -------------------------------- RARES (12) ------------------------------
 	{
 		"id": &"demon_bile", "name": "Fiel de démon", "rarity": 1,
 		"desc": "Corrosif. Très corrosif.",
@@ -146,8 +146,34 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {},
 		"special": &"giant_bane", "max_stacks": 1,
 	},
+	{
+		# 0.9.2 — LA BRÛLURE, porte d'entrée des synergies de feu (Sel de
+		# Sodome, Feu grégeois). Une réserve qui s'ajoute coup après coup : voir
+		# `Enemy.enflammer`.
+		"id": &"sulfur", "name": "Soufre", "rarity": 1,
+		"desc": "Vos coups enflamment la cible : elle brûle pour 40 % des dégâts reçus.",
+		"mods": {},
+		"special": &"brulure", "max_stacks": 1,
+	},
+	{
+		# 0.9.2 — L'ENTRAVE. Un objet de CONTRÔLE : il ne tue pas plus vite, il
+		# laisse plus de place. Les boss et les charges annoncées y échappent.
+		"id": &"tartarus_chains", "name": "Chaînes du Tartare", "rarity": 1,
+		"desc": "Vos coups ralentissent de 40 % pendant 2 s. Sans effet sur les boss.",
+		"mods": {},
+		"special": &"entrave", "max_stacks": 1,
+	},
+	{
+		# 0.9.2 — LES SEUILS. Contre une foule, ce qui compte n'est pas le DPS
+		# mais le nombre de coups pour tuer : faire passer un imp de deux tirs à
+		# un double la vitesse de nettoyage. Rien au-delà du premier coup.
+		"id": &"david_sling", "name": "Fronde de David", "rarity": 1,
+		"desc": "+60 % de dégâts sur un ennemi encore intact.",
+		"mods": {},
+		"special": &"premier_coup", "max_stacks": 1,
+	},
 
-	# ------------------------------- ÉPIQUES (9) ------------------------------
+	# ------------------------------- ÉPIQUES (10) -----------------------------
 	# Objets structurants : ils orientent la build et coûtent quelque chose.
 	{
 		"id": &"trifid_shard", "name": "Éclat trifide", "rarity": 2,
@@ -200,6 +226,15 @@ const ITEMS: Array[Dictionary] = [
 		"desc": "Les coups critiques traversent un ennemi de plus.",
 		"mods": {"crit_chance": 0.05},
 		"special": &"crit_bounce", "max_stacks": 1,
+	},
+	{
+		# 0.9.2 — LE RISQUE, tenu par la santé et non par un malus. Pas un effet
+		# proportionnel aux dégâts subis (le Déchaînement les fait exploser) :
+		# un seuil, franchi ou non.
+		"id": &"samson_jaw", "name": "Mâchoire de Samson", "rarity": 2,
+		"desc": "Sous la moitié de vos PV : +30 % de dégâts et +15 % de cadence.",
+		"mods": {},
+		"special": &"samson", "max_stacks": 1,
 	},
 	{
 		# Le tank MOBILE : l'armure sans le malus de vitesse des Écailles.
@@ -269,6 +304,60 @@ const ITEMS: Array[Dictionary] = [
 		"desc": "La première relance de chaque boutique est offerte.",
 		"mods": {},
 		"special": &"free_reroll", "max_stacks": 1, "key_cost": 3,
+	},
+
+	# -------- SACRÉS DE LA 0.9.2 : des objets qui changent la façon de jouer --------
+	# Tous à débloquer : avec les quatre ajouts de base, le tirage de départ
+	# passe de 32 à 36 objets, la taille où la 0.8.6 a mesuré que les builds
+	# restent lisibles (README, « Douze objets de plus »). Le catalogue grandit avec le profil, et les clés servent encore
+	# une fois la Forge finie.
+	{
+		"id": &"sodom_salt", "name": "Sel de Sodome", "rarity": 1,
+		"desc": "+35 % de dégâts contre les ennemis en feu ou ralentis.",
+		"mods": {},
+		"special": &"sel", "max_stacks": 1, "key_cost": 2,
+	},
+	{
+		"id": &"thirty_pieces", "name": "Trente deniers", "rarity": 1,
+		"desc": "À chaque fin de vague, 10 % de vos âmes vous sont versées (40 au plus).",
+		"mods": {},
+		"special": &"interets", "max_stacks": 1, "key_cost": 2,
+	},
+	{
+		"id": &"salamander_skin", "name": "Peau de salamandre", "rarity": 1,
+		"desc": "La lave ne vous brûle plus. Elle brûle toujours ceux qui vous y suivent.",
+		"mods": {"move_speed_pct": 0.05},
+		"special": &"salamandre", "max_stacks": 1, "key_cost": 3,
+	},
+	{
+		"id": &"greek_fire", "name": "Feu grégeois", "rarity": 2,
+		"desc": "Un ennemi qui meurt en feu enflamme jusqu'à trois voisins. Le feu se propage deux fois au plus.",
+		"mods": {},
+		"special": &"feu_gregeois", "max_stacks": 1, "key_cost": 3,
+	},
+	{
+		"id": &"golgotha_nail", "name": "Clou du Golgotha", "rarity": 2,
+		"desc": "+10 % de critique. Vos coups critiques enflamment (100 % des dégâts) et ralentissent.",
+		"mods": {"crit_chance": 0.10},
+		"special": &"clou", "max_stacks": 1, "key_cost": 4,
+	},
+	{
+		"id": &"censer", "name": "Encensoir", "rarity": 2,
+		"desc": "Deux flammes tournent autour de vous et brûlent ce qu'elles touchent (60 % des dégâts d'un tir).",
+		"mods": {},
+		"special": &"encensoir", "max_stacks": 1, "key_cost": 4,
+	},
+	{
+		"id": &"moses_staff", "name": "Bâton de Moïse", "rarity": 2,
+		"desc": "Votre pouvoir ouvre la foule : tout ce qui est proche est repoussé et prend 150 % des dégâts d'un tir.",
+		"mods": {},
+		"special": &"baton_moise", "max_stacks": 1, "key_cost": 5,
+	},
+	{
+		"id": &"jericho_trumpet", "name": "Trompette de Jéricho", "rarity": 3,
+		"desc": "Toutes les 6 s, une onde repousse et frappe tout ce qui vous entoure (200 % des dégâts d'un tir).",
+		"mods": {},
+		"special": &"trompette", "max_stacks": 1, "key_cost": 6,
 	},
 ]
 
