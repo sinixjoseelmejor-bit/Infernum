@@ -30,8 +30,11 @@ const RARITY_BASE_COST := {
 }
 
 @export var id: StringName = &""
-@export var display_name: String = ""
-@export var description: String = ""
+## Écrits en français, lus dans la langue du joueur (voir `CharacterData`).
+@export var display_name: String = "":
+	get: return tr(display_name)
+@export var description: String = "":
+	get: return tr(description)
 @export var rarity: Rarity = Rarity.COMMON
 ## Modificateurs additifs, ex. {"damage_pct": 0.18, "move_speed_pct": -0.05}
 @export var mods: Dictionary = {}
@@ -56,7 +59,7 @@ func load_icon() -> void:
 
 
 func get_rarity_name() -> String:
-	return RARITY_NAMES[rarity]
+	return tr(RARITY_NAMES[rarity])
 
 
 func get_rarity_color() -> Color:

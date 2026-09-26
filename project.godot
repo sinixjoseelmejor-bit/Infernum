@@ -150,6 +150,11 @@ aim_right={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.po")
+locale/fallback="fr"
+
 [layer_names]
 
 2d_physics/layer_1="world"

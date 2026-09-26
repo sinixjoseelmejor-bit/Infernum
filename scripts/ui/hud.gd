@@ -160,7 +160,7 @@ func _tout_rafraichir() -> void:
 	_maj_objets()
 	_on_souls_changed(RunState.souls)
 	_on_keys_changed(RunState.keys)
-	_eliminations.text = "ÉLIMINATIONS  %d" % RunState.kills
+	_eliminations.text = tr("ÉLIMINATIONS  %d") % RunState.kills
 
 
 # --- Construction ------------------------------------------------------------
@@ -285,7 +285,7 @@ func _construire_joueur() -> void:
 	_ligne_revive.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_racine.add_child(_ligne_revive)
 	_ligne_revive.add_child(_icone(ETOILE, 26.0))
-	_texte_revive = _etiquette("SECONDE CHANCE", 20, OR, true, 5)
+	_texte_revive = _etiquette(tr("SECONDE CHANCE"), 20, OR, true, 5)
 	_ligne_revive.add_child(_texte_revive)
 
 
@@ -301,7 +301,7 @@ func _construire_centre() -> void:
 	pile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_racine.add_child(pile)
 
-	_vague = _etiquette("VAGUE 1", 50, Color(1.0, 0.55, 0.3), true, 10)
+	_vague = _etiquette(tr("VAGUE %d") % 1, 50, Color(1.0, 0.55, 0.3), true, 10)
 	_vague.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pile.add_child(_vague)
 	_chrono = _etiquette("", 30, Color.WHITE, true, 7)
@@ -317,7 +317,7 @@ func _construire_centre() -> void:
 	_info_boss = _etiquette("", 18, GRIS, true, 5)
 	_info_boss.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pile.add_child(_info_boss)
-	_dechaine = _etiquette("DÉCHAÎNEMENT", 22, DANGER_COULEUR, true, 6)
+	_dechaine = _etiquette(tr("DÉCHAÎNEMENT"), 22, DANGER_COULEUR, true, 6)
 	_dechaine.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pile.add_child(_dechaine)
 	_pacte = _etiquette("", 22, PACTE_COULEUR, true, 6)
@@ -414,7 +414,7 @@ func _construire_objets() -> void:
 	_touche_fiche.action = &"show_stats"
 	_touche_fiche.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	aide.add_child(_touche_fiche)
-	_aide_fiche = _etiquette("FICHE DES STATISTIQUES", 16, GRIS, false, 4)
+	_aide_fiche = _etiquette(tr("FICHE DES STATISTIQUES"), 16, GRIS, false, 4)
 	_aide_fiche.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	aide.add_child(_aide_fiche)
 
@@ -467,7 +467,7 @@ func _process(delta: float) -> void:
 	_temps_anim += delta
 	_animer_vie(delta)
 	_maj_pouvoir()
-	_temps.text = "TEMPS  " + _format_time(RunState.run_time)
+	_temps.text = tr("TEMPS  %s") % _format_time(RunState.run_time)
 	if wave_manager == null:
 		return
 	var boss_en_jeu := wave_manager.is_boss_wave()
@@ -475,7 +475,7 @@ func _process(delta: float) -> void:
 		WaveManager.State.RUNNING:
 			# Une vague de boss n'a pas de compte à rebours : elle dure le combat.
 			if boss_en_jeu:
-				_chrono.text = "BOSS  ·  %s" % _format_time(wave_manager.time_left)
+				_chrono.text = tr("BOSS  ·  %s") % _format_time(wave_manager.time_left)
 				_barre_vague.visible = false
 			else:
 				_chrono.text = _format_time(wave_manager.time_left)
@@ -483,7 +483,7 @@ func _process(delta: float) -> void:
 				_barre_vague.visible = true
 				_barre_vague.value = 100.0 * (1.0 - wave_manager.time_left / maxf(0.01, duree))
 		WaveManager.State.INTERMISSION:
-			_chrono.text = "PRÉPAREZ-VOUS"
+			_chrono.text = tr("PRÉPAREZ-VOUS")
 			_barre_vague.visible = false
 		WaveManager.State.COLLECTING:
 			_chrono.text = "VAGUE TERMINÉE"
@@ -534,22 +534,22 @@ func _maj_pouvoir() -> void:
 		return
 	var info: Dictionary = POUVOIRS[id]
 	var couleur: Color = info["couleur"]
-	var nom: String = info["nom"]
+	var nom: String = tr(info["nom"])
 	var texte := ""
 	match id:
 		&"dash":
-			texte = "PRÊTE" if etat["pret"] else "%.1f s" % float(etat["reste"])
+			texte = tr("PRÊTE") if etat["pret"] else tr("%.1f s") % float(etat["reste"])
 		&"blood_price":
 			var pc := roundi(float(etat["part"]) * 100.0)
-			texte = "MARQUE %d %%" % pc if etat["pret"] \
-				else "MARQUE %d %%  ·  %d %% requis" % [pc, roundi(float(etat["minimum"]) * 100.0)]
+			texte = tr("MARQUE %d %%") % pc if etat["pret"] \
+				else tr("MARQUE %d %%  ·  %d %% requis") % [pc, roundi(float(etat["minimum"]) * 100.0)]
 		&"steadfast":
 			if etat["jugement"]:
-				nom = "LE JUGEMENT"
-				texte = "FERVEUR PLEINE"
+				nom = tr("LE JUGEMENT")
+				texte = tr("FERVEUR PLEINE")
 			else:
-				texte = ("PARADE PRÊTE" if etat["pret"] else "%.1f s" % float(etat["reste"])) \
-					+ "  ·  FERVEUR %d / %d" % [etat["charges"], etat["charges_max"]]
+				texte = (tr("PARADE PRÊTE") if etat["pret"] else tr("%.1f s") % float(etat["reste"])) \
+					+ tr("  ·  FERVEUR %d / %d") % [etat["charges"], etat["charges_max"]]
 	_nom_pouvoir.text = nom
 	_nom_pouvoir.add_theme_color_override(&"font_color", couleur if etat["pret"] else GRIS)
 	_etat_pouvoir.text = texte
@@ -583,7 +583,7 @@ func _maj_info_boss() -> void:
 		_info_boss.text = "BOSS À LA PROCHAINE VAGUE"
 		_info_boss.add_theme_color_override(&"font_color", DANGER_COULEUR)
 	else:
-		_info_boss.text = "BOSS DANS %d VAGUES" % dans
+		_info_boss.text = tr("BOSS DANS %d VAGUES") % dans
 		_info_boss.add_theme_color_override(&"font_color", GRIS)
 
 
@@ -625,8 +625,8 @@ func _maj_personnage() -> void:
 
 func _maj_revive() -> void:
 	_ligne_revive.visible = RunState.revives_left > 0
-	_texte_revive.text = "SECONDE CHANCE" if RunState.revives_left == 1 \
-		else "SECONDE CHANCE  ×%d" % RunState.revives_left
+	_texte_revive.text = tr("SECONDE CHANCE") if RunState.revives_left == 1 \
+		else tr("SECONDE CHANCE  ×%d") % RunState.revives_left
 
 
 func _maj_pacte() -> void:
@@ -634,13 +634,13 @@ func _maj_pacte() -> void:
 	_pacte.visible = not pacte.is_empty()
 	_pacte_detail.visible = not pacte.is_empty()
 	if not pacte.is_empty():
-		_pacte.text = "PACTE : " + str(pacte.get("name", "")).to_upper()
-		_pacte_detail.text = str(pacte.get("desc", ""))
+		_pacte.text = tr("PACTE : %s") % tr(str(pacte.get("name", ""))).to_upper()
+		_pacte_detail.text = tr(str(pacte.get("desc", "")))
 	var n := Curses.active.size()
 	_maledictions.visible = n > 0
 	if n > 0:
-		_maledictions.text = "%d MALÉDICTION%s  ·  DANGER %d" % [n, "S" if n > 1 else "",
-			Curses.get_danger()]
+		_maledictions.text = (tr("%d MALÉDICTIONS  ·  DANGER %d") if n > 1
+			else tr("%d MALÉDICTION  ·  DANGER %d")) % [n, Curses.get_danger()]
 
 
 func _maj_objets() -> void:
@@ -693,11 +693,11 @@ func _case_objet(item: ItemData, nombre: int) -> Control:
 
 
 func _on_enemy_died(_enemy: Node2D, _position: Vector2) -> void:
-	_eliminations.text = "ÉLIMINATIONS  %d" % RunState.kills
+	_eliminations.text = tr("ÉLIMINATIONS  %d") % RunState.kills
 
 
 func _on_wave_started(index: int) -> void:
-	_vague.text = "VAGUE %d" % index
+	_vague.text = tr("VAGUE %d") % index
 	_sauter(_vague)
 	# Les malédictions se choisissent à l'écran d'ouverture, APRÈS la mise en
 	# place de l'interface : on les relit au début de chaque vague.
@@ -711,8 +711,8 @@ func _on_wave_cleared(_index: int) -> void:
 func _on_boss_spawned(boss: Node2D) -> void:
 	_boss = boss
 	_panneau_boss.visible = true
-	var subtitle: String = str(boss.get(&"subtitle"))
-	_nom_boss.text = str(boss.get(&"boss_name")).to_upper()
+	var subtitle: String = tr(str(boss.get(&"subtitle")))
+	_nom_boss.text = tr(str(boss.get(&"boss_name"))).to_upper()
 	if subtitle != "":
 		_nom_boss.text += "  —  " + subtitle
 	_phase_texte = ""
@@ -722,11 +722,11 @@ func _on_boss_spawned(boss: Node2D) -> void:
 func _on_boss_health_changed(current: float, maximum: float) -> void:
 	_barre_boss.max_value = maximum
 	_barre_boss.value = current
-	_pourcent_boss.text = "%d %%" % ceili(100.0 * current / maxf(1.0, maximum))
+	_pourcent_boss.text = tr("%d %%") % ceili(100.0 * current / maxf(1.0, maximum))
 
 
 func _on_boss_phase_changed(phase: int, total: int) -> void:
-	_phase_texte = "PHASE %d / %d" % [phase + 1, total]
+	_phase_texte = tr("PHASE %d / %d") % [phase + 1, total]
 	_maj_phase_boss()
 
 
@@ -737,11 +737,11 @@ func _maj_phase_boss() -> void:
 		return
 	var texte := _phase_texte
 	if bool(_boss.get(&"is_enraged")):
-		texte += "  ·  ENRAGÉ"
+		texte += "  ·  " + tr("ENRAGÉ")
 		_phase_boss.add_theme_color_override(&"font_color", DANGER_COULEUR)
 	else:
 		var reste: float = float(_boss.get(&"enrage_time")) - float(_boss.get(&"fight_time"))
-		texte += "  ·  ENRAGEMENT DANS %s" % _format_time(reste)
+		texte += tr("  ·  ENRAGEMENT DANS %s") % _format_time(reste)
 		_phase_boss.add_theme_color_override(&"font_color",
 			Color(1.0, 0.7, 0.5) if reste < 20.0 else GRIS)
 	_phase_boss.text = texte

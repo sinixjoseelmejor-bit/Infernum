@@ -174,9 +174,9 @@ func collect() -> void:
 			# chose que Lucifer laisse et qu'on garde après la mort.
 			Audio.play(&"cle_abysses")
 			if SaveGame.grant_abyss_key():
-				GameEvents.announce.emit("LA CLÉ DES ABYSSES",
-					"Armez le Déchaînement à la Forge, pour le personnage de votre"
-					+ " choix : plus aucune limite, et un enfer qui répond.",
+				GameEvents.announce.emit(tr("LA CLÉ DES ABYSSES"),
+					tr("Armez le Déchaînement à la Forge, pour le personnage de votre"
+					+ " choix : plus aucune limite, et un enfer qui répond."),
 					Color(0.78, 0.45, 1.0))
 			GameEvents.request_shake(6.0)
 	set_physics_process(false)

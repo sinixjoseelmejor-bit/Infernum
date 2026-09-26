@@ -198,7 +198,7 @@ func _show_choice() -> void:
 	for character in Characters.get_all():
 		var brise := SaveGame.has_seal(character.id)
 		parts.append("%s %s" % [character.display_name, "✓" if brise else "✗"])
-	seals.text = "Sceaux brisés : %d / 3   ·   %s" % [SaveGame.seal_count(), "   ".join(parts)]
+	seals.text = tr("Sceaux brisés : %d / 3   ·   %s") % [SaveGame.seal_count(), "   ".join(parts)]
 	box.add_child(seals)
 
 	var open := SaveGame.seal_count() >= 3
@@ -206,12 +206,12 @@ func _show_choice() -> void:
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	help.add_theme_color_override(&"font_color", Color(0.78, 0.74, 0.72))
-	help.text = "Les trois sceaux sont brisés : le portail vers Hélel est ouvert." if open \
-		else "Chaque damné doit abattre Lucifer pour briser son propre sceau."
+	help.text = tr("Les trois sceaux sont brisés : le portail vers Hélel est ouvert.") if open \
+		else tr("Chaque damné doit abattre Lucifer pour briser son propre sceau.")
 	box.add_child(help)
 
 	var portal := Button.new()
-	portal.text = "Franchir le portail — Hélel" if open else "Portail scellé"
+	portal.text = tr("Franchir le portail — Hélel") if open else tr("Portail scellé")
 	portal.disabled = not open
 	portal.custom_minimum_size = Vector2(0, 60)
 	box.add_child(portal)

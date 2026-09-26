@@ -23,7 +23,10 @@ const PROFILE_COUNT := 3
 const INDEX_PATH := "user://infernum_profiles.cfg"
 
 var active_slot: int = 0
-var profile_name: String = ""
+## Le nom par défaut s'écrit dans la sauvegarde dans la langue du moment
+## (« Profil 1 ») : il est relu dans celle du joueur, un nom choisi reste tel quel.
+var profile_name: String = "":
+	get: return nom_affiche(active_slot, profile_name)
 var banked_keys: int = 0
 var best_wave: int = 0
 var total_runs: int = 0
@@ -76,7 +79,16 @@ static func get_profile_path(slot: int) -> String:
 
 
 static func get_default_name(slot: int) -> String:
-	return "Profil %d" % (slot + 1)
+	return TranslationServer.translate("Profil %d") % (slot + 1)
+
+
+## Un nom par défaut, écrit dans n'importe quelle langue du jeu, se lit dans la
+## langue du joueur.
+static func nom_affiche(slot: int, nom: String) -> String:
+	for defaut in ["Profil %d", "Profile %d"]:
+		if nom == defaut % (slot + 1):
+			return get_default_name(slot)
+	return nom
 
 
 func profile_exists(slot: int) -> bool:
@@ -96,7 +108,7 @@ func get_profile_summary(slot: int) -> Dictionary:
 	var config := ConfigFile.new()
 	if config.load(get_profile_path(slot)) != OK:
 		return summary
-	summary["name"] = config.get_value("meta", "profile_name", get_default_name(slot))
+	summary["name"] = nom_affiche(slot, config.get_value("meta", "profile_name", get_default_name(slot)))
 	summary["keys"] = config.get_value("meta", "banked_keys", 0)
 	summary["best_wave"] = config.get_value("meta", "best_wave", 0)
 	summary["total_runs"] = config.get_value("meta", "total_runs", 0)

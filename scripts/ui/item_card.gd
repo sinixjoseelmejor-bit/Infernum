@@ -134,7 +134,7 @@ func _refresh() -> void:
 	_desc_label.text = item.description
 	_mods_label.text = format_mods(item.mods)
 	_mods_label.add_theme_color_override(&"font_color", Color(0.85, 0.85, 0.85))
-	_buy_button.text = "%d âmes" % cost
+	_buy_button.text = (tr("%d âme") if cost == 1 else tr("%d âmes")) % cost
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.11, 0.05, 0.06, 0.96)
@@ -145,7 +145,7 @@ func _refresh() -> void:
 		# la carte se repère d'un coup d'œil, sans rien masquer des autres.
 		style.bg_color = style.bg_color.lerp(color, 0.2)
 		style.set_border_width_all(4)
-		_rarity_label.text = "%s  ·  PIÈCE RARE" % item.get_rarity_name().to_upper()
+		_rarity_label.text = tr("%s  ·  PIÈCE RARE") % item.get_rarity_name().to_upper()
 	if _focused:
 		style.border_color = color.lerp(Color.WHITE, 0.5)
 		style.set_border_width_all(4)
@@ -184,11 +184,11 @@ static func format_mods(mods: Dictionary) -> String:
 	]
 	var lines: Array[String] = []
 	for key in mods:
-		var label: String = LABELS.get(String(key), String(key))
+		var label: String = TranslationServer.translate(LABELS.get(String(key), String(key)))
 		var value := float(mods[key])
 		var line := ""
 		if String(key) in PERCENT_KEYS:
-			line = "%+d %% %s" % [roundi(value * 100.0), label]
+			line = TranslationServer.translate("%+d %% %s") % [roundi(value * 100.0), label]
 		elif String(key) in INTEGER_KEYS:
 			line = "%+d %s" % [roundi(value), label]
 		else:

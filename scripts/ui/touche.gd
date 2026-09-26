@@ -50,7 +50,8 @@ const DECALAGE_ENFONCEE := 7
 ## réserve la place des accents, centrer sur elle poserait le texte trop bas.
 const HAUTEUR_CAPITALE := 0.72
 
-## Les noms de touches que Godot renvoie, en français et en capitales.
+## Les noms de touches que Godot renvoie, en français et en capitales (traduits
+## à la lecture, comme tout texte du jeu).
 const NOMS := {
 	"Space": "ESPACE", "Tab": "TAB", "Escape": "ÉCHAP", "Enter": "ENTRÉE",
 	"Shift": "MAJ", "Ctrl": "CTRL", "Alt": "ALT", "Backspace": "RETOUR",
@@ -122,7 +123,7 @@ static func nom_de(action_: StringName) -> String:
 		if touche.physical_keycode != KEY_NONE:
 			code = DisplayServer.keyboard_get_keycode_from_physical(touche.physical_keycode)
 		var nom := OS.get_keycode_string(code)
-		return NOMS.get(nom, nom.to_upper())
+		return TranslationServer.translate(NOMS[nom]) if NOMS.has(nom) else nom.to_upper()
 	return ""
 
 
@@ -135,6 +136,13 @@ static func bouton_de(action_: StringName) -> Array:
 		if bouton != null:
 			return BOUTONS.get(bouton.button_index, [str(bouton.button_index), Color.WHITE])
 	return []
+
+
+## Le nom de la touche est dessiné, pas posé dans un Label : il ne suit pas un
+## changement de langue tout seul.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		_actualiser()
 
 
 func _actualiser() -> void:

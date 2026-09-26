@@ -93,6 +93,12 @@ godot --headless --path . res://tools/test_carte.tscn
 - La dernière lance les **tests de la carte** : règles de jouabilité et de
   composition sur 6 480 parcelles, poches fermées, part de lave à l'écran. À relancer après toute
   retouche de `scripts/world/`. Il demande les planches extraites.
+- **Traductions** : `python tools/traductions.py` après toute retouche d'un
+  texte affiché (code de sortie 1 s'il en manque une ou si un gabarit `%d` est
+  faux). Le français est la langue source et sert de clé : un texte composé
+  passe par `tr()` AVANT le formatage, un texte posé tel quel dans un contrôle
+  se traduit seul. Retoucher une phrase française lui fait perdre sa
+  traduction anglaise dans `locale/en.po`. Voir README, « Langues ».
 - **Toujours sous `timeout`.** Une erreur de compilation dans le script d'une
   scène de test laisse Godot ouvert au lieu de quitter : sans garde-fou, on
   attend un test qui n'a jamais tourné.
@@ -157,6 +163,8 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.
+- **L'anglais** (0.9.1) : complet (579 textes) mais **pas relu par un
+  anglophone natif** — les textes d'ambiance (objets, histoire) d'abord.
 - **La carte de l'enfer** (0.9.1, voir README) : ses règles sont testées et le
   contournement mesuré, mais deux choses ne le sont pas — le **danger réel de la
   lave** dans une run (aucun banc ne l'évite ni ne la cherche) et l'effet des

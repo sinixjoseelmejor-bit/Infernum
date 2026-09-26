@@ -1190,6 +1190,101 @@ profil (ce sont des préférences, pas de la progression).
 Vérifié par mesure : à 0 %, une secousse de force 20 laisse le traumatisme de la
 caméra à 0.00 ; à 100 %, il monte à 1.00.
 
+## Langues — le français source, l'anglais en face (0.9.1)
+
+Le jeu existe en **français et en anglais**. L'anglais a été fait en vue d'une
+sortie Steam : le français seul en est la première limite commerciale.
+L'option **Langue · Language** vient en tête des options. Par défaut elle est
+« Automatique » : français sur un système en français, anglais partout
+ailleurs. Chaque langue y est écrite dans la sienne (« Français », « English »),
+pour qu'un joueur qui ne lit pas la langue affichée trouve quand même la sienne.
+
+**Le français reste la langue source, et chaque texte est sa propre clé.** Il
+n'y a pas de table de clés abstraites (`MENU_JOUER`…) :
+[`locale/en.po`](locale/en.po) met l'anglais en face de la phrase française
+exacte. Trois conséquences :
+
+- le code se lit tel qu'il s'affiche ;
+- un texte oublié retombe sur le français, jamais sur une clé ;
+- **retoucher une phrase française lui fait perdre sa traduction**, puisque sa
+  clé a changé. L'outil ci-dessous le signale.
+
+`locale/fallback` vaut `"fr"`, et ce n'est pas un détail : avec la valeur par
+défaut de Godot (`"en"`), un joueur réglé en français, sans traduction
+française à trouver, recevrait l'anglais.
+
+### Où la traduction se fait
+
+| Texte | Comment |
+|---|---|
+| posé tel quel dans un contrôle (`label.text = "PAUSE"`, scènes) | le contrôle le traduit lui-même, et le retraduit si la langue change à l'écran |
+| composé (`"Vague %d" % n`) | `tr()` sur le GABARIT, avant le formatage : c'est lui la clé |
+| catalogues en constantes (objets, personnages, Forge, malédictions, pactes, histoire) | traduits à la LECTURE : `ItemData.display_name` et `CharacterData` passent leurs textes par `tr()` dans leur accesseur, l'affichage appelle `tr()` sur le reste |
+| noms et sous-titres des boss (scènes) | `tr()` dans le HUD |
+| noms des touches (dessinés, pas posés dans un Label) | retraduits sur `NOTIFICATION_TRANSLATION_CHANGED` |
+
+Le panneau de développement reste en français : il n'est jamais livré aux
+joueurs.
+
+### L'outil qui garde tout à jour
+
+[`tools/traductions.py`](tools/traductions.py) relève les textes :
+
+- les appels `tr()` ;
+- les textes posés dans un contrôle ;
+- les propriétés `text` et `boss_name` des scènes ;
+- les clés de texte des catalogues, que la table `DONNEES` désigne.
+
+Il vérifie que chacun a sa traduction :
+
+```bash
+python tools/traductions.py
+```
+
+- **Code de sortie 1** s'il manque une traduction, ou si un **gabarit est
+  faux** : une traduction qui perd ou ajoute un `%d` ferait échouer le
+  formatage en jeu, dans cette langue seulement.
+- `--manque` ajoute les textes nouveaux à `en.po`, à remplir.
+- `--suspects` liste les chaînes qui ressemblent à du texte sans passer par
+  la traduction, c'est-à-dire les oublis probables. Le premier relevé en a
+  sorti une trentaine : des textes passés par une variable, les branches d'un
+  ternaire (`"Actif" if … else "Charger"`), les colonnes de la fiche nommées
+  hors d'une constante.
+
+État à la sortie de la 0.9.1 : **579 textes, 579 traduits.**
+
+### Décisions de traduction
+
+| Français | Anglais | Pourquoi |
+|---|---|---|
+| Caïn, Job, Loth | Cain, Job, **Lot** | les noms des Bibles anglaises |
+| Hélel, Asmodée, Golgota, Édith | Helel, Asmodeus, Golgotha, Edith | idem |
+| Déchaînement | Unleashed | |
+| Forge Éternelle, Clé des Abysses | Eternal Forge, Key of the Abyss | |
+| le Prix du sang, le Refus de plier, la Ruée | Blood Price, Refuse to Bend, the Rush | |
+| Le Pari, l'Accusateur | The Wager, the Accuser | |
+| PV, âmes, Sacrés | HP, souls, Sacred | |
+
+Les pourcentages perdent leur espace en anglais (`25 %` → `25%`). Les
+décimales suivent la langue (`UIUtils.nombre` : « 1,5 » ou « 1.5 »).
+
+### Trois défauts vus à la capture
+
+Ce sont des défauts que la seule relecture du fichier ne montrait pas :
+
+- **« 1 keys », « Reroll (1 souls) »** : le compte singulier manquait, et il
+  manquait aussi en français (« 1 clés »). Les clés et les âmes ont maintenant
+  une forme au singulier.
+- **« Profil 2 » dans un jeu en anglais** : le nom par défaut s'écrit dans la
+  sauvegarde. `SaveGame.nom_affiche` relit un nom par défaut, quelle que soit
+  sa langue, dans celle du joueur. Un nom choisi par le joueur reste tel quel.
+- Le changement de langue à l'écran a été vérifié : les options se
+  reconstruisent dans la nouvelle langue, le focus reste sur le sélecteur, et
+  le menu dessous suit.
+
+**Pas encore relu par un anglophone natif.** Les textes d'ambiance (objets,
+histoire) sont les plus exposés.
+
 ## Interface — un thème, zéro style local
 
 L'habillage vient de **PixelUIKit** (panneau sombre, liseré doré) et passe

@@ -82,12 +82,12 @@ func _rebuild() -> void:
 	_refresh_queued = false
 	var keep := UIUtils.capture_focus(self)
 	var progress := Forge.get_progress()
-	keys_label.text = "Clés : %d" % SaveGame.banked_keys
+	keys_label.text = tr("Clés : %d") % SaveGame.banked_keys
 	# Le personnage est NOMMÉ, et c'est indispensable : chaque personnage a sa
 	# propre Forge, et un joueur qui ouvre cet écran sans savoir lequel il
 	# renforce dépenserait ses clés au mauvais endroit — une dépense
 	# irréversible.
-	progress_label.text = "%s  ·  Forge %d / %d nœuds  ·  %d clés pour tout ouvrir" % [
+	progress_label.text = tr("%s  ·  Forge %d / %d nœuds  ·  %d clés pour tout ouvrir") % [
 		Characters.get_selected().display_name.to_upper(),
 		progress.x, progress.y, Forge.get_total_cost()]
 
@@ -153,15 +153,15 @@ func _rebuild_abysses() -> void:
 	abyss_panel.add_theme_stylebox_override(&"panel", style)
 
 	if actif:
-		abyss_button.text = "DÉCHAÎNEMENT  ·  ARMÉ POUR %s" % personnage.display_name.to_upper()
-		abyss_label.text = "Plafonds, taxes et limites de piles levés. En échange," \
-			+ " les ennemis doublent de PV toutes les cinq vagues — la course est" \
-			+ " perdue d'avance, la question est de savoir jusqu'où."
+		abyss_button.text = tr("DÉCHAÎNEMENT  ·  ARMÉ POUR %s") % personnage.display_name.to_upper()
+		abyss_label.text = tr("Plafonds, taxes et limites de piles levés. En échange,"
+			+ " les ennemis doublent de PV toutes les cinq vagues — la course est"
+			+ " perdue d'avance, la question est de savoir jusqu'où.")
 		abyss_label.add_theme_color_override(&"font_color", Color(0.82, 0.58, 1.0))
 	else:
 		abyss_button.text = "DÉCHAÎNEMENT"
-		abyss_label.text = "La Clé des Abysses lève toutes les limites de %s." \
-			% personnage.display_name + " L'enfer s'endurcit d'autant."
+		abyss_label.text = tr("La Clé des Abysses lève toutes les limites de %s. L'enfer s'endurcit d'autant.") \
+			% personnage.display_name
 		abyss_label.add_theme_color_override(&"font_color", Color(0.70, 0.66, 0.72))
 
 
@@ -180,7 +180,7 @@ func _build_branch(branch: String) -> Control:
 	# pour lui des trois que tout le monde possède.
 	var propre: bool = branch == String(Forge.BRANCHES_PERSO.get(Characters.selected_id, ""))
 	var title := Label.new()
-	title.text = branch.to_upper()
+	title.text = tr(branch).to_upper()
 	title.theme_type_variation = &"TitleLabel"
 	title.add_theme_font_size_override(&"font_size", 30)
 	title.add_theme_color_override(&"font_color",
@@ -247,7 +247,7 @@ func _build_node_tile(node: Dictionary) -> Control:
 	panel.add_child(box)
 
 	var name_label := Label.new()
-	name_label.text = node["name"]
+	name_label.text = tr(node["name"])
 	name_label.add_theme_font_size_override(&"font_size", 15)
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	if not available and not unlocked:
@@ -278,11 +278,11 @@ func _build_node_tile(node: Dictionary) -> Control:
 		button.disabled = true
 		button.theme_type_variation = &"SecondaryButton"
 	elif not available:
-		button.text = "Verrouillé · %d" % int(node["cost"])
+		button.text = tr("Verrouillé · %d") % int(node["cost"])
 		button.disabled = true
 		button.theme_type_variation = &"SecondaryButton"
 	else:
-		button.text = "%d clés" % int(node["cost"])
+		button.text = (tr("%d clé") if int(node["cost"]) == 1 else tr("%d clés")) % int(node["cost"])
 		button.disabled = not Forge.can_unlock(id)
 		button.pressed.connect(func() -> void: Forge.unlock(id))
 	# Désactivé mais focalisable : à la manette, c'est le seul moyen de lire le
@@ -300,20 +300,20 @@ func _build_node_tile(node: Dictionary) -> Control:
 
 func _effect_text(node: Dictionary) -> String:
 	var text := ItemCard.format_mods(node.get("mods", {}))
-	return text if text != "" else String(node.get("desc", ""))
+	return text if text != "" else tr(String(node.get("desc", "")))
 
 
 ## La barre de détail : tout ce que la case ne peut pas dire.
 func _show_detail(node: Dictionary) -> void:
 	var id: StringName = node["id"]
-	var state := "Acquis" if Forge.is_unlocked(id) else "%d clés" % int(node["cost"])
-	var text := "%s  —  %s" % [node["name"], node.get("desc", "")]
+	var state := tr("Acquis") if Forge.is_unlocked(id) else (tr("%d clé") if int(node["cost"]) == 1 else tr("%d clés")) % int(node["cost"])
+	var text := "%s  —  %s" % [tr(node["name"]), tr(String(node.get("desc", "")))]
 	var mods := ItemCard.format_mods(node.get("mods", {}))
 	if mods != "":
 		text += "  (%s)" % mods
 	text += "   ·   %s" % state
 	if not Forge.requirements_met(id) and not Forge.is_unlocked(id):
-		text += "   ·   Nécessite : %s" % _requirement_names(node)
+		text += tr("   ·   Nécessite : %s") % _requirement_names(node)
 	detail_label.text = text
 
 
@@ -344,7 +344,7 @@ func _draw_links() -> void:
 func _requirement_names(node: Dictionary) -> String:
 	var names: Array[String] = []
 	for req in node.get("requires", []):
-		names.append(String(Forge.get_node_data(req).get("name", req)))
+		names.append(tr(String(Forge.get_node_data(req).get("name", req))))
 	return ", ".join(names)
 
 
@@ -362,7 +362,7 @@ func _build_item_row(item: ItemData) -> Control:
 
 	var button := Button.new()
 	button.name = "objet_%s" % item.id
-	button.text = "%d clés" % item.key_cost
+	button.text = (tr("%d clé") if item.key_cost == 1 else tr("%d clés")) % item.key_cost
 	button.disabled = SaveGame.banked_keys < item.key_cost
 	if button.disabled:
 		button.focus_mode = Control.FOCUS_NONE

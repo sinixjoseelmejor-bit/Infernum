@@ -310,12 +310,13 @@ func get_stat_sources() -> Array:
 	if has_special(&"reaper_stacks"):
 		objets.damage_pct += get_reaper_bonus()
 
+	# Traduits ici : la fiche les affiche tels quels.
 	return [
-		["Personnage", perso],
-		["Forge", forge],
-		["Sacrés", sacres],
-		["Objets", objets],
-		["Pactes", pactes],
+		[tr("Personnage"), perso],
+		[tr("Forge"), forge],
+		[tr("Sacrés"), sacres],
+		[tr("Objets"), objets],
+		[tr("Pactes"), pactes],
 	]
 
 

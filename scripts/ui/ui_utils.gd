@@ -99,3 +99,13 @@ static func clear_children(container: Node) -> void:
 	for child in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+
+
+## Un nombre à une décimale, écrit comme le lit le joueur : « 1,5 » en français,
+## « 1.5 » en anglais. Entier, il s'écrit sans décimale — arrondir 1,5 à « 2 »
+## masquait la valeur réelle.
+static func nombre(value: float) -> String:
+	if is_equal_approx(value, roundf(value)):
+		return str(roundi(value))
+	var texte := String.num(value, 1)
+	return texte.replace(".", ",") if TranslationServer.get_locale().begins_with("fr") else texte

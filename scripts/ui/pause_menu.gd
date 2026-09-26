@@ -43,7 +43,7 @@ func _on_options_visibility_changed() -> void:
 func open() -> void:
 	if visible:
 		return
-	wave_label.text = "Vague %d  ·  %d âmes" % [RunState.wave, RunState.souls]
+	wave_label.text = tr("Vague %d  ·  %d âmes") % [RunState.wave, RunState.souls]
 	visible = true
 	get_tree().paused = true
 	resume_button.grab_focus()

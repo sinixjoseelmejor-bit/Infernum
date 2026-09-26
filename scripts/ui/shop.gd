@@ -103,12 +103,12 @@ func open() -> void:
 	_rerolls = 0
 	visible = true
 	get_tree().paused = true
-	wave_label.text = "Vague %d terminée" % RunState.wave
+	wave_label.text = tr("Vague %d terminée") % RunState.wave
 	# La récolte des survivants est DITE. Des âmes qui arrivent sans explication
 	# ne s'attribuent à rien, et le joueur n'apprendrait jamais que blesser sans
 	# achever rapporte quelque chose.
 	if RunState.leftover_souls > 0:
-		wave_label.text += "  ·  %d âmes arrachées à %d survivants" % [
+		wave_label.text += tr("  ·  %d âmes arrachées à %d survivants") % [
 			RunState.leftover_souls, RunState.leftover_count]
 	_roll_offer()
 	_roll_pacts()
@@ -283,10 +283,9 @@ func _build_sell() -> void:
 			button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.text = "%s%s
-+%d âmes" % [
+		button.text = "%s%s\n%s" % [
 			item.display_name, ("  ×%d" % piles) if piles > 1 else "",
-			get_sell_value(item)]
+			(tr("+%d âme") if get_sell_value(item) == 1 else tr("+%d âmes")) % get_sell_value(item)]
 		button.add_theme_color_override(&"font_color", item.get_rarity_color())
 		button.pressed.connect(func() -> void: _on_sell_pressed(item))
 		sell_row.add_child(button)
@@ -312,8 +311,9 @@ func _on_sell_pressed(item: ItemData) -> void:
 
 func _refresh() -> void:
 	UIUtils.chain_focus(self)
-	souls_label.text = "%d âmes" % RunState.souls
-	reroll_button.text = "Relancer (%d âmes)" % get_reroll_cost()
+	souls_label.text = (tr("%d âme") if RunState.souls == 1 else tr("%d âmes")) % RunState.souls
+	var prix := get_reroll_cost()
+	reroll_button.text = (tr("Relancer (%d âme)") if prix == 1 else tr("Relancer (%d âmes)")) % prix
 	reroll_button.disabled = RunState.souls < get_reroll_cost() or _cards.is_empty()
 	for card in _cards:
 		card.set_affordable(RunState.souls >= card.cost)
@@ -355,10 +355,8 @@ func _roll_pacts() -> void:
 		button.custom_minimum_size = Vector2(300, 88)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.text = "%s
-%s
-→ %s" % [
-			mod["name"], mod["desc"], _format_pact_rewards(mod)]
+		button.text = "%s\n%s\n→ %s" % [
+			tr(mod["name"]), tr(mod["desc"]), _format_pact_rewards(mod)]
 		button.toggle_mode = true
 		var id: StringName = mod["id"]
 		button.pressed.connect(func() -> void: _on_pact_pressed(id))
@@ -373,18 +371,18 @@ func _format_pact_rewards(mod: Dictionary) -> String:
 	for key in mod.get("rewards", {}):
 		var value := float(mod["rewards"][key])
 		match String(key):
-			"soul_gain_pct": parts.append("%+d %% d'âmes" % roundi(value * 100.0))
-			"luck": parts.append("+%s chance" % _num(value))
-			"range_pct": parts.append("%+d %% de portée" % roundi(value * 100.0))
+			"soul_gain_pct": parts.append(tr("%+d %% d'âmes") % roundi(value * 100.0))
+			"luck": parts.append(tr("+%s chance") % _num(value))
+			"range_pct": parts.append(tr("%+d %% de portée") % roundi(value * 100.0))
 			_: parts.append("%s %+.2f" % [key, value])
 	if float(mod.get("key_chance", 0.0)) > 0.0:
-		parts.append("%+d %% de chance de clé" % roundi(float(mod["key_chance"]) * 100.0))
+		parts.append(tr("%+d %% de chance de clé") % roundi(float(mod["key_chance"]) * 100.0))
 	return ", ".join(parts)
 
 
 ## Même règle que l'écran de malédictions : 0.5 reste « 0,5 ».
 func _num(value: float) -> String:
-	return str(roundi(value)) if is_equal_approx(value, roundf(value)) 		else String.num(value, 1).replace(".", ",")
+	return UIUtils.nombre(value)
 
 
 func _on_pact_pressed(id: StringName) -> void:
@@ -405,7 +403,7 @@ func _refresh_pacts() -> void:
 		pact_status.text = "Aucun pacte — la vague suivante se joue normalement."
 		pact_status.add_theme_color_override(&"font_color", Color(0.68, 0.64, 0.64))
 	else:
-		pact_status.text = "Pacte actif : %s (une vague)" % WaveMods.current["name"]
+		pact_status.text = tr("Pacte actif : %s (une vague)") % tr(WaveMods.current["name"])
 		pact_status.add_theme_color_override(&"font_color", Color(1, 0.55, 0.3))
 
 
