@@ -121,8 +121,8 @@ func _build_card(character: CharacterData) -> Button:
 	# investissement on repart, et ça doit se voir avant de cliquer.
 	var avancement := Forge.get_progress_for(character.id)
 	var branche: String = String(Forge.BRANCHES_PERSO.get(character.id, ""))
-	box.add_child(_label("Forge %d/%d  ·  branche %s" % [
-		avancement.x, avancement.y, branche], 14, Color(0.72, 0.68, 0.66), 1))
+	box.add_child(_label(tr("Forge %d/%d  ·  branche %s") % [
+		avancement.x, avancement.y, tr(branche)], 14, Color(0.72, 0.68, 0.66), 1))
 	box.add_child(HSeparator.new())
 
 	var desc := _label(character.description, 16, Color(0.78, 0.76, 0.76), 0)
@@ -153,7 +153,7 @@ func _refresh() -> void:
 	var character := Characters.get_selected()
 	if character == null:
 		return
-	stats_label.text = "%d PV   ·   %d vitesse   ·   %.0f DPS de départ   ·   %d portée" % [
+	stats_label.text = tr("%d PV   ·   %d vitesse   ·   %.0f DPS de départ   ·   %d portée") % [
 		roundi(character.max_health), roundi(character.move_speed),
 		character.get_base_dps(), roundi(character.targeting_range)]
 	if character.passive_name != "":
@@ -161,7 +161,7 @@ func _refresh() -> void:
 		passive_label.add_theme_color_override(&"font_color", character.color)
 	else:
 		passive_label.text = ""
-	start_button.text = "COMMENCER AVEC %s" % character.display_name.to_upper()
+	start_button.text = tr("COMMENCER AVEC %s") % character.display_name.to_upper()
 	_refresh_dechainement()
 
 
@@ -174,6 +174,6 @@ func _refresh_dechainement() -> void:
 	unleash_label.visible = arme
 	if not arme:
 		return
-	unleash_label.text = "DÉCHAÎNEMENT ARMÉ — aucune limite, et un enfer qui double" \
-		+ " de PV toutes les cinq vagues. Se désarme à la Forge."
+	unleash_label.text = tr("DÉCHAÎNEMENT ARMÉ — aucune limite, et un enfer qui double"
+		+ " de PV toutes les cinq vagues. Se désarme à la Forge.")
 	unleash_label.add_theme_color_override(&"font_color", Color(0.82, 0.58, 1.0))

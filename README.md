@@ -11,13 +11,14 @@ Ouvrir le dossier dans Godot, puis F5. Scène de départ :
 > **Après un clone, il manque les images.** Les sprites des personnages, des
 > ennemis, des boss, de l'interface et du décor viennent de packs tiers dont la
 > licence interdit la redistribution : ils ne sont pas dans le dépôt. Déposer les
-> cinq packs dans `assets/packs/` puis lancer
+> sept packs dans `assets/packs/` puis lancer
 > ```bash
 > python tools/extract_assets.py
 > ```
 > Le script n'a aucune dépendance et reconstruit tout à l'identique : les 12
 > planches d'entité, les pièces d'interface, les 24 icônes d'objets, les 19
-> pièces de décor et l'icône de l'application. Les noms de packs attendus sont en
+> pièces de décor, les 213 pièces de la carte de l'enfer et l'icône de
+> l'application. Les noms de packs attendus sont en
 > tête du fichier, les licences dans [`CREDITS.md`](CREDITS.md).
 
 | Action | Clavier | Manette | Mobile |
@@ -44,8 +45,11 @@ La run se termine à la mort du joueur : les âmes non dépensées sont perdues,
 **clés** récoltées sont capitalisées et servent à alimenter la **Forge Éternelle**
 (arbre de méta-progression permanent) et à débloquer des objets.
 
-Le HUD affiche en permanence : vie, **numéro de vague**, **minuteur de la vague**,
-âmes, clés, éliminations.
+Le HUD affiche en permanence le damné (portrait, vie, pouvoir et sa touche,
+seconde chance), la **vague**, son **minuteur** et le **prochain boss**, le pacte
+et les malédictions en jeu, les âmes, les clés, les éliminations, le temps de
+run et les **objets portés** avec leur nombre — détail dans « L'affichage en
+jeu ».
 
 ## Systèmes
 
@@ -1185,6 +1189,101 @@ profil (ce sont des préférences, pas de la progression).
 
 Vérifié par mesure : à 0 %, une secousse de force 20 laisse le traumatisme de la
 caméra à 0.00 ; à 100 %, il monte à 1.00.
+
+## Langues — le français source, l'anglais en face (0.9.1)
+
+Le jeu existe en **français et en anglais**. L'anglais a été fait en vue d'une
+sortie Steam : le français seul en est la première limite commerciale.
+L'option **Langue · Language** vient en tête des options. Par défaut elle est
+« Automatique » : français sur un système en français, anglais partout
+ailleurs. Chaque langue y est écrite dans la sienne (« Français », « English »),
+pour qu'un joueur qui ne lit pas la langue affichée trouve quand même la sienne.
+
+**Le français reste la langue source, et chaque texte est sa propre clé.** Il
+n'y a pas de table de clés abstraites (`MENU_JOUER`…) :
+[`locale/en.po`](locale/en.po) met l'anglais en face de la phrase française
+exacte. Trois conséquences :
+
+- le code se lit tel qu'il s'affiche ;
+- un texte oublié retombe sur le français, jamais sur une clé ;
+- **retoucher une phrase française lui fait perdre sa traduction**, puisque sa
+  clé a changé. L'outil ci-dessous le signale.
+
+`locale/fallback` vaut `"fr"`, et ce n'est pas un détail : avec la valeur par
+défaut de Godot (`"en"`), un joueur réglé en français, sans traduction
+française à trouver, recevrait l'anglais.
+
+### Où la traduction se fait
+
+| Texte | Comment |
+|---|---|
+| posé tel quel dans un contrôle (`label.text = "PAUSE"`, scènes) | le contrôle le traduit lui-même, et le retraduit si la langue change à l'écran |
+| composé (`"Vague %d" % n`) | `tr()` sur le GABARIT, avant le formatage : c'est lui la clé |
+| catalogues en constantes (objets, personnages, Forge, malédictions, pactes, histoire) | traduits à la LECTURE : `ItemData.display_name` et `CharacterData` passent leurs textes par `tr()` dans leur accesseur, l'affichage appelle `tr()` sur le reste |
+| noms et sous-titres des boss (scènes) | `tr()` dans le HUD |
+| noms des touches (dessinés, pas posés dans un Label) | retraduits sur `NOTIFICATION_TRANSLATION_CHANGED` |
+
+Le panneau de développement reste en français : il n'est jamais livré aux
+joueurs.
+
+### L'outil qui garde tout à jour
+
+[`tools/traductions.py`](tools/traductions.py) relève les textes :
+
+- les appels `tr()` ;
+- les textes posés dans un contrôle ;
+- les propriétés `text` et `boss_name` des scènes ;
+- les clés de texte des catalogues, que la table `DONNEES` désigne.
+
+Il vérifie que chacun a sa traduction :
+
+```bash
+python tools/traductions.py
+```
+
+- **Code de sortie 1** s'il manque une traduction, ou si un **gabarit est
+  faux** : une traduction qui perd ou ajoute un `%d` ferait échouer le
+  formatage en jeu, dans cette langue seulement.
+- `--manque` ajoute les textes nouveaux à `en.po`, à remplir.
+- `--suspects` liste les chaînes qui ressemblent à du texte sans passer par
+  la traduction, c'est-à-dire les oublis probables. Le premier relevé en a
+  sorti une trentaine : des textes passés par une variable, les branches d'un
+  ternaire (`"Actif" if … else "Charger"`), les colonnes de la fiche nommées
+  hors d'une constante.
+
+État à la sortie de la 0.9.1 : **579 textes, 579 traduits.**
+
+### Décisions de traduction
+
+| Français | Anglais | Pourquoi |
+|---|---|---|
+| Caïn, Job, Loth | Cain, Job, **Lot** | les noms des Bibles anglaises |
+| Hélel, Asmodée, Golgota, Édith | Helel, Asmodeus, Golgotha, Edith | idem |
+| Déchaînement | Unleashed | |
+| Forge Éternelle, Clé des Abysses | Eternal Forge, Key of the Abyss | |
+| le Prix du sang, le Refus de plier, la Ruée | Blood Price, Refuse to Bend, the Rush | |
+| Le Pari, l'Accusateur | The Wager, the Accuser | |
+| PV, âmes, Sacrés | HP, souls, Sacred | |
+
+Les pourcentages perdent leur espace en anglais (`25 %` → `25%`). Les
+décimales suivent la langue (`UIUtils.nombre` : « 1,5 » ou « 1.5 »).
+
+### Trois défauts vus à la capture
+
+Ce sont des défauts que la seule relecture du fichier ne montrait pas :
+
+- **« 1 keys », « Reroll (1 souls) »** : le compte singulier manquait, et il
+  manquait aussi en français (« 1 clés »). Les clés et les âmes ont maintenant
+  une forme au singulier.
+- **« Profil 2 » dans un jeu en anglais** : le nom par défaut s'écrit dans la
+  sauvegarde. `SaveGame.nom_affiche` relit un nom par défaut, quelle que soit
+  sa langue, dans celle du joueur. Un nom choisi par le joueur reste tel quel.
+- Le changement de langue à l'écran a été vérifié : les options se
+  reconstruisent dans la nouvelle langue, le focus reste sur le sélecteur, et
+  le menu dessous suit.
+
+**Pas encore relu par un anglophone natif.** Les textes d'ambiance (objets,
+histoire) sont les plus exposés.
 
 ## Interface — un thème, zéro style local
 
@@ -3007,6 +3106,54 @@ L'action `dash` (Espace / bouton A) a longtemps été une **liaison morte** :
 déclarée dans la table d'entrées et implémentée nulle part. C'est désormais la
 **ruée de Loth**, et elle n'appartient qu'à lui — voir « La ruée de Loth ».
 
+### L'affichage en jeu
+
+L'ancien affichage donnait la vie, la vague, son minuteur, les âmes, les clés et
+un nombre d'éliminations sans légende. Tout ce qui décide d'une décision en pleine
+vague manquait : le pouvoir et sa touche, le prochain boss, le pacte ou les
+malédictions en jeu, la seconde chance, les objets portés et leur nombre.
+[`hud.gd`](scripts/ui/hud.gd) est reconstruit par code, quatre coins pour quatre
+questions :
+
+| Coin | Question | Ce qui s'y trouve |
+|---|---|---|
+| haut gauche | qui suis-je, dans quel état | portrait et nom du damné encadrés de sa couleur (ils changent pendant le combat contre Hélel, et le cadre claque à chaque changement), vie et sa traînée, pouvoir avec sa jauge, son état et sa TOUCHE, seconde chance si elle reste |
+| haut centre | où en est la run | vague, minuteur et barre de progression, « boss dans N vagues » (en rouge à la veille), Déchaînement, pacte de la vague et son effet, malédictions et danger, puis la barre du boss avec son pourcentage, sa phase et le compte à rebours de l'enragement |
+| haut droite | ce que j'ai gagné | âmes, clés, éliminations, temps de run |
+| bas centre | ce que je porte | une case par objet DISTINCT, liserée de sa rareté, avec son nombre d'exemplaires ; la touche de la fiche en dessous |
+
+Quelques règles qui ont décidé de la forme :
+
+- **La traînée de vie** : une perte se lit en blanc pendant 0,35 s avant de se
+  résorber. Sans elle, un coup de 30 PV et un coup de 3 PV se ressemblaient.
+- **Sous 25 % de PV**, la barre et le cœur battent au rythme du battement que
+  joue l'audio : l'image et le son disent la même chose au même moment.
+- **Le pouvoir est lu, jamais deviné** : `Player.etat_pouvoir()` rend les mêmes
+  minuteurs et la même charge que ceux qui décident de l'appui. La Marque de Caïn
+  porte son seuil de 25 % sur l'anneau, la Ferveur de Job ses charges en perles.
+  Les jauges au sol restent : l'œil est aux pieds du joueur pendant le combat,
+  le coin sert à vérifier et à apprendre la touche, qu'aucune jauge ne disait.
+- **Les touches sont dessinées comme des touches** ([`touche.gd`](scripts/ui/touche.gd)),
+  à partir d'une planche de touches clavier en 16 px (lettres, flèches, F1 à
+  F12, quelques signes, en versions normale et enfoncée). Elle n'a ni Espace, ni
+  Tab, ni Échap — justement les touches du jeu : `extract_assets.py` en tire une
+  touche VIERGE en effaçant la plus petite inscription de la planche
+  (l'apostrophe), et l'interface l'étire pour y écrire le nom. La touche lit la
+  vraie liaison dans la table d'entrées, sur la disposition du joueur (une
+  touche physique W s'affiche Z en AZERTY), et **s'enfonce tant qu'on appuie** :
+  l'écran confirme l'appui. Dès qu'une manette sert, elle devient un bouton rond
+  (A vert) ou une gélule (SELECT). Planches absentes : le nom entre crochets.
+- **L'enragement du boss se voit** : c'est la seule horloge du combat qui change
+  ce que fait le boss. Le compte à rebours passe à l'orange sous 20 s.
+- **Une case par objet distinct** : `owned_items` porte une entrée par
+  exemplaire, la première version affichait donc cinq braises identiques.
+- **Pas d'icône pour les éliminations** : la seule croix du kit est rouge et se
+  lisait comme un bouton « fermer ».
+- **Les malédictions sont relues à chaque début de vague** : elles se choisissent
+  à l'écran d'ouverture, après la mise en place de l'affichage.
+- Le HUD est passé au **calque 2**, au-dessus du vignetage : les coins sont
+  sombres, l'interface y reste lisible. Aucun texte n'y est posé sans contour.
+
 ## Auto-aim (`scripts/combat/targeting_system.gd`)
 
 Chaque cible dans le rayon reçoit un score (0 = idéal), le plus petit gagne :
@@ -3025,6 +3172,11 @@ sans tirer parce qu'il vise mal, il privilégie simplement ce qui est devant lui
 filets en plus : tir anticipé sur la position future, auto-correction du projectile en
 vol (90 °/s), et un enum `target_priority` (`NEAREST`, `AIM_ASSISTED`, `LOWEST_HEALTH`,
 `HIGHEST_HEALTH`).
+
+**Pas à travers un obstacle** (0.9.1) : `require_line_of_sight` est actif sur le
+joueur, un rayon sur la couche du monde par candidat. Ce chemin n'avait jamais
+servi avant que la carte ait des obstacles, et il était faux — `exclude`
+recevait un nœud là où Godot attend des RID.
 
 ## Arborescence
 
@@ -3063,6 +3215,9 @@ scripts/
               curse_system.gd (autoload)   malédictions de run
               wave_modifiers.gd (autoload) pactes de vague
               character_effects.gd        passifs des personnages
+  world/      carte.gd                    la carte : lieux, obstacles, lave
+              generateur_carte.gd         ce qu'il y a dans une parcelle
+              enfer_db.gd                 ce que chaque pièce bloque ou brûle
   camera/     game_camera.gd
   pickups/    pickup.gd
   characters/ character_data.gd           définition d'un personnage
@@ -3073,7 +3228,7 @@ scripts/
               pause_menu.gd · virtual_joystick.gd · ui_utils.gd
   main.gd
 assets/
-  packs/      LES CINQ PACKS SOURCES, tels que téléchargés. Un seul
+  packs/      LES SIX PACKS SOURCES, tels que téléchargés. Un seul
               .gdignore à la racine les masque à Godot — donc ni importés ni
               exportés — et une seule ligne de .gitignore les exclut du dépôt.
               Rien du jeu ne pointe ici : tout en est DÉRIVÉ, par
@@ -3083,6 +3238,7 @@ assets/
               chaque entité porte deux planches : <nom>_idle.png, <nom>_walk.png
               items/ une icône 16×16 par objet, nommée par son identifiant
               decor/ une pièce de décor par fichier, nommée pareil
+              enfer/ les pièces de la carte, et sol/ ses trois textures
               arena/floor/ les deux carreaux de sol (art du projet)
   audio/      SoundEffects/ 2 musiques + 5 effets (OGG Vorbis)
   vfx/        Effect_pushAndStars/ planche d'explosion (domaine public)
@@ -3171,7 +3327,39 @@ pas la lisibilité**, et les ennemis se lisent aussi bien aux deux étages. Le
 décor suit le sol dans les deux cas — sans quoi la pierre beige flotte au-dessus
 d'un sol froid comme un calque d'un autre jeu.
 
+#### Le pavé de l'enfer remplace le dallage peint (0.9.1)
+
+Quand le pack Hell Underworld est extrait, le sol est son **pavé sombre** aux
+deux étages : l'ancien dallage, peint et lisse, faisait deux jeux superposés
+sous un décor en pixel art. Les deux anciens carreaux restent dans la scène, en
+repli pour un dépôt fraîchement cloné.
+
+Le carreau a été cherché comme celui de `floor.png` : toutes les positions
+essayées, et c'est le recadrage **(424, 2) en 144 px** qui ramène les joints
+(2,4 et 2,2) sous le bruit interne (3,9) ; le carré brut de 192 portait des
+joints de 6,5 et 5,5. À pleine force, son motif fin et serré occupait tout
+l'écran et le joueur s'y détachait moins bien : il est ramené à **50 % de
+contraste** vers sa couleur moyenne.
+
+Un shader y découpe des **régions** selon un bruit tiré à chaque run, avec un
+liseré sombre à la frontière : le dallage d'un temple enfoui en surface, de la
+**lave refroidie** en profondeur. Celle-ci sort de sa planche orange vif
+(127/56/33) : à la première capture, le joueur debout sur une croûte avait l'air
+d'être dans la lave. Elle est assombrie, ramenée à 55 % de contraste, et couvre
+moins de sol qu'en surface.
+
+La lumière n'a pas bougé — quart d'écran sans décor, mesuré en jeu :
+
+| Étage | ancien sol | pavé de l'enfer |
+|---|---|---|
+| Surface | 48/52/55, luminance 51 | 48/53/57, luminance 53 |
+| Profondeur | 68/50/43, luminance 55 | 70/51/43, luminance 56 |
+
 ### Le décor de l'arène
+
+> Depuis la 0.9.1, ce décor est engendré par la carte de l'enfer (section
+> suivante), qui en reprend les deux générateurs tels quels en surface. Tout ce
+> qui suit reste vrai, sauf la règle « aucune collision », remplacée.
 
 Même problème que le sol : rien ne peut être posé une fois, l'arène n'a pas de
 bord. Il a fallu deux versions jetées pour arriver à celle-ci, et les raisons
@@ -3248,7 +3436,9 @@ qu'on y voit des tirages faits puis ignorés.
 
 Quatre décisions valent d'être retenues :
 
-- **Aucune collision.** Dans un jeu où l'on lit le sol pour esquiver, un obstacle
+- **Aucune collision** (remplacée en 0.9.1 : les monuments de la carte bloquent,
+  mais ils arrêtent aussi tous les projectiles — ce qui répond à l'objection
+  même). Dans un jeu où l'on lit le sol pour esquiver, un obstacle
   qui arrête le joueur sans arrêter ce qui le frappe serait une trahison.
 - **Trié en Y avec les créatures**, donc le joueur passe derrière une colonne
   comme derrière un ennemi. Les zones annoncées et les projectiles vivent dans un autre
@@ -3313,6 +3503,333 @@ commentaire dans [`tools/extract_assets.py`](tools/extract_assets.py), parce
 qu'ils ne se retrouveraient pas autrement. Et le pack fournit aussi des caisses,
 des tonneaux, des portes, un banc et des panneaux indicateurs gravés, hors sujet
 dans un enfer, dont le texte serait de toute façon illisible à cette échelle.
+
+### La carte de l'enfer
+
+Depuis la 0.9.1, l'arène n'est plus un sol nu semé de pierres : c'est une
+**carte engendrée**, différente à chaque run, où certaines pièces **bloquent**
+et d'autres **brûlent**. Trois fichiers : [`generateur_carte.gd`](scripts/world/generateur_carte.gd)
+décide ce qu'il y a dans une parcelle (des données, sans aucun nœud),
+[`carte.gd`](scripts/world/carte.gd) en fait des sprites, des obstacles et de la
+lave, [`enfer_db.gd`](scripts/world/enfer_db.gd) dit ce que chaque pièce bloque,
+brûle ou éclaire.
+
+#### Le pack n'est pas un tileset
+
+Hell Underworld Tileset, ce sont cinq planches de 768 × 768 **sans aucune tuile
+de transition** : des objets posés où ils tiennent (monuments, supplices, laves,
+damnés) et quelques carrés de sol opaques. Les rectangles ont été relevés en
+détectant les îlots de pixels opaques puis identifiés sur des agrandissements
+quadrillés ([`tools/extract_enfer.py`](tools/extract_enfer.py)) : 210 pièces et
+3 textures. Chaque pièce est **masquée** après découpe — les planches sont
+serrées et un rectangle déborde souvent sur le bord adouci de la voisine.
+
+**Ce n'est pas du pixel art propre, et ça se mesure.** Sur la planche des
+terrains, 157 628 plages de couleur identique sur 160 858 font **un seul pixel**,
+et aucune phase de grille (2, 3 ou 4 px) ne se distingue des autres. Le dessin
+imite un pixel d'environ 2 px de planche sans grille régulière : le réduire de
+moitié l'aurait brouillé. Les pièces sont donc affichées à **1,5**, ce qui met ce
+pseudo-pixel à 3 px d'écran, la taille de celui des personnages. Filtrage net et
+doux comparés en capture : le net garde le trait ; sur un écran de 1440 lignes
+l'échelle réelle tombe à 2 et le rendu est exact.
+
+Les damnés de la planche B-02 ne sont repris qu'**enfermés** (cage, pieux,
+bûcher) : un damné libre dressé au milieu du sol se lit comme un ennemi. Les
+fantômes et les démons en sont écartés pour la même raison.
+
+#### Trois décisions
+
+1. **Des monuments solides, rares.** Statues, obélisques, autels, trônes,
+   cratères, machines de supplice, cages, murs de geôle : ce qui est gros et
+   dressé bloque, ce qui est petit ou plat se traverse — une règle de FORME que
+   le joueur devine d'un coup d'œil. La règle d'origine du décor (« aucune
+   collision ») disait qu'un obstacle qui arrête le joueur sans arrêter ce qui le
+   frappe serait une trahison : ceux-ci **arrêtent aussi tous les projectiles**,
+   des deux camps, et le rayon de l'œil. Les **boss passent au travers** (leur
+   masque n'a plus la couche du monde) : un boss coincé derrière une statue
+   serait un combat gagné sans le jouer.
+2. **La lave brûle tout le monde, boss exceptés.** Elle se voit en permanence :
+   c'est du placement pur, et y attirer la horde devient une tactique.
+3. **Une graine par run, un paysage par étage.** En surface la pierre froide,
+   les sanctuaires, les supplices, les geôles ; à la vague 11 on descend dans la
+   lave, les cratères et les ossuaires.
+
+#### Les lieux
+
+Le socle du décor d'origine ne change pas : une parcelle de 950 px, **un lieu
+par parcelle**, petit six fois sur dix, tout tiré d'un hachage de la parcelle.
+L'étage entre dans le hachage : une même parcelle porte deux lieux sans rapport.
+La règle « l'ordre des tirages fait partie du paysage » ne tient plus : la
+graine change à chaque run, il n'y a plus de paysage à préserver d'une version à
+l'autre.
+
+| Surface | poids | Profondeur | poids |
+|---|---|---|---|
+| éboulis (décor d'origine) | 28 | champ de lave | 26 |
+| ruine (décor d'origine) | 18 | éboulis noir | 20 |
+| sanctuaire | 17 | rivière de lave | 18 |
+| supplices | 15 | autel de braise | 15 |
+| geôle | 10 | cratère | 14 |
+| ossuaire | 6 | ossuaire | 7 |
+| cercle de pierres | 6 | | |
+
+La **soufrière** a existé et a été retirée : ses plaques de soufre jaune vif se
+lisaient comme des mines d'or et juraient avec tout le reste. Ses cristaux
+runiques dominent désormais le grand éboulis noir.
+
+Le décor d'origine est **retiré de la profondeur** : sa pierre beige, teintée
+chaude, jurait sur le pavé du pack (vu en capture). L'éboulis y garde sa pente,
+en roche noire et en obsidienne.
+
+#### Les règles de jouabilité
+
+Garanties par construction, et vérifiées par [`tools/test_carte.tscn`](tools/test_carte.tscn)
+sur 40 graines × 81 parcelles × 2 étages, soit 6 480 parcelles :
+
+1. Deux obstacles se touchent (un mur) ou laissent **160 px** — cinq imps de
+   front. Jamais de goulet, jamais de poche.
+2. Obstacles et lave restent à **80 px à l'intérieur de LEUR parcelle** : c'est
+   ce qui garantit la règle 1 entre deux parcelles qui s'engendrent sans se
+   connaître (2 × 80 = 160).
+3. Rien qui bloque ou brûle à moins de **320 px** du départ, ni de l'endroit où
+   l'on se tient quand on change d'étage.
+4. La lave laisse **110 px** aux obstacles, ou les touche.
+5. Une rivière est **finie** : elle tient dans sa parcelle, un bassin à chaque
+   bout. Elle se pose d'un bloc ou pas du tout — coupée en deux, elle ne se
+   lirait plus.
+
+Résultat : zéro violation, et **aucune poche fermée** même pour une brute
+d'élite (sol rastérisé à 16 px, obstacles gonflés de 30 px, remplissage par
+diffusion). Une pose qui enfreindrait une règle n'est pas posée ; un lieu se lit
+encore avec une statue en moins.
+
+#### Les règles de composition
+
+La première version posait chaque pièce à une position tirée dans un
+rectangle, sans regarder ce qui s'y trouvait déjà : un crâne dans le socle d'une
+statue, une roche au milieu d'une rivière, une braise qui couvait en surface,
+deux bassins soudés en une tache (retour de jeu : « tout est un peu aléatoire et
+certaines choses n'ont aucun sens »). Quatre règles s'ajoutent à celles de
+jouabilité, vérifiées par le même test :
+
+6. **Rien ne se chevauche.** Chaque pièce dressée a une emprise au sol — son
+   PIED, mesuré dans son image : largeur des pixels opaques de ses dernières
+   rangées, et décalage de leur milieu (le manche d'une torche n'est pas
+   forcément au centre). Deux pieds ne se recouvrent pas ; une grappe de roches
+   ou de stalagmites a le droit de se TOUCHER (28 % de recouvrement toléré).
+   Deux marques au sol ne se recouvrent pas non plus.
+7. **Rien ne tombe dans la lave** : ni pièce dressée, ni sceau, ni fissure.
+8. **Rien ne déborde de sa parcelle** : deux lieux voisins ne se mêlent plus.
+9. **Chaque pièce a un rôle et une place par rapport aux autres.** Deux braseros
+   ENCADRENT ce qu'on vénère ; les offrandes gisent À SES PIEDS ; chaque machine
+   de supplice a SA torche du côté du dehors et ses restes au pied ; les torches
+   d'une geôle tiennent les deux bouts du mur et les os s'entassent au pied des
+   portes ; les roches refroidies se posent SUR LA RIVE des bassins ; celles
+   d'une rivière sur les berges des tronçons droits, calculées tronçon par
+   tronçon (la première version les plaçait autour de l'axe de départ, et le
+   coude, qui déporte le cours, les jetait dans le courant) ; l'anneau de roches
+   entoure ses braises au lieu de les repousser. Les rôles ne mélangent plus les
+   étages : en surface, seuls les feux qu'on a allumés brûlent — plus de roche
+   incandescente ni de pic de lave dans l'enfer froid.
+
+Une pièce qui gêne **cherche une place à côté** avant de renoncer : jusqu'à huit
+essais autour du point voulu, de plus en plus loin, dans un ordre tiré (angle
+d'or). Mesuré sur 6 480 parcelles :
+
+| | pièces posées | déplacées pour trouver leur place | tombées |
+|---|---|---|---|
+| surface | 7 991 | 5 % | 1 % |
+| profondeur | 17 315 | 10 % | 4 % |
+
+Zéro chevauchement sur 14 299 pièces dressées en surface et 8 780 en
+profondeur. Les pièces du décor d'origine ne sont pas comparées entre elles :
+les colonnes d'une ruine se touchent à dessein, comme avant.
+
+#### La densité a dû être relevée
+
+| | 1re version | retenue |
+|---|---|---|
+| obstacles par parcelle, surface | 0,21 | 0,40 |
+| écrans 1920 × 1080 sans obstacle, surface | 68 % | 44 % |
+| obstacles par écran, surface (moy. / max) | 0,48 / 4 | 0,83 / 4 |
+| obstacles par écran, profondeur | 0,31 | 0,34 |
+| lave à l'écran, profondeur (moyenne) | 0,3 % | 1,5 % |
+| lave, 95e centile / maximum | 1,1 / 3,9 % | 4,1 / 7,3 % |
+| écrans sans lave | 31 % | 13 % |
+
+« Rares » ne voulait pas dire invisibles : deux écrans sur trois sans rien, et un
+bassin qui ne couvre que 0,44 % d'un écran à lui seul. Les lieux qui bloquent
+pèsent plus lourd, les petits lieux gardent parfois une vraie statue ou une
+machine, les champs ont plus de bassins, et la rivière existe aussi en petit —
+un ruisseau d'un tronçon (541 rivières posées sur 581 parcelles « rivière »).
+
+#### La lave
+
+La zone qui brûle est **lue dans l'image** : critère de couleur mesuré sur les
+planches (rouge fort, bleu faible), puis une fermeture qui bouche les îlots de
+roche dans le courant et une **érosion de 2 px** — un pied posé sur le bord
+rougeoyant ne brûle pas. Elle se teste aux **pieds** : 37,5 px sous l'origine du
+joueur, 28 sous celle des ennemis (entre l'imp et le joueur, voir le décor).
+
+| | réglage | mesuré |
+|---|---|---|
+| joueur | un coup ennemi moyen par seconde (`get_hit_damage`) | 42,9 PV en 2 s à la vague 11, attendu 42,9 |
+| ennemis | 30 % de leurs PV max par seconde | un imp immobile meurt en 3,35 s |
+
+Le joueur suit la courbe des vagues, donc le Déchaînement : tout ce qui résiste
+au joueur suit la même courbe. Les ennemis perdent un POURCENTAGE, sans quoi la
+lave cesserait de compter à mesure que leurs PV montent.
+
+**La brûlure ne donne ni ne consomme d'i-frames** (vérifié : aucune après une
+brûlure). Sinon, se tenir dans la lave au milieu d'une mêlée rendait intouchable
+au contact pour le prix d'un coup par seconde. Elle ne se pare pas — rien ne
+pare ce qui est annoncé au sol —, respecte l'armure et déclenche la seconde
+chance. Un éclair **orange** et non rouge : « je brûle », pas « on m'a touché ».
+
+**Les rivières se raccordent au pixel.** Mesuré sur les planches : la lave des
+deux tronçons droits va de x 20 à 76, centrée sur 48, en haut comme en bas ; le
+coude entre centré sur 143,5 et sort sur 47,5. Un tronçon sur deux est retourné,
+ce qui rend chaque joint parfait. Deux corrections vues en capture : les
+tronçons étaient des rectangles opaques dont la berge grise se découpait sur le
+sol, d'où une berge **fondue selon la distance à la lave** à l'extraction ; et
+les bassins des bouts passaient parfois sous la rivière, d'où une couche à part.
+
+La roche refroidie autour des bassins rougeoyait autant que la lave : elle est
+**éteinte**. Le langage est un seul : une nappe orange pleine brûle, des fissures
+sur fond sombre ne brûlent pas.
+
+#### Les obstacles et le contournement
+
+Les obstacles sont convexes (cercles et capsules) et espacés : un **évitement
+local** suffit, sans carte de flux. Chaque obstacle proche et devant pousse la
+direction voulue vers sa tangente. Banc : un obstacle, le joueur immobile au
+nord, 12 imps nés juste au sud, 15 s pour arriver ; neuf obstacles de trois
+formes.
+
+| | arrivés | temps médian |
+|---|---|---|
+| sans évitement | 46 / 108 — aucun à franchir un mur de geôle | 7,9 s |
+| **avec évitement** | **107 / 108** | **4,0 s** |
+| ligne droite, rien entre eux | — | 4,4 s |
+
+Coût : 0,3 à 0,7 ms de physique par image avec 160 ennemis.
+
+Trois erreurs en chemin, à ne pas refaire :
+
+- **Un mur en trois capsules** laissait à chaque jonction une encoche entre les
+  bouts arrondis, et deux tangentes contraires qui renvoyaient le corps de l'une
+  à l'autre : 0 à 1 imp sur 12 passait. Le mur entier est désormais **une seule
+  capsule** ; ses pans sont de purs dessins.
+- **Le côté tiré au hasard** devant un obstacle allongé faisait se croiser ceux
+  de gauche et ceux de droite, qui se bloquaient contre lui (5 à 10 sur 12).
+  Devant une capsule, chacun passe du côté du CENTRE où il se trouve ; devant un
+  cercle, du côté de son cap.
+- **Le premier banc mesurait autre chose.** Le joueur, armé, tuait les imps en
+  route — comptés « jamais arrivés » — et la version à 90 ennemis saturait
+  l'anneau de contact autour d'un joueur immobile. Un banc de contournement se
+  fait joueur désarmé, par petits groupes.
+
+Le reste suit : **le rayon de l'œil s'arrête** au bord de l'obstacle (marche par
+pas de 6 px, puis dichotomie), **la visée ne tire pas à travers** (vérifié : un
+ennemi caché est ignoré, le même à découvert est visé), et **personne ne naît
+dans un mur ni dans la lave** — ni les ennemis de l'anneau, ni les renforts des
+boss.
+
+#### La lumière et les ombres
+
+Une pièce posée sur le sol sans ombre ni lumière se lit comme un autocollant.
+Deux choses l'intègrent :
+
+- **Une ombre de contact glissée sous le pied** de chaque pièce dressée :
+  l'ellipse sombre que portent aussi les personnages dans leurs planches. Elle
+  épouse le pied RÉEL de la pièce — socle, roche, manche de torche —, mesuré
+  dans l'image (largeur des pixels opaques des dernières rangées), et se centre
+  un peu au-dessus de la base : il n'en dépasse qu'un liseré. Deux versions
+  ont été écartées parce que **les objets avaient l'air de voler** (retour de
+  jeu, confirmé en gros plan) : une ellipse large comme toute l'image, centrée
+  sous la base, laissait une tache sombre séparée de la roche par un espace ; et
+  une **ombre portée** vers la droite — la silhouette inclinée depuis la base,
+  dans le sens des ombres du décor d'origine — avait sa partie proche du sol
+  cachée par la pièce elle-même, pour peu qu'elle soit large en bas : il n'en
+  restait qu'une bande sortant à mi-hauteur, détachée du sol.
+- **De vraies lumières 2D**, additives, sous la lave et le feu : le sol et le
+  décor s'y colorent, les flammes vacillent (deux sinus sans rapport simple, une
+  phase par flamme), la lave couve sans bouger. Des braises montent des bassins,
+  des rivières et des grands brasiers. Elles remplacent les disques de lueur
+  additifs de la première version, qui teintaient le sol d'une couleur fixe même
+  là où il était noir.
+
+**Les créatures ne reçoivent pas la lumière** (calque `Carte.MASQUE_DECOR`) : un
+joueur orangé près d'un bassin se lirait comme un joueur qui BRÛLE, l'éclair de
+la brûlure étant orange. Les zones annoncées et les projectiles non plus. La
+lave elle-même n'est pas éclairée : c'est déjà la chose la plus claire de
+l'écran, éclairée elle saturait.
+
+**Le coût, mesuré** vsync coupée en 3440 × 1440, au milieu d'un champ de lave :
+0,84 à 0,87 ms par image sans les lumières, 0,91 à 0,95 avec, pour 19 à 23
+lumières à l'écran. Moins d'un dixième de milliseconde.
+
+**La lumière du joueur et le vignetage** ([`lumiere_joueur.gd`](scripts/vfx/lumiere_joueur.gd),
+[`vignette.gd`](scripts/vfx/vignette.gd)). Un halo blanc chaud sur le sol autour
+des pieds du joueur, et les bords de l'écran qui s'enfoncent dans le noir : à
+eux deux, ils disent où regarder. Le halo n'éclaire, comme les autres lumières,
+que le sol et le décor ; il est blanc chaud et non orange, l'orange étant la
+couleur de la brûlure. Le vignetage suit l'écran et non le joueur — la caméra
+n'anticipe que de 96 px, le joueur ne sort jamais de la zone claire — et se
+pose entre le monde et l'interface (le HUD est passé au calque 2) : HUD,
+boutique et menus restent à pleine lumière. Il suit la forme de l'écran, donc
+un écran très large ne s'assombrit pas plus sur les côtés qu'en haut et en bas.
+
+Mesuré en jeu sur du sol nu, en 3440 × 1440 (luminance perçue, avec puis sans) :
+
+| zone | surface | profondeur |
+|---|---|---|
+| sol sous le joueur | +33 % | +31 % |
+| à 250 px du joueur | +2 % | +2 % |
+| milieu des bords gauche et droit | −36 % | −37 % |
+| coins du bas | −72 % | −72 % |
+| centre de l'écran | 0 % | 0 % |
+
+Le vignetage est FORT, et c'est un choix assumé contre la lisibilité des bords :
+il a été monté trois fois à la demande, jusqu'à accepter d'en cacher un peu.
+
+| réglage | milieu des bords | coins |
+|---|---|---|
+| force 0,5 (premier) | −13 % | −41 % |
+| force 0,62 | −17 à −21 % | −51 % |
+| **force 0,8, début 0,24** (retenu) | **−36 %** | **−72 %** |
+
+Les ennemis entrent par les bords et les zones annoncées s'y dessinent : ce qui
+s'y passe se voit encore, mais s'y remarque moins. Si le jeu devient injuste sur
+les côtés, c'est la première valeur à redescendre (`force`, dans
+`vignette.gd`). Le premier halo (énergie 0,42, +22 % sous le joueur) se devinait
+à peine en capture : il a été porté à 0,65.
+
+**Un piège à connaître** : la lumière 2D de Godot s'applique aux couleurs de
+l'IMAGE, pas à la teinte du sprite. L'ombre portée — la silhouette d'une statue
+teintée en noir — se rallumait aux couleurs de la statue près d'un brasier (vu
+en capture : des croissants orange à côté des braseros). Aucune ombre n'est donc
+sur le calque de lumière.
+
+#### Le changement d'étage
+
+À la vague 11, le paysage entier change derrière un **fondu au noir** de 0,25 s :
+changé à vue, pièce par pièce, il se lirait comme un bug d'affichage. Le sol
+attend le plus noir du fondu pour changer de carreau. L'endroit où se tient le
+joueur devient une exclusion : rien ne peut surgir sur lui.
+
+C'est aussi là que se calculent les **masques de lave** : 75 ms en tout
+(mesuré), dont 13 à 26 ms par tronçon de rivière. Calculés à la première
+rencontre, ils faisaient saccader le jeu quand une rivière entrait dans l'écran ;
+derrière le noir, personne ne les voit.
+
+#### Ce qui n'est pas mesuré
+
+- Le **danger réel de la lave en partie** : les bancs tiennent le joueur immobile
+  ou invincible, et aucun ne l'évite. Le chiffre de brûlure est vérifié, pas son
+  poids dans une run.
+- L'effet des obstacles sur **l'équilibrage des vagues** : les goulets sont
+  exclus par construction, la survie n'a pas été remesurée.
 
 ## Effets visuels
 
@@ -3741,7 +4258,8 @@ Le dossier en contient six ; **quatre** entrent dans la liste.
   musique — de la roche qui se brise, ce qui tombe bien pour l'écrasement de
   Golgota, qui n'a aucun son propre.
 
-Les deux restent sur le disque, hors de toute liste, en attendant une décision.
+Les deux restaient sur le disque, hors de toute liste. L'écrasement de roche
+sert depuis la 0.9.1 aux zones de Golgota ; le générique attend toujours.
 
 Elles s'**enchaînent** au lieu d'être tirées au sort à l'ouverture : un tirage par
 run laisserait encore une seule piste tourner en boucle pendant toute la partie,
@@ -3877,6 +4395,69 @@ sont dans le commentaire de [`audio.gd`](scripts/core/audio.gd).
 À 1 s le tir mobilise 7 des 16 voix en permanence et cesse d'être un évènement :
 six copies d'une nappe qui se recouvrent en continu font un bourdon. À 0,5 s
 chaque coup s'articule encore. D'où le choix.
+
+### Les effets de la 0.9.1
+
+Le jeu ne jouait que six effets : le clic, le survol, le tir, la mort d'un
+ennemi, le rugissement de boss et « objet » — ce dernier réemployé faute de
+mieux pour le glitch, le Jugement et la seconde chance. Les trois pouvoirs, le
+coup encaissé et l'âme ramassée étaient muets. 26 fichiers déposés dans `Sfx/`
+(voir CREDITS) et l'écrasement de roche resté inutilisé dans `Music/` comblent
+ces manques :
+
+| Son | Quand | Son | Quand |
+|---|---|---|---|
+| `impact` | chaque trait du joueur qui touche | `explosion` / `roche` | zone annoncée qui détone (roche : Golgota) |
+| `coup` | coup encaissé | `mort_boss` | mort d'un boss |
+| `ame`, `soin`, `cle` | ramassage | `tir_ennemi` | tir d'un cultiste |
+| `mort_joueur`, `seconde_chance` | mort, seconde chance | `voile`, `voile_brise` | Voile de l'Aurore levé, brisé |
+| `lance` | tir de Job (la boule de feu garde `tir`) | `glitch_1` à `4` | changement de corps, au hasard |
+| `ruee`, `prix_du_sang` | pouvoirs de Loth et de Caïn | `cle_abysses` | Clé des Abysses |
+| `parade`, `parade_ratee` | parade de Job | `forge` | nœud de Forge débloqué |
+| `jugement`, `consecration` | Jugement, sol consacré | `texte`, `texte_ligne` | cinématiques (toutes les deux lettres, et à chaque réplique) |
+| `foudre` | zones de Baal | `baiser` | Édith revient, dans la fin de Loth |
+| `teleportation` | Lilith disparaît | `chaine`, `meuglement` | chaîne et charge d'Asmodée |
+
+**Deux boucles, hors de la banque de voix** — une ambiance de deux minutes ne doit
+jamais se faire voler sa voix par un tir :
+
+- **l'ambiance de l'arène**, sous la musique : le donjon en surface, la lave dès
+  la vague 11, avec le sol ; fondu de 2 s entre les deux, silence au menu ;
+- **le battement de cœur** sous 25 % de PV, repris après les 0,36 s de silence
+  de tête du fichier, pour que la boucle ne marque pas de trou.
+
+Le gong de fin de vague a été retiré : il ne plaisait pas.
+
+**Mesuré avant de brancher, et la première mesure était fausse.** Joués dans le
+moteur et captés en sortie de bus, les fichiers donnaient des fins plus longues
+que les fichiers eux-mêmes : la capture en temps réel compte mal. Décodés hors
+ligne (`AudioStreamPlayback.mix_audio`, sans carte son), les chiffres tombent
+juste — la boule de feu d'origine, qui démarre franc, y démarre à 0,08 s :
+
+| Fichier | Crête | Son utile | Fichier |
+|---|---|---|---|
+| impact | −2,4 dB | 0,25 → 0,45 s | 1,04 s |
+| prix_du_sang | −6,7 dB | 0,31 → 1,05 s | 1,58 s |
+| glitch_1 | **+5,2 dB** | 0,26 → 1,45 s | 1,70 s |
+| gong | −2,2 dB | **2,57** → 7,69 s | 17,2 s |
+| jugement | 0,1 dB | 0,02 → 4,46 s | 10,3 s |
+| consecration | 0,4 dB | 0,03 → 1,84 s | 8,0 s |
+| seconde_chance | −4,6 dB | 0,08 → 1,28 s | 8,0 s |
+| baiser | −2,0 dB | **1,18 → 1,24 s** | 3,6 s |
+| ame | **−16,7 dB** | 0,12 → 0,35 s | 0,77 s |
+| texte | **−15,4 dB** | 0,03 → 0,09 s | 0,12 s |
+
+Aucun fichier n'a été retouché : deux clés de `Audio.SFX` suffisent. `debut`
+saute le silence de tête — un impact qui sonne un quart de seconde après le
+coup paraît cassé —, `duree` coupe les queues avec le fondu existant. Les
+volumes compensent les écarts de 20 dB entre fichiers, les sons les plus
+fréquents (impact, lance, âme, blips de texte) le plus bas, avec leur anti-spam.
+
+**Vérifié au banc** : les 34 sons se chargent, et chacun se déclenche par son vrai
+chemin — sauf ceux que le scénario ne provoquait pas (aucun soin tombé, aucune
+seconde chance, et un seul changement de corps, donc un seul glitch sur quatre).
+**Non vérifié** : le MIX lui-même. Les volumes sont posés d'après les crêtes et
+le rôle de chaque son ; c'est à l'oreille, en jeu, qu'ils se corrigent.
 
 ### Les boutons sonnent sans être câblés
 
@@ -4061,9 +4642,10 @@ développement :
 
 ### Avant une diffusion publique
 
-- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Les cinq packs
+- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Six des sept packs
   autorisent l'usage commercial dans un jeu et interdisent la redistribution des
-  assets. **Distribuer le jeu exporté est conforme** — c'est le cas d'usage
+  assets ; le septième, la planche des touches clavier (0.9.1), n'a pas encore
+  sa source ni sa licence consignées. **Distribuer le jeu exporté est conforme** — c'est le cas d'usage
   explicitement prévu.
 - **Dépôt public.** C'est l'autre face de la même clause : « ni redistribution ni
   ré-upload, modifiés ou non ». Ni les packs ni les planches qu'on en tire ne
@@ -4105,6 +4687,63 @@ qu'un accent de couleur, et il survit à la réduction.
   l'exécutable. À incrémenter à chaque livraison — il était resté à `0.1.0` dans
   ce paragraphe pendant six versions, ce qui est exactement ce qu'une note « à
   incrémenter » finit par devenir si personne ne la relit.
+
+### La bande-annonce, tournée dans le jeu (0.9.1)
+
+[`tools/bande_annonce.gd`](tools/bande_annonce.gd) tourne une bande-annonce de
+70 s, sans logiciel de montage. Le script joue la vraie partie et pose les
+cartons par-dessus. Godot enregistre ensuite chaque image avec son **Movie
+Maker**, son compris.
+
+```bash
+godot --path . --fixed-fps 60 --write-movie build/bande-annonce/infernum_en.avi res://tools/bande_annonce.tscn ++ en
+```
+
+`++ fr` donne la version française.
+
+| Temps | Plan |
+|---|---|
+| 0 – 9,6 s | cartons de l'histoire (« Le Ciel a fait un pari »…), puis Lucifer sort de l'ombre et rugit |
+| 9,65 s | le titre, sur l'attaque de la musique |
+| 13,6 – 25,6 s | Caïn et le Prix du sang, Job et le Jugement, Loth et ses ruées |
+| 25,6 – 36,6 s | « L'enfer n'a pas de portes », une vague, puis les profondeurs et la lave |
+| 36,6 – 48,6 s | les cinq boss, de Golgota à Lucifer (Hélel est gardé secret) |
+| 48,6 – 54,6 s | la boutique et la Forge |
+| 54,6 – 62,6 s | le Déchaînement, avec tout le catalogue au maximum |
+| 62,6 – 70 s | le titre et « Bientôt disponible » |
+
+Décisions et mesures :
+
+- **Une seule arène pour tout le tournage.** Les trois damnés se relaient
+  par le changement de personnage en cours de partie du combat contre Hélel.
+  Les ennemis restent donc à l'écran d'un plan à l'autre. Ce qui se prépare
+  entre deux plans (saut de vague, apparition d'un boss) passe sous un
+  carton ou un noir de quelques images, jeu accéléré jusqu'à ×8 et son coupé.
+- **La musique fait le montage.** Les six pistes ont été mesurées sur leur
+  enveloppe RMS. « Cyber Wolf » a une intro calme (-18 dB), un trou à 8,1 s
+  (-25 dB), puis une attaque à 9,65 s (-12 dB) : le titre tombe dessus.
+- **Le mix est propre à la vidéo**, sans toucher aux réglages du joueur. Le
+  premier rendu sortait à -16/-17 dB RMS, avec des crêtes à -2,2 dBFS. Le son
+  est monté de 3 dB, et un limiteur tient les crêtes sous -1 dBFS.
+- **Toujours en fenêtre 16/9.** En plein écran sur un écran 21/9, le jeu se
+  calait sur 2560 × 1080 et la vidéo rognait les deux colonnes du HUD.
+- **La taille de la vidéo est celle de la fenêtre**, et `--resolution` est
+  ignoré. Pour du 1080p, un `override.cfg` temporaire à la racine fixe
+  `display/window/size/window_width_override=1920` (et la hauteur à 1080) et
+  `editor/movie_writer/mjpeg_quality=0.95`. On le supprime après le rendu.
+- **Un rendu peut sortir noir.** C'est arrivé une fois sur deux rendus
+  enchaînés, sans erreur, et la relance était bonne. Vérifier les plans de
+  jeu dans l'AVI avant de le livrer.
+- **Le tournage écrit dans le profil actif** : l'histoire y est marquée vue
+  (pour qu'aucune cinématique ne coupe un plan) et le nom par défaut est
+  réécrit dans la langue de la vidéo. Il faut sauvegarder avant, comparer et
+  rendre après.
+
+L'AVI (MJPEG, environ 750 Mo) se convertit en MP4 H.264 + AAC, 16 Mbit/s,
+avec le transcodeur intégré à Windows (`Windows.Media.Transcoding`), sans rien
+installer. Cela prend 12 s et donne environ 95 Mo. La musique est une piste
+Pixabay, comme les autres musiques d'arène : sa page d'origine est à
+consigner avec les autres sources avant une diffusion.
 
 ## Étendre
 
@@ -4149,6 +4788,9 @@ qu'un accent de couleur, et il survit à la réduction.
 | 4 | player_projectile | 8 |
 | 5 | enemy_projectile | 16 |
 | 6 | pickup | 32 |
+
+La couche **world** porte les obstacles de la carte (0.9.1). Joueur, ennemis et
+tous les projectiles l'ont dans leur masque ; les boss ne l'ont plus.
 
 ## Notes
 

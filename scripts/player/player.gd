@@ -79,6 +79,9 @@ var ferveur: float = 0.0
 ## boule de feu et retour.
 var _projectile_origine: PackedScene = null
 
+## Son du tir : la boule de feu, ou la lance de Job.
+var _son_tir: StringName = &"tir"
+
 ## Le Jugement vient d'être rendu, à cet endroit : la Consécration s'y pose.
 signal jugement_rendu(at: Vector2)
 
@@ -102,7 +105,7 @@ func _ready() -> void:
 		# Seules les armes DU JOUEUR sonnent. Les cultistes tirent aussi, et
 		# ajouter leur salve au même son remplirait la banque de voix avec du
 		# bruit sur lequel le joueur n'a aucune prise.
-		weapon.fired.connect(func(_target: Node2D) -> void: Audio.play(&"tir"))
+		weapon.fired.connect(func(_target: Node2D) -> void: Audio.play(_son_tir))
 
 	RunState.stats_recomputed.connect(_on_stats_recomputed)
 	apply_stats(RunState.stats)
@@ -226,6 +229,7 @@ func _lancer_ruee() -> void:
 		_dash_direction = Vector2.RIGHT
 	_dash_restant = Characters.DASH_TIME
 	_dash_recharge = _recharge_ruee()
+	Audio.play(&"ruee")
 	_knockback = Vector2.ZERO
 	collision_mask &= ~Layers.ENEMY
 	_trace_restante = 0.0
@@ -273,6 +277,7 @@ func _avancer_parade(delta: float) -> void:
 			# Fenêtre écoulée sans rien parer : c'est un coup dans le vide.
 			_parade_racine = Characters.PARADE_RACINE
 			_parade_recharge = _recharge_parade()
+			Audio.play(&"parade_ratee")
 	if _jauge_parade == null:
 		return
 	if _parade_amorce > 0.0:
@@ -306,6 +311,38 @@ func is_parrying() -> bool:
 	return _parade_fenetre > 0.0
 
 
+## L'ÉTAT DU POUVOIR, pour l'interface. Lu, jamais écrit : ce sont les mêmes
+## minuteurs et la même charge que ceux qui décident de l'appui — l'interface
+## ne peut donc pas promettre un pouvoir qui ne partirait pas.
+##   "id"      le pouvoir (&"dash", &"blood_price", &"steadfast"), ou &"" ;
+##   "part"    remplissage de 0 à 1 ;
+##   "pret"    un appui maintenant produirait quelque chose ;
+##   "reste"   secondes avant d'être prêt (recharges), sinon 0 ;
+##   "charges" / "charges_max"  la Ferveur de Job, en charges entières ;
+##   "jugement" la Ferveur est pleine : l'appui rend le Jugement.
+func etat_pouvoir() -> Dictionary:
+	if _peut_foncer:
+		var total := _recharge_ruee()
+		return {"id": &"dash", "part": clampf(1.0 - _dash_recharge / maxf(0.01, total), 0.0, 1.0),
+			"pret": _ruee_disponible(), "reste": _dash_recharge}
+	if _pouvoir == &"blood_price":
+		var marque: float = RunState.character_bonus.get(&"damage_pct", 0.0)
+		var part := clampf(marque / _marque_plafond, 0.0, 1.0)
+		return {"id": &"blood_price", "part": part,
+			"pret": part >= Characters.PRIX_MINIMUM, "reste": 0.0,
+			"minimum": Characters.PRIX_MINIMUM}
+	if _pouvoir == &"steadfast":
+		var maxi := _ferveur_max()
+		var occupe := _parade_racine > 0.0 or _parade_amorce > 0.0 or _parade_fenetre > 0.0
+		var jugement := ferveur >= maxi
+		return {"id": &"steadfast",
+			"part": clampf(1.0 - _parade_recharge / maxf(0.01, _recharge_parade()), 0.0, 1.0),
+			"pret": jugement or (_parade_recharge <= 0.0 and not occupe),
+			"reste": _parade_recharge, "charges": roundi(ferveur),
+			"charges_max": roundi(maxi), "jugement": jugement}
+	return {"id": &"", "part": 0.0, "pret": false, "reste": 0.0}
+
+
 ## LE CONTRE. Dégâts FIXES — un multiple des dégâts d'arme — et surtout pas une
 ## fraction de ce qui a été paré : au Déchaînement les dégâts ennemis montent en
 ## exponentielle, et un contre proportionnel y deviendrait la réponse à tout.
@@ -319,6 +356,7 @@ func _contrer(source: Node) -> void:
 	if _jauge_parade != null:
 		_jauge_parade.reussite()
 	_onde_parade()
+	Audio.play(&"parade")
 	add_ferveur(1.0)
 	# RIEN À DÉTRUIRE CÔTÉ PROJECTILE, et il a fallu le vérifier : `source` est
 	# le TIREUR et non le projectile — `projectile.gd` passe son `origin`. Le
@@ -364,7 +402,7 @@ func _rendre_jugement() -> void:
 	var degats: float = armes[0].get_projectile_damage() * Characters.JUGEMENT_RATIO \
 		if not armes.is_empty() else 0.0
 	GameEvents.request_shake(hit_shake * 2.5)
-	Audio.play(&"objet")
+	Audio.play(&"jugement")
 	var onde := ParryWave.new()
 	onde.rayon = Characters.JUGEMENT_RAYON
 	onde.teinte = Color(1.0, 0.86, 0.45)
@@ -459,6 +497,7 @@ func _apply_character(character: CharacterData) -> void:
 			_projectile_origine = weapon.projectile_scene
 		weapon.projectile_scene = character.projectile_scene \
 			if character.projectile_scene != null else _projectile_origine
+		_son_tir = &"lance" if character.projectile_scene != null else &"tir"
 		weapon.pierce = character.weapon_pierce
 		weapon.damage = character.weapon_damage
 		weapon.fire_rate = character.weapon_fire_rate
@@ -558,9 +597,34 @@ func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2
 		return
 	if not health.take_damage(reduced, source):
 		return
+	if not health.is_dead:
+		Audio.play(&"coup")
 	_knockback = (_knockback + impulse).limit_length(max_knockback)
 	GameEvents.request_shake(hit_shake)
 	_flash()
+
+
+## LA LAVE (voir `Carte`). Une brûlure continue et non un coup : pas de parade
+## (rien ne pare ce qui est annoncé au sol), pas d'i-frames ni données ni
+## consommées, pas de secousse — elle tombe quatre fois par seconde. L'armure
+## s'applique, la seconde chance aussi : mourir dans la lave reste une mort.
+func brule(amount: float) -> void:
+	var reduced := amount * (1.0 - RunState.stats.get_damage_reduction())
+	if health.is_dead or health.is_invulnerable() or reduced <= 0.0:
+		return
+	if reduced >= health.current and RunState.consume_revive():
+		health.revive(0.5, REVIVE_INVULNERABILITE)
+		GameEvents.player_revived.emit(self)
+		GameEvents.request_shake(hit_shake * 2.0)
+		_montrer_seconde_chance()
+		return
+	if not health.drain(reduced):
+		return
+	# Un éclair ORANGE, pas le rouge d'un coup : on doit lire « je brûle », et
+	# pas « on m'a touché ».
+	var tween := create_tween()
+	sprite.modulate = Color(2.0, 1.1, 0.45)
+	tween.tween_property(sprite, ^"modulate", Color.WHITE, 0.2)
 
 
 ## Poussée externe sans dégâts (chaîne d'Asmodée, souffles, explosions).
@@ -597,7 +661,6 @@ func _montrer_seconde_chance() -> void:
 	var eclat := ReviveBurst.new()
 	eclat.duree = REVIVE_INVULNERABILITE
 	add_child(eclat)
-	Audio.play(&"objet")
 
 
 func _on_stats_recomputed(stats: PlayerStats) -> void:

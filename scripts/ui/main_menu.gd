@@ -36,11 +36,14 @@ func _ready() -> void:
 
 	SaveGame.keys_changed.connect(func(_t: int) -> void: _refresh_meta())
 	SaveGame.profile_changed.connect(func(_s: int) -> void: _refresh_meta())
+	# La langue peut changer depuis les options, menu ouvert dessous.
+	Settings.changed.connect(_refresh_meta)
 
 	# Une run précédente peut avoir laissé l'arbre en pause ou des malédictions.
 	get_tree().paused = false
 	Curses.clear_all()
 	Audio.play_music(&"menu")
+	Audio.stop_ambiance()
 	_add_embers()
 	for screen in [character_select, profiles_screen, options_screen, forge_screen]:
 		screen.visibility_changed.connect(_update_hub)
@@ -94,7 +97,7 @@ func _add_embers() -> void:
 
 func _refresh_meta() -> void:
 	var progress := Forge.get_progress()
-	meta_label.text = "%s   ·   Clés : %d   ·   Forge %d/%d   ·   Meilleure vague : %d   ·   Runs : %d" % [
+	meta_label.text = tr("%s   ·   Clés : %d   ·   Forge %d/%d   ·   Meilleure vague : %d   ·   Runs : %d") % [
 		SaveGame.profile_name, SaveGame.banked_keys, progress.x, progress.y,
 		SaveGame.best_wave, SaveGame.total_runs]
 

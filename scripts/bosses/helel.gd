@@ -197,6 +197,7 @@ func _raise_shield() -> void:
 		add_child(_shield_ring)
 	_shield_ring.visible = true
 	GameEvents.request_shake(5.0)
+	Audio.play(&"voile")
 
 
 ## Brisé à temps : Hélel vacille, cesse d'attaquer, et encaisse davantage. C'est
@@ -204,6 +205,7 @@ func _raise_shield() -> void:
 func _break_shield() -> void:
 	shields_broken += 1
 	_shield_left = 0
+	Audio.play(&"voile_brise")
 	_stun = stun_time
 	_attack_timer = maxf(_attack_timer, stun_time)
 	if is_instance_valid(_shield_ring):

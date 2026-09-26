@@ -85,7 +85,7 @@ func _build_row(summary: Dictionary) -> Control:
 
 	var detail := Label.new()
 	if exists:
-		detail.text = "%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs" % [
+		detail.text = tr("%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs") % [
 			summary["keys"], summary["forge_nodes"], Forge.count_all_nodes(),
 			summary["best_wave"], summary["total_runs"]]
 	else:
@@ -96,7 +96,7 @@ func _build_row(summary: Dictionary) -> Control:
 
 	var select := Button.new()
 	select.custom_minimum_size = Vector2(160, 40)
-	select.text = "Actif" if is_active else ("Charger" if exists else "Commencer ici")
+	select.text = tr("Actif") if is_active else (tr("Charger") if exists else tr("Commencer ici"))
 	select.disabled = is_active
 	select.pressed.connect(func() -> void: SaveGame.load_profile(slot))
 	row.add_child(select)

@@ -75,6 +75,7 @@ func _run_phase(delta: float) -> void:
 func _blink(to: Vector2) -> void:
 	telegraph_at(global_position, 60.0, 0.25, 0.0, Color(0.7, 0.45, 1.0))
 	global_position = to
+	Audio.play(&"teleportation")
 	GameEvents.request_shake(2.5)
 
 

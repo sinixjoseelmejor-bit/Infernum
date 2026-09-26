@@ -100,10 +100,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _rebuild() -> void:
 	var stats := RunState.stats
-	wave_label.text = "Vague %d  ·  %d âmes  ·  %d éliminations  ·  %s" % [
+	wave_label.text = tr("Vague %d  ·  %d âmes  ·  %d éliminations  ·  %s") % [
 		RunState.wave, RunState.souls, RunState.kills, _duration()]
 	if RunState.unleashed:
-		wave_label.text += "  ·  DÉCHAÎNEMENT"
+		wave_label.text += "  ·  " + tr("DÉCHAÎNEMENT")
 		wave_label.add_theme_color_override(&"font_color", Color(1.0, 0.55, 0.2))
 	else:
 		wave_label.remove_theme_color_override(&"font_color")
@@ -119,7 +119,7 @@ func _rebuild() -> void:
 	grille.add_child(_entete(""))
 	for source: Array in sources:
 		grille.add_child(_entete(String(source[0]).to_upper(), LARGEUR_SOURCE))
-	grille.add_child(_entete("= TOTAL", LARGEUR_TOTAL))
+	grille.add_child(_entete(tr("= TOTAL"), LARGEUR_TOTAL))
 	grille.add_child(_entete(""))
 
 	for row in ROWS:
@@ -139,7 +139,7 @@ func _rebuild() -> void:
 
 	UIUtils.clear_children(items_column)
 	var owned := _owned_sorted()
-	items_title.text = "OBJETS  ·  %d piles, %d distincts" % [
+	items_title.text = tr("OBJETS  ·  %d piles, %d distincts") % [
 		RunState.owned_items.size(), owned.size()]
 	if owned.is_empty():
 		var empty := Label.new()
@@ -154,7 +154,7 @@ func _rebuild() -> void:
 
 func _duration() -> String:
 	var total := int(RunState.run_time)
-	return "%d min %02d s" % [total / 60, total % 60]
+	return tr("%d min %02d s") % [total / 60, total % 60]
 
 
 ## Une source apporte-t-elle quelque chose sur cette statistique ?
@@ -172,7 +172,7 @@ func _alimentee(cle: String, sources: Array) -> bool:
 ## c'est là que la mention PLAFOND s'allume.
 func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Array) -> void:
 	var titre := Label.new()
-	titre.text = String(row[0])
+	titre.text = tr(String(row[0]))
 	titre.add_theme_font_size_override(&"font_size", 15)
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	titre.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
@@ -204,7 +204,7 @@ func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Arra
 	grille.add_child(total)
 
 	var plafond := Label.new()
-	plafond.text = "PLAFOND" if au_plafond else ""
+	plafond.text = tr("PLAFOND") if au_plafond else ""
 	plafond.add_theme_font_size_override(&"font_size", 11)
 	plafond.custom_minimum_size = Vector2(62, 0)
 	plafond.add_theme_color_override(&"font_color", MAXED)
@@ -233,7 +233,7 @@ func _cellule_base(cle: String, perso: PlayerStats) -> Label:
 		"fire_rate":
 			texte = "%.1f /s" % (personnage.weapon_fire_rate * (1.0 + perso.fire_rate_pct))
 		"crit":
-			texte = "%d %%" % roundi((personnage.weapon_crit_chance + perso.crit_chance) * 100.0)
+			texte = tr("%d %%") % roundi((personnage.weapon_crit_chance + perso.crit_chance) * 100.0)
 		"crit_damage":
 			texte = "×%.2f" % (2.0 + perso.crit_damage_pct)
 		"health":
@@ -277,7 +277,7 @@ func _cellule_source(cle: String, unite: String, source: PlayerStats) -> Label:
 		return cellule
 	match unite:
 		"pct":
-			cellule.text = "%+d %%" % roundi(brut * 100.0)
+			cellule.text = tr("%+d %%") % roundi(brut * 100.0)
 		"ent":
 			cellule.text = "%+d" % int(brut)
 		"plat":
@@ -327,7 +327,7 @@ func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
 		match cle:
 			"damage":
 				if arme != null:
-					return ["%.1f /tir" % arme.get_projectile_damage(), stats.get_damage_pct()]
+					return [tr("%.1f /tir") % arme.get_projectile_damage(), stats.get_damage_pct()]
 			"fire_rate":
 				if arme != null:
 					var duree: float = arme.get_cooldown_duration()
@@ -338,7 +338,7 @@ func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
 						float(stats.get_projectile_bonus())]
 			"crit":
 				if arme != null:
-					return ["%d %%" % roundi(arme.get_crit_chance() * 100.0),
+					return [tr("%d %%") % roundi(arme.get_crit_chance() * 100.0),
 						stats.get_crit_chance()]
 			"crit_damage":
 				if arme != null:
@@ -354,7 +354,7 @@ func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
 
 	match cle:
 		"damage":
-			return ["+%d %%" % roundi(stats.get_damage_pct() * 100.0), stats.get_damage_pct()]
+			return [tr("+%d %%") % roundi(stats.get_damage_pct() * 100.0), stats.get_damage_pct()]
 		"damage_flat":
 			# S'ajoute AVANT le pourcentage, donc il est multiplié par lui : +1.5
 			# plat sur une arme à +50 % vaut +2.25 de dégâts réels. La ligne
@@ -362,33 +362,33 @@ func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
 			# ne fait que dire d'où vient l'écart.
 			return ["%+.1f" % stats.damage_flat, stats.damage_flat]
 		"fire_rate":
-			return ["%+d %%" % roundi(stats.get_fire_rate_pct() * 100.0), stats.get_fire_rate_pct()]
+			return [tr("%+d %%") % roundi(stats.get_fire_rate_pct() * 100.0), stats.get_fire_rate_pct()]
 		"projectiles":
 			return ["+%d" % stats.get_projectile_bonus(), float(stats.get_projectile_bonus())]
 		"pierce":
 			return ["+%d" % stats.get_pierce(), float(stats.get_pierce())]
 		"crit":
-			return ["%d %%" % roundi(stats.get_crit_chance() * 100.0), stats.get_crit_chance()]
+			return [tr("%d %%") % roundi(stats.get_crit_chance() * 100.0), stats.get_crit_chance()]
 		"crit_damage":
 			return ["×%.2f" % (2.0 + stats.get_crit_damage_pct()), stats.get_crit_damage_pct()]
 		"health":
 			return ["%+d" % roundi(stats.max_health_flat), stats.max_health_flat]
 		"armor":
-			return ["%d  (−%d %%)" % [roundi(stats.get_armor()),
+			return [tr("%d  (−%d %%)") % [roundi(stats.get_armor()),
 				roundi(stats.get_damage_reduction() * 100.0)], stats.get_armor()]
 		"regen":
-			return ["%.1f PV/s" % stats.regen, stats.regen]
+			return [tr("%.1f PV/s") % stats.regen, stats.regen]
 		"lifesteal":
-			return ["%.1f %%" % (stats.get_lifesteal() * 100.0), stats.get_lifesteal()]
+			return [tr("%.1f %%") % (stats.get_lifesteal() * 100.0), stats.get_lifesteal()]
 		"speed":
-			return ["%+d %%" % roundi(stats.get_move_speed_pct() * 100.0), stats.get_move_speed_pct()]
+			return [tr("%+d %%") % roundi(stats.get_move_speed_pct() * 100.0), stats.get_move_speed_pct()]
 		"range":
-			return ["+%d %%" % roundi(stats.get_range_pct() * 100.0), stats.get_range_pct()]
+			return [tr("+%d %%") % roundi(stats.get_range_pct() * 100.0), stats.get_range_pct()]
 		"pickup":
-			return ["+%d %%" % roundi(stats.get_pickup_radius_pct() * 100.0),
+			return [tr("+%d %%") % roundi(stats.get_pickup_radius_pct() * 100.0),
 				stats.get_pickup_radius_pct()]
 		"souls":
-			return ["+%d %%" % roundi(stats.get_soul_gain_pct() * 100.0), stats.get_soul_gain_pct()]
+			return [tr("+%d %%") % roundi(stats.get_soul_gain_pct() * 100.0), stats.get_soul_gain_pct()]
 		"luck":
 			return ["%.1f" % stats.get_luck(), stats.get_luck()]
 	return ["", 0.0]

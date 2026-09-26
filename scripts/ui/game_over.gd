@@ -49,14 +49,14 @@ func show_victory() -> void:
 	_open = true
 	var summary := RunState.get_summary()
 	RunState.end_run()
-	_show(summary, "LE PARI EST ROMPU")
+	_show(summary, tr("LE PARI EST ROMPU"))
 
 
-func _show(summary: Dictionary, title: String = "VOUS ÊTES MORT") -> void:
+func _show(summary: Dictionary, title: String = "") -> void:
 	visible = true
 	get_tree().paused = true
-	title_label.text = title
-	summary_label.text = "Vague %d  ·  %d éliminations  ·  %s\n%d objets  ·  %d clés récoltées" % [
+	title_label.text = title if title != "" else tr("VOUS ÊTES MORT")
+	summary_label.text = tr("Vague %d  ·  %d éliminations  ·  %s\n%d objets  ·  %d clés récoltées") % [
 		summary["wave"],
 		summary["kills"],
 		HUD._format_time(summary["time"]),
@@ -81,7 +81,7 @@ func _queue_unlocks() -> void:
 func _refresh_unlocks() -> void:
 	_unlocks_queued = false
 	var keep := UIUtils.capture_focus(self)
-	keys_label.text = "Clés disponibles : %d   ·   Meilleure vague : %d" % [
+	keys_label.text = tr("Clés disponibles : %d   ·   Meilleure vague : %d") % [
 		SaveGame.banked_keys, SaveGame.best_wave
 	]
 	UIUtils.clear_children(unlock_list)
@@ -113,7 +113,7 @@ func _build_unlock_row(item: ItemData) -> Control:
 
 	var button := Button.new()
 	button.name = "objet_%s" % item.id
-	button.text = "%d clés" % item.key_cost
+	button.text = (tr("%d clé") if item.key_cost == 1 else tr("%d clés")) % item.key_cost
 	button.disabled = SaveGame.banked_keys < item.key_cost
 	if button.disabled:
 		button.focus_mode = Control.FOCUS_NONE

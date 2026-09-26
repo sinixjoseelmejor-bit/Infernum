@@ -532,7 +532,7 @@ const CINEMATIQUES := {
 				{"texte": "Derrière le trône, une statue de sel, tournée vers une ville qui n'existe plus."},
 				{"qui": &"loth", "texte": "Je suis revenu."},
 				{"texte": "Le sel se fend. Sous la croûte blanche, une main tiède.", "dessale": &"femme", "secousse": 0.3},
-				{"qui": &"edith", "texte": "Tu t'es retourné."},
+				{"qui": &"edith", "texte": "Tu t'es retourné.", "son": &"baiser"},
 				{"qui": &"loth", "texte": "Cette fois, oui."},
 			],
 		},

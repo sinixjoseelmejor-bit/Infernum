@@ -66,6 +66,21 @@ func revive(ratio: float, invulnerability: float) -> void:
 	health_changed.emit(current, max_health)
 
 
+## Perte de PV SANS i-frames : la brûlure de la lave (voir `Carte`). Elle
+## respecte l'invulnérabilité en cours mais n'en accorde aucune — sans quoi se
+## tenir dans la lave rendrait intouchable au contact.
+func drain(amount: float, source: Node = null) -> bool:
+	if is_dead or amount <= 0.0 or is_invulnerable():
+		return false
+	current = maxf(0.0, current - amount)
+	damaged.emit(amount, source)
+	health_changed.emit(current, max_health)
+	if current <= 0.0:
+		is_dead = true
+		died.emit(source)
+	return true
+
+
 func heal(amount: float) -> void:
 	if is_dead or amount <= 0.0:
 		return

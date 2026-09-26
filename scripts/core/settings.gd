@@ -13,6 +13,14 @@ enum JoystickMode { AUTO, ALWAYS, NEVER }
 
 const PATH := "user://infernum_settings.cfg"
 
+## Les langues du jeu, chacune écrite dans sa propre langue : un joueur perdu
+## dans une langue qu'il ne lit pas doit reconnaître la sienne. Le français est
+## la langue source (voir `tools/traductions.py`).
+const LANGUES := {
+	"fr": "Français",
+	"en": "English",
+}
+
 const JOYSTICK_LABELS := {
 	JoystickMode.AUTO: "Automatique (tactile)",
 	JoystickMode.ALWAYS: "Toujours affiché",
@@ -20,6 +28,10 @@ const JOYSTICK_LABELS := {
 }
 
 @export var fullscreen: bool = false
+## Vide = celle du système, le français pour un système en français et
+## l'anglais pour tout autre : c'est la seule traduction, et la langue la plus
+## lue de ceux qui ne lisent pas le français.
+@export var langue: String = ""
 @export var joystick_mode: JoystickMode = JoystickMode.AUTO
 ## Multiplicateur du tremblement de caméra. 0 = désactivé (confort visuel).
 @export var shake_scale: float = 1.0
@@ -37,6 +49,7 @@ const JOYSTICK_LABELS := {
 
 func _ready() -> void:
 	load_settings()
+	apply_langue()
 	apply_display()
 	apply_audio()
 
@@ -55,10 +68,26 @@ func should_show_joystick() -> bool:
 
 
 func get_joystick_label() -> String:
-	return JOYSTICK_LABELS[joystick_mode]
+	return tr(JOYSTICK_LABELS[joystick_mode])
 
 
 # --- Modification ------------------------------------------------------------
+
+## La langue réellement affichée, réglage automatique résolu.
+func get_langue() -> String:
+	return langue if LANGUES.has(langue) else get_langue_systeme()
+
+
+## Celle que choisit le réglage automatique.
+func get_langue_systeme() -> String:
+	return "fr" if OS.get_locale_language() == "fr" else "en"
+
+
+func set_langue(value: String) -> void:
+	langue = value if LANGUES.has(value) else ""
+	apply_langue()
+	_commit()
+
 
 func set_fullscreen(value: bool) -> void:
 	fullscreen = value
@@ -103,6 +132,13 @@ func reset() -> void:
 	apply_display()
 	apply_audio()
 	_commit()
+
+
+## Les textes posés tels quels dans un contrôle se retraduisent seuls ; ceux que
+## le code compose (un nombre dans une phrase) attendent leur prochaine mise à
+## jour, d'où le signal `changed` que les écrans ouverts écoutent.
+func apply_langue() -> void:
+	TranslationServer.set_locale(get_langue())
 
 
 func apply_display() -> void:
@@ -159,6 +195,7 @@ func _commit() -> void:
 
 func save_settings() -> void:
 	var config := ConfigFile.new()
+	config.set_value("general", "langue", langue)
 	config.set_value("video", "fullscreen", fullscreen)
 	config.set_value("input", "joystick_mode", int(joystick_mode))
 	config.set_value("input", "eight_way", eight_way)
@@ -172,6 +209,7 @@ func load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(PATH) != OK:
 		return
+	langue = str(config.get_value("general", "langue", ""))
 	fullscreen = config.get_value("video", "fullscreen", false)
 	joystick_mode = config.get_value("input", "joystick_mode", JoystickMode.AUTO) as JoystickMode
 	eight_way = config.get_value("input", "eight_way", true)

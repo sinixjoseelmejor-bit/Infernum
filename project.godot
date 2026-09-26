@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Infernum"
 config/description="Roguelite d'action top-down — ambiance enfer/démons."
-config/version="0.9.0"
+config/version="0.9.1"
 run/main_scene="res://scenes/ui/splash.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.png"
@@ -149,6 +149,11 @@ aim_right={
 "events": [Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":2,"axis_value":1.0,"script":null)
 ]
 }
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.po")
+locale/fallback="fr"
 
 [layer_names]
 

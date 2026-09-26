@@ -60,7 +60,7 @@ func _build_card(curse: Dictionary) -> Button:
 	card.theme_type_variation = &"CardButton"
 	card.toggle_mode = true
 	card.custom_minimum_size = CARD_MIN_SIZE
-	card.tooltip_text = curse["desc"]
+	card.tooltip_text = tr(curse["desc"])
 	card.toggled.connect(func(_pressed: bool) -> void: Curses.toggle(id))
 
 	var margin := MarginContainer.new()
@@ -78,19 +78,19 @@ func _build_card(curse: Dictionary) -> Button:
 	var head := HBoxContainer.new()
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(head)
-	var title := _label(curse["name"], 30, CURSE_COLOR)
+	var title := _label(tr(curse["name"]), 30, CURSE_COLOR)
 	title.theme_type_variation = &"TitleLabel"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_label("Danger %d" % int(curse.get("danger", 0)), 15, Color(0.72, 0.62, 0.7)))
+	head.add_child(_label(tr("Danger %d") % int(curse.get("danger", 0)), 15, Color(0.72, 0.62, 0.7)))
 
-	var desc := _label(curse["desc"], 14, Color(0.7, 0.67, 0.68))
+	var desc := _label(tr(curse["desc"]), 14, Color(0.7, 0.67, 0.68))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(desc)
-	var price := _label("Prix : %s" % curse["penalty"], 17, PRICE_COLOR)
+	var price := _label(tr("Prix : %s") % tr(curse["penalty"]), 17, PRICE_COLOR)
 	price.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(price)
-	var gain := _label("Gain : %s" % _format_rewards(curse), 17, GAIN_COLOR)
+	var gain := _label(tr("Gain : %s") % _format_rewards(curse), 17, GAIN_COLOR)
 	gain.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(gain)
 	return card
@@ -121,22 +121,22 @@ func _format_rewards(curse: Dictionary) -> String:
 	for key in rewards:
 		var value := float(rewards[key])
 		match String(key):
-			"soul_gain_pct": parts.append("%+d %% d'âmes" % roundi(value * 100.0))
-			"luck": parts.append("+%s chance (raretés)" % _num(value))
+			"soul_gain_pct": parts.append(tr("%+d %% d'âmes") % roundi(value * 100.0))
+			"luck": parts.append(tr("+%s chance (raretés)") % _num(value))
 			"max_health_flat":
 				# Un malus de PV est déjà affiché comme pénalité : ne pas le
 				# répéter dans la ligne « en échange ».
 				if value > 0.0:
-					parts.append("%+d PV max" % roundi(value))
+					parts.append(tr("%+d PV max") % roundi(value))
 			_: parts.append("%s %+.2f" % [key, value])
 	if float(curse.get("key_chance", 0.0)) > 0.0:
-		parts.append("%+d %% de chance de clé" % roundi(float(curse["key_chance"]) * 100.0))
+		parts.append(tr("%+d %% de chance de clé") % roundi(float(curse["key_chance"]) * 100.0))
 	return ", ".join(parts)
 
 
 ## 1.5 doit s'afficher « 1,5 » et non « 2 » : arrondir masquait la valeur réelle.
 func _num(value: float) -> String:
-	return str(roundi(value)) if is_equal_approx(value, roundf(value)) 		else String.num(value, 1).replace(".", ",")
+	return UIUtils.nombre(value)
 
 
 func _refresh() -> void:
@@ -147,9 +147,9 @@ func _refresh() -> void:
 		danger_label.text = "Aucune malédiction — run de référence."
 		start_button.text = "Commencer sans malédiction"
 	else:
-		danger_label.text = "Danger %d  ·  %d malédiction(s) active(s)" % [
+		danger_label.text = tr("Danger %d  ·  %d malédiction(s) active(s)") % [
 			danger, Curses.active.size()]
-		start_button.text = "Commencer (danger %d)" % danger
+		start_button.text = tr("Commencer (danger %d)") % danger
 
 
 func _on_start_pressed() -> void:

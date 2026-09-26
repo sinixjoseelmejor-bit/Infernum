@@ -15,12 +15,20 @@ extends Resource
 ## vite qu'avant, il TRAVERSE, ce qu'aucun autre ne sait faire.
 
 @export var id: StringName = &""
-@export var display_name: String = ""
+## Les textes sont écrits en français et LUS dans la langue du joueur : le
+## catalogue reste la source, la traduction se fait à la lecture (voir
+## `tools/traductions.py`). Une langue changée en cours de route est donc
+## suivie sans recharger quoi que ce soit.
+@export var display_name: String = "":
+	get: return tr(display_name)
 ## Épithète affichée sous le nom.
-@export var title: String = ""
+@export var title: String = "":
+	get: return tr(title)
 ## Étiquette d'archétype : « Dégâts », « Survie », « Mobilité ».
-@export var archetype: String = ""
-@export var description: String = ""
+@export var archetype: String = "":
+	get: return tr(archetype)
+@export var description: String = "":
+	get: return tr(description)
 @export var color: Color = Color.WHITE
 ## Planches d'animation : bandes d'images carrées (repos et marche).
 @export var sprite_idle: Texture2D
@@ -63,8 +71,10 @@ extends Resource
 @export_group("Départ et passif")
 ## Modificateurs injectés dans PlayerStats au début de la run (mêmes plafonds).
 @export var starting_mods: Dictionary = {}
-@export var passive_name: String = ""
-@export var passive_description: String = ""
+@export var passive_name: String = "":
+	get: return tr(passive_name)
+@export var passive_description: String = "":
+	get: return tr(passive_description)
 ## Identifiant lu par `character_effects.gd`. Vide = pas de passif scripté.
 @export var special: StringName = &""
 ## Pouvoir déclenché par la touche Espace, pour ceux dont le pouvoir n'est pas

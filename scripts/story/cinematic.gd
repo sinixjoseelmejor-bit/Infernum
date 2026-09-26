@@ -289,8 +289,8 @@ func _stage_shot() -> void:
 
 	if _shot.has("titre"):
 		var titre: Array = _shot["titre"]
-		_title.text = titre[0]
-		_subtitle.text = titre[1] if titre.size() > 1 else ""
+		_title.text = tr(titre[0])
+		_subtitle.text = tr(titre[1]) if titre.size() > 1 else ""
 		_title.visible = true
 		_subtitle.visible = true
 		_title.modulate.a = 0.0
@@ -325,14 +325,16 @@ func _next_line() -> void:
 		_text.add_theme_color_override(&"font_color", Color(0.78, 0.74, 0.72))
 	else:
 		var locuteur: Array = StoryDB.LOCUTEURS.get(who, [String(who), Color.WHITE])
-		_speaker.text = locuteur[0]
+		_speaker.text = tr(locuteur[0])
 		_speaker.add_theme_color_override(&"font_color", locuteur[1])
 		_text.add_theme_color_override(&"font_color", Color(0.94, 0.92, 0.9))
 	var sceaux := SaveGame.seal_count()
-	_active_label.text = String(line.get("texte", "")).format(
+	# Traduit AVANT de remplacer {sceaux} : c'est le gabarit qui est la clé.
+	_active_label.text = tr(String(line.get("texte", ""))).format(
 		{"sceaux": sceaux, "reste": maxi(0, 3 - sceaux)})
 	_active_label.visible_characters = 0
 	_typing = true
+	Audio.play(&"texte_ligne")
 	_arrow.visible = false
 
 
@@ -598,6 +600,10 @@ func _process(delta: float) -> void:
 			_typing = false
 			_arrow.visible = true
 		else:
+			# Un petit « blip » toutes les deux lettres : le texte s'entend
+			# s'écrire, sans devenir une mitraille (l'anti-spam borne le débit).
+			if floori(shown / 2.0) != floori(_active_label.visible_characters / 2.0):
+				Audio.play(&"texte")
 			_active_label.visible_characters = shown
 	if _arrow.visible:
 		_arrow.modulate.a = 0.4 + 0.6 * absf(sin(_clock * 3.0))

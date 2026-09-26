@@ -73,6 +73,33 @@ composant que des ruines et des éboulis. Les rectangles de découpe sont dans `
 grille, ces relevés ne se retrouveraient pas autrement. Le reste du pack — caisses,
 tonneaux, portes, banc, panneaux gravés, tuiles d'herbe — n'est pas employé.
 
+### Hell Underworld Tileset — la carte de l'enfer (0.9.1)
+
+`assets/packs/Hell Underworld Tileset/` — cinq planches de 768 × 768
+(`tile-B-01` à `tile-B-05`), `LICENCE.txt` fourni avec le pack.
+
+- Usage **personnel et commercial** autorisé dans des projets de jeu.
+- **Revente et redistribution interdites** en tant que ressources autonomes —
+  d'où l'exclusion du dépôt, comme les autres packs d'images.
+- Crédit apprécié mais non exigé ; le fichier de licence ne nomme pas son
+  auteur. Le lien de la page d'origine est à consigner ici avant une diffusion
+  publique.
+
+210 pièces et 3 textures de sol en sont tirées par
+[`tools/extract_enfer.py`](tools/extract_enfer.py) : monuments, supplices,
+laves, rivières, ossements, braseros, damnés enfermés, pavé, dallage et lave
+refroidie. Les fantômes, les démons et les damnés libres de la planche B-02 ne
+sont pas employés : posés dans le décor, ils se liraient comme des ennemis.
+
+### Touches clavier — l'affichage des touches (0.9.1)
+
+`assets/packs/Touches/touches_clavier.png` — une planche de 128 × 224 : les
+touches du clavier en 16 px (flèches, F1 à F12, A à Z, quelques signes), en
+versions normale et enfoncée. Déposée sans nom de pack ni fichier de licence :
+**la source et la licence sont à consigner ici avant une diffusion publique.**
+Comme les autres images tierces, elle reste hors du dépôt ; `extract_assets.py`
+la copie et en tire une touche vierge.
+
 ### Effets sonores et musiques
 
 `assets/audio/SoundEffects/` — `LICENSE.txt` fourni avec les fichiers. C'est le
@@ -118,7 +145,53 @@ sont eux qui portent l'attribution, faute de fichier de licence.
 | `strawberry_candy-powerful-heavy-metal-heavy-force-572627.ogg` | strawberry_candy | 2 min 07 | arène |
 | `mrclaps-this-heavy-metal-492569.ogg` | mrclaps | 2 min 09 | arène |
 | `43084433-hard-rock-logo-intro-335297.ogg` | — | 13,8 s | aucun |
-| `freesound_community-rock-destroy-6409.ogg` | freesound_community | 2,9 s | aucun |
+| `freesound_community-rock-destroy-6409.ogg` | freesound_community | 2,9 s | écrasement de Golgota (0.9.1) |
+
+### Effets sonores ajoutés — dossier `Sfx/` (0.9.1)
+
+36 fichiers déposés comme **libres de droits**, sans fichier de licence joint :
+comme pour les musiques ci-dessus, c'est la mention faite au téléchargement qui
+fonde leur emploi, et la page d'origine qui fait foi. **Les sources restent à
+consigner ici** (lien et licence par fichier) avant une diffusion publique.
+
+Ils ont été renommés en entrant dans le projet — leurs noms d'origine étaient des
+descriptions, pas des attributions. Correspondance, pour les retrouver :
+
+| Dans le projet | Nom déposé |
+|---|---|
+| `ame.ogg` | ramasser ame (remplace « ame ramassé », devenu le son des clés) |
+| `ambiance_donjon.ogg` | dungeon ambient sound |
+| `ambiance_lave.ogg` | ambient lava |
+| `chaine.ogg` | chain |
+| `cle.ogg` | Ramasser clé (l'ancien « ame ramassé ») |
+| `foudre.ogg` | thunder |
+| `meuglement.ogg` | cow muh |
+| `teleportation.ogg` | teleport |
+| `tir_ennemi.ogg` | tir culturiste |
+| `vie_basse.ogg` | low hp |
+| `baiser.ogg` | kiss |
+| `cle_abysses.ogg` | abyss key |
+| `consecration.ogg` | eart magic |
+| `coup_encaisse.ogg` | Coup encaissé joueur |
+| `explosion.ogg` | explosion sound |
+| `forge.ogg` | anvil noise |
+| `glitch_1.ogg` à `glitch_4.ogg` | Glitch 1 à Glitch 4 |
+| `impact.ogg` | impact ennemi |
+| `jugement.ogg` | jugement job |
+| `lance.ogg` | lance tir |
+| `mort_boss.ogg` | Boss explosion die |
+| `mort_joueur.ogg` | dying man |
+| `parade.ogg` | parade Job |
+| `parade_ratee.ogg` | parade ratée |
+| `prix_du_sang.ogg` | Blood Cain |
+| `ruee.ogg` | Dash loh |
+| `seconde_chance.ogg` | resurrection sounf |
+| `soin.ogg` | soin ramassé |
+| `texte.ogg` | text |
+| `texte_ligne.ogg` | Text 2 |
+| `voile_brise.ogg` | Glass clack |
+
+(Ceux du premier lot portaient le suffixe « -converted ». Le gong a été retiré.)
 
 ## Art propre au projet
 

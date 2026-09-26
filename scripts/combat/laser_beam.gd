@@ -44,6 +44,9 @@ extends Node2D
 var source: Node2D
 
 var _direction: Vector2 = Vector2.RIGHT
+## Longueur réelle du trait : `length`, ou moins si un obstacle de la carte
+## l'arrête. Recalculée à chaque image, puisque l'œil bouge.
+var _portee: float = 1100.0
 var _elapsed: float = 0.0
 var _fired: bool = false
 ## Vrai si un émetteur a été posé à la création. Sans ce drapeau, un rayon tiré
@@ -100,6 +103,12 @@ func _process(delta: float) -> void:
 		_tirer()
 	elif _fired and _elapsed >= aim_time + lock_time + fire_time:
 		queue_free()
+	# UN OBSTACLE ARRÊTE LE RAYON, comme il arrête les projectiles : se mettre à
+	# couvert derrière une statue est une esquive, et la ligne dessinée s'arrête
+	# là où le coup s'arrêtera.
+	_portee = length
+	if Carte.courante != null:
+		_portee = Carte.courante.portee_libre(global_position, _direction, length)
 	queue_redraw()
 
 
@@ -119,12 +128,15 @@ func _tirer() -> void:
 ## une esquive valable, et ce serait faux de la refuser.
 func _distance_au_segment(point: Vector2) -> float:
 	var vers := point - global_position
-	var le_long := clampf(vers.dot(_direction), 0.0, length)
+	var le_long := vers.dot(_direction)
+	if le_long > _portee:
+		return INF
+	le_long = clampf(le_long, 0.0, _portee)
 	return vers.distance_to(_direction * le_long)
 
 
 func _draw() -> void:
-	var fin := _direction * length
+	var fin := _direction * _portee
 	if _fired:
 		# Le coup : un trait large, un cœur blanc, et une lueur au point de
 		# départ pour qu'on voie d'où il vient même en le prenant de plein fouet.

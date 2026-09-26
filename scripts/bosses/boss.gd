@@ -69,6 +69,8 @@ extends Enemy
 ## Elle diffère d'un effet à l'autre — 58 px pour la braise, 90 pour la pierre —
 ## et c'est elle qui fait correspondre le dessin au RAYON de la zone.
 @export var telegraph_impact_width: float = 88.0
+## Son de la détonation de ses zones (voir `Audio.SFX`).
+@export var telegraph_sound: StringName = &"explosion"
 
 ## Mise a l'echelle des degats d'ATTAQUE (zones annoncees et projectiles), posee
 ## par le WaveManager a l'apparition. Les valeurs ecrites dans chaque boss sont
@@ -303,6 +305,7 @@ func telegraph_at(point: Vector2, radius: float, delay: float, damage: float,
 	zone.color = color
 	zone.impact_scene = telegraph_impact
 	zone.impact_content_width = telegraph_impact_width
+	zone.son = telegraph_sound
 	_projectile_parent().add_child(zone)
 
 
@@ -320,6 +323,13 @@ func spawn_add(scene: PackedScene, at: Vector2) -> Node2D:
 	if scene == null:
 		return null
 	var add := scene.instantiate() as Node2D
+	# Un renfort se heurte aux obstacles, lui : né dans une statue, il y
+	# resterait coincé. On l'écarte d'un pas vers le boss, qui n'y est jamais.
+	if Carte.courante != null:
+		for _pas in 6:
+			if Carte.courante.libre(at, 30.0):
+				break
+			at = at.move_toward(global_position, 40.0)
 	add.global_position = at
 	if add is Enemy:
 		(add as Enemy).target = target

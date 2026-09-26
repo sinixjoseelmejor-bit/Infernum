@@ -39,41 +39,59 @@ func _unhandled_input(event: InputEvent) -> void:
 func refresh() -> void:
 	UIUtils.clear_children(rows)
 
+	# EN TÊTE, et chaque langue écrite dans la sienne : un joueur qui ne lit pas
+	# la langue affichée doit trouver la sienne sans rien comprendre d'autre.
+	var langue := OptionButton.new()
+	langue.name = "Langue"
+	langue.add_item("%s (%s)" % [tr("Automatique"), Settings.LANGUES[Settings.get_langue_systeme()]], 0)
+	var codes: Array = Settings.LANGUES.keys()
+	for i in codes.size():
+		langue.add_item(Settings.LANGUES[codes[i]], i + 1)
+	langue.select(codes.find(Settings.langue) + 1)
+	langue.item_selected.connect(func(index: int) -> void:
+		var id := langue.get_item_id(index)
+		Settings.set_langue("" if id == 0 else String(codes[id - 1]))
+		# L'écran se reconstruit dans la nouvelle langue ; pas dans le signal du
+		# bouton, qu'il détruit.
+		_relangue.call_deferred())
+	rows.add_child(_row("Langue · Language", tr("La langue des menus, de l'interface et de l'histoire."),
+		langue))
+
 	var fullscreen := CheckButton.new()
 	fullscreen.text = "Plein écran"
 	fullscreen.button_pressed = Settings.fullscreen
 	fullscreen.toggled.connect(func(on: bool) -> void: Settings.set_fullscreen(on))
-	rows.add_child(_row("Affichage", "Bascule entre fenêtré et plein écran.", fullscreen))
+	rows.add_child(_row(tr("Affichage"), tr("Bascule entre fenêtré et plein écran."), fullscreen))
 
-	rows.add_child(_percent_row("Musique",
-		"Volume des musiques du menu et de l'arène.",
+	rows.add_child(_percent_row(tr("Musique"),
+		tr("Volume des musiques du menu et de l'arène."),
 		Settings.music_volume, 1.0, Settings.set_music_volume))
 
-	rows.add_child(_percent_row("Effets",
-		"Volume des tirs, des rugissements et de l'interface.",
+	rows.add_child(_percent_row(tr("Effets", "son"),
+		tr("Volume des tirs, des rugissements et de l'interface."),
 		Settings.sfx_volume, 1.0, Settings.set_sfx_volume))
 
 	var joystick := OptionButton.new()
 	for mode in [Settings.JoystickMode.AUTO, Settings.JoystickMode.ALWAYS,
 			Settings.JoystickMode.NEVER]:
-		joystick.add_item(Settings.JOYSTICK_LABELS[mode], mode)
+		joystick.add_item(tr(Settings.JOYSTICK_LABELS[mode]), mode)
 	joystick.select(joystick.get_item_index(Settings.joystick_mode))
 	joystick.item_selected.connect(func(index: int) -> void:
 		Settings.set_joystick_mode(joystick.get_item_id(index) as Settings.JoystickMode))
-	rows.add_child(_row("Joystick virtuel",
-		"« Automatique » ne l'affiche que sur écran tactile. « Toujours » permet de le tester à la souris.",
+	rows.add_child(_row(tr("Joystick virtuel"),
+		tr("« Automatique » ne l'affiche que sur écran tactile. « Toujours » permet de le tester à la souris."),
 		joystick))
 
-	rows.add_child(_percent_row("Tremblement de caméra",
-		"Réduire ou couper les secousses d'écran (confort visuel).",
+	rows.add_child(_percent_row(tr("Tremblement de caméra"),
+		tr("Réduire ou couper les secousses d'écran (confort visuel)."),
 		Settings.shake_scale, 1.5, Settings.set_shake_scale))
 
 	var eight_way := CheckButton.new()
 	eight_way.text = "8 directions"
 	eight_way.button_pressed = Settings.eight_way
 	eight_way.toggled.connect(func(on: bool) -> void: Settings.set_eight_way(on))
-	rows.add_child(_row("Déplacement",
-		"Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre.",
+	rows.add_child(_row(tr("Déplacement"),
+		tr("Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre."),
 		eight_way))
 
 	# Les cinématiques ne se jouent qu'une fois par profil : il faut pouvoir
@@ -87,11 +105,18 @@ func refresh() -> void:
 		Cinematic.play(StoryDB.all_for(Characters.selected_id), func() -> void:
 			if is_instance_valid(replay) and replay.is_visible_in_tree():
 				replay.grab_focus()))
-	rows.add_child(_row("Histoire",
-		"Rejoue le Pari, le prologue de %s et les scènes déjà vues." % Characters.get_selected().display_name,
+	rows.add_child(_row(tr("Histoire"),
+		tr("Rejoue le Pari, le prologue de %s et les scènes déjà vues.") % Characters.get_selected().display_name,
 		replay))
 
 	UIUtils.chain_focus(self)
+
+
+func _relangue() -> void:
+	refresh()
+	var langue := rows.find_child("Langue", true, false) as Control
+	if langue != null:
+		langue.grab_focus()
 
 
 ## Curseur exprimé en pourcentage, avec la valeur lue à droite. Le réglage part
@@ -107,10 +132,10 @@ func _percent_row(title: String, help: String, value: float, maximum: float,
 
 	var readout := Label.new()
 	readout.custom_minimum_size = Vector2(60, 0)
-	readout.text = "%d %%" % roundi(value * 100.0)
+	readout.text = tr("%d %%") % roundi(value * 100.0)
 	slider.value_changed.connect(func(v: float) -> void:
 		setter.call(v)
-		readout.text = "%d %%" % roundi(v * 100.0))
+		readout.text = tr("%d %%") % roundi(v * 100.0))
 
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override(&"separation", 10)
