@@ -61,6 +61,8 @@ var revives_left: int = 0
 var character_mods: Dictionary = {}
 ## Bonus dynamiques des passifs (Marque de Caïn, fuite de Loth...).
 var character_bonus: Dictionary = {}
+## Bonus dynamiques des objets, tenus par `ItemEffects` (Mâchoire de Samson).
+var item_bonus: Dictionary = {}
 
 
 func _ready() -> void:
@@ -81,6 +83,7 @@ func reset_run() -> void:
 	owned_counts.clear()
 	owned_items.clear()
 	character_bonus.clear()
+	item_bonus.clear()
 	leftover_souls = 0
 	leftover_count = 0
 	revives_left = int(Forge.get_special_total(&"revive"))
@@ -252,6 +255,8 @@ func recompute_stats() -> void:
 			stats.add_mod(String(key), float(item.mods[key]))
 		if item.special != &"":
 			stats.specials[item.special] = true
+	for key in item_bonus:
+		stats.add_mod(String(key), float(item_bonus[key]))
 	if has_special(&"reaper_stacks"):
 		stats.damage_pct += get_reaper_bonus()
 	stats.damage_pct += get_conversion_armure()
@@ -309,6 +314,8 @@ func get_stat_sources() -> Array:
 	# boutique qui la donne, et il ne coûte aucune clé.
 	if has_special(&"reaper_stacks"):
 		objets.damage_pct += get_reaper_bonus()
+	# Les bonus conditionnels (Mâchoire de Samson) aussi : un objet de boutique.
+	_verser(objets, item_bonus)
 
 	# Traduits ici : la fiche les affiche tels quels.
 	return [
@@ -334,6 +341,20 @@ func set_character_bonus(key: StringName, value: float) -> void:
 		character_bonus.erase(key)
 	else:
 		character_bonus[key] = value
+	recompute_stats()
+
+
+## Écrit un bonus CONDITIONNEL d'objet (Mâchoire de Samson : sous la moitié
+## des PV). Même contrat que `set_character_bonus` : ne recalcule que si la
+## valeur change, parce que l'appelant l'interroge à chaque variation de PV.
+func set_item_bonus(key: StringName, value: float) -> void:
+	var previous := float(item_bonus.get(key, 0.0))
+	if is_equal_approx(previous, value):
+		return
+	if is_zero_approx(value):
+		item_bonus.erase(key)
+	else:
+		item_bonus[key] = value
 	recompute_stats()
 
 

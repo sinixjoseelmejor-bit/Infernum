@@ -168,8 +168,15 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.
-- **L'anglais** (0.9.1) : complet (579 textes) mais **pas relu par un
-  anglophone natif** — les textes d'ambiance (objets, histoire) d'abord.
+- **L'anglais** (0.9.1) : complet (603 textes depuis la 0.9.2) mais **pas relu
+  par un anglophone natif** — les textes d'ambiance (objets, histoire) d'abord.
+- **Les douze objets à effets de la 0.9.2** (voir README) : chaque mécanique
+  est sondée et la valeur offensive mesurée en horde, pas le reste. À juger en
+  jeu : la valeur **défensive** des Chaînes et de la Trompette, la Peau de
+  salamandre (la lave), les Trente deniers (l'économie d'une run) et le Bâton
+  de Moïse, dont la fréquence dépend du personnage. Soufre + Feu grégeois est
+  la paire la plus forte du jeu (+81 %), c'est voulu — à surveiller. Pas de
+  son pour la brûlure ni l'entrave.
 - **La carte de l'enfer** (0.9.1, voir README) : ses règles sont testées et le
   contournement mesuré, mais deux choses ne le sont pas — le **danger réel de la
   lave** dans une run (aucun banc ne l'évite ni ne la cherche) et l'effet des
