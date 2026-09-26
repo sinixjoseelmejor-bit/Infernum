@@ -21,6 +21,7 @@ func _ready() -> void:
 	# doit être remis à zéro explicitement à chaque nouvelle partie.
 	RunState.reset_run()
 	Audio.play_music(&"arene")
+	Audio.play_ambiance(false)
 
 	waves.target = player
 	waves.container = enemies
@@ -33,6 +34,11 @@ func _ready() -> void:
 
 	curse_select.connect(&"confirmed", waves.start)
 	curse_select.call(&"open")
+
+	# L'ambiance : le halo sous les pieds du joueur, et les bords de l'écran
+	# qui s'enfoncent dans le noir.
+	player.add_child(LumiereJoueur.new())
+	add_child(Vignette.new())
 
 	# L'histoire autour des boss : entrées, sceaux, portail, Hélel.
 	var director := StoryDirector.new()

@@ -143,6 +143,7 @@ func _on_power_requested() -> void:
 
 	var centre: Vector2 = _player.global_position
 	_effet_prix_du_sang(centre)
+	Audio.play(&"prix_du_sang")
 	GameEvents.damage_dealt.emit(degats, centre, false)
 	GameEvents.request_shake(5.0)
 	for enemy in get_tree().get_nodes_in_group(Groups.ENEMIES):
@@ -246,6 +247,7 @@ func _poser_consecration(at: Vector2) -> void:
 		if Forge.get_special_total(&"consecration_boost") > 0.0 else 1.0)
 	_zone.auteur = _player
 	bacs[0].add_child(_zone)
+	Audio.play(&"consecration")
 	_zone.global_position = at
 	_time_since_hit = 0.0
 

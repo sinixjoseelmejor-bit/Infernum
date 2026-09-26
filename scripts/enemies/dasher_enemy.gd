@@ -65,6 +65,12 @@ func _update_movement(delta: float) -> void:
 				_enter(Phase.APPROACH)
 
 
+## La charge part en ligne droite, annoncée pendant l'élan : ni l'élan ni la
+## charge ne se dévient. Un chien lancé contre une statue s'y arrête.
+func _contourne_obstacles() -> bool:
+	return super() and phase != Phase.WINDUP and phase != Phase.DASH
+
+
 func _enter(next: Phase) -> void:
 	phase = next
 	match next:

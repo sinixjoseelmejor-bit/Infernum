@@ -105,7 +105,56 @@ const MUSIC_GAIN := {
 ## Le quota monte à 8 (mesuré : 5,84 voix en moyenne), et le volume descend de
 ## 3 dB pour compenser l'empilement, qui passe de +4,9 à +7,7 dB. Coût : 7 des
 ## 16 voix mobilisées en permanence pendant les tirs.
+## LES EFFETS DE LA 0.9.1 vivent sous `Sfx/`, pas sous `SoundEffects/` : ce
+## dossier-là est couvert par le `LICENSE.txt` de son lot, et y glisser d'autres
+## fichiers brouillerait la question des licences. Une entrée dont le fichier
+## porte un dossier (`Sfx/…`) se lit depuis `AUDIO_DIR`.
+##
+## Deux clés de plus, parce que les fichiers déposés ne sont pas découpés :
+##   "debut" : où commencer la lecture, en secondes — plusieurs portent jusqu'à
+##             une seconde de silence devant (mesuré, voir README « Les effets
+##             de la 0.9.1 ») ; un coup qui sonne une demi-seconde après
+##             l'impact paraît cassé ;
+##   "duree" : déjà là, coupe avec un fondu les queues de 8 à 17 s.
 const SFX := {
+	# --- Combat -----------------------------------------------------------
+	&"impact": {"file": "Sfx/impact.ogg", "vol": -16.0, "pitch": 0.12, "gap": 0.05, "voix": 3, "debut": 0.23, "duree": 0.25},
+	&"coup": {"file": "Sfx/coup_encaisse.ogg", "vol": -4.0, "pitch": 0.08, "gap": 0.15, "voix": 2, "debut": 0.08, "duree": 0.4},
+	&"ame": {"file": "Sfx/ame.ogg", "vol": 0.0, "pitch": 0.1, "gap": 0.04, "voix": 2, "debut": 0.09, "duree": 0.2},
+	&"cle": {"file": "Sfx/cle.ogg", "vol": -2.0, "pitch": 0.05, "gap": 0.08, "voix": 1, "debut": 0.1, "duree": 0.3},
+	&"tir_ennemi": {"file": "Sfx/tir_ennemi.ogg", "vol": -18.0, "pitch": 0.12, "gap": 0.08, "voix": 3, "debut": 0.15, "duree": 0.5},
+	&"soin": {"file": "Sfx/soin.ogg", "vol": -8.0, "pitch": 0.0, "gap": 0.1, "voix": 1, "debut": 0.11, "duree": 0.45},
+	&"mort_joueur": {"file": "Sfx/mort_joueur.ogg", "vol": 2.0, "pitch": 0.0, "gap": 1.0, "voix": 1, "debut": 0.08, "duree": 1.0},
+	&"seconde_chance": {"file": "Sfx/seconde_chance.ogg", "vol": -4.0, "pitch": 0.0, "gap": 1.0, "voix": 1, "debut": 0.06, "duree": 1.4},
+	&"lance": {"file": "Sfx/lance.ogg", "vol": -14.0, "pitch": 0.1, "gap": 0.06, "voix": 4, "debut": 0.09, "duree": 0.14},
+	# --- Pouvoirs ---------------------------------------------------------
+	&"ruee": {"file": "Sfx/ruee.ogg", "vol": -8.0, "pitch": 0.08, "gap": 0.1, "voix": 1, "debut": 0.11, "duree": 0.3},
+	&"prix_du_sang": {"file": "Sfx/prix_du_sang.ogg", "vol": -2.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.29, "duree": 0.8},
+	&"parade": {"file": "Sfx/parade.ogg", "vol": -4.0, "pitch": 0.06, "gap": 0.1, "voix": 1, "debut": 0.08, "duree": 0.55},
+	&"parade_ratee": {"file": "Sfx/parade_ratee.ogg", "vol": -6.0, "pitch": 0.0, "gap": 0.2, "voix": 1, "debut": 0.05, "duree": 0.28},
+	&"jugement": {"file": "Sfx/jugement.ogg", "vol": -3.0, "pitch": 0.0, "gap": 0.5, "voix": 1, "debut": 0.0, "duree": 2.5},
+	&"consecration": {"file": "Sfx/consecration.ogg", "vol": -12.0, "pitch": 0.05, "gap": 0.4, "voix": 1, "debut": 0.02, "duree": 1.0},
+	# --- Boss et partie ---------------------------------------------------
+	&"explosion": {"file": "Sfx/explosion.ogg", "vol": -12.0, "pitch": 0.1, "gap": 0.06, "voix": 3, "debut": 0.09, "duree": 1.0},
+	&"foudre": {"file": "Sfx/foudre.ogg", "vol": -12.0, "pitch": 0.1, "gap": 0.15, "voix": 2, "debut": 0.09, "duree": 1.2},
+	&"teleportation": {"file": "Sfx/teleportation.ogg", "vol": -6.0, "pitch": 0.05, "gap": 0.3, "voix": 1, "debut": 0.03, "duree": 0.8},
+	&"chaine": {"file": "Sfx/chaine.ogg", "vol": -4.0, "pitch": 0.05, "gap": 0.3, "voix": 1, "debut": 0.03, "duree": 1.0},
+	&"meuglement": {"file": "Sfx/meuglement.ogg", "vol": -2.0, "pitch": 0.05, "gap": 0.5, "voix": 1, "debut": 0.89, "duree": 1.4},
+	&"roche": {"file": "Music/freesound_community-rock-destroy-6409.ogg", "vol": -8.0, "pitch": 0.08, "gap": 0.08, "voix": 2, "debut": 0.02, "duree": 1.1},
+	&"mort_boss": {"file": "Sfx/mort_boss.ogg", "vol": -4.0, "pitch": 0.0, "gap": 1.0, "voix": 1, "debut": 0.12, "duree": 2.8},
+	&"cle_abysses": {"file": "Sfx/cle_abysses.ogg", "vol": -4.0, "pitch": 0.0, "gap": 1.0, "voix": 1, "debut": 0.04, "duree": 1.6},
+	&"voile": {"file": "Sfx/consecration.ogg", "vol": -8.0, "pitch": 0.0, "gap": 0.5, "voix": 1, "debut": 0.02, "duree": 1.0},
+	&"voile_brise": {"file": "Sfx/voile_brise.ogg", "vol": -4.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.03, "duree": 0.9},
+	&"glitch_1": {"file": "Sfx/glitch_1.ogg", "vol": -10.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.24, "duree": 0.9},
+	&"glitch_2": {"file": "Sfx/glitch_2.ogg", "vol": -8.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.0, "duree": 0.9},
+	&"glitch_3": {"file": "Sfx/glitch_3.ogg", "vol": -8.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.03, "duree": 0.9},
+	&"glitch_4": {"file": "Sfx/glitch_4.ogg", "vol": -8.0, "pitch": 0.0, "gap": 0.3, "voix": 1, "debut": 0.0, "duree": 0.9},
+	# --- Interface et récit -----------------------------------------------
+	&"forge": {"file": "Sfx/forge.ogg", "vol": -6.0, "pitch": 0.05, "gap": 0.1, "voix": 1, "debut": 0.02, "duree": 0.65},
+	&"texte": {"file": "Sfx/texte.ogg", "vol": -8.0, "pitch": 0.08, "gap": 0.05, "voix": 2, "debut": 0.02, "duree": 0.1},
+	&"texte_ligne": {"file": "Sfx/texte_ligne.ogg", "vol": -10.0, "pitch": 0.0, "gap": 0.1, "voix": 1, "debut": 0.05, "duree": 0.2},
+	&"baiser": {"file": "Sfx/baiser.ogg", "vol": -2.0, "pitch": 0.0, "gap": 1.0, "voix": 1, "debut": 1.16, "duree": 0.15},
+	# --- Lot d'origine ----------------------------------------------------
 	&"clic": {"file": "StoneSoundForButtonMenuSelect.ogg", "vol": -6.0, "pitch": 0.05, "gap": 0.04, "voix": 2},
 	# Le pas du focus à la manette : le même caillou que le clic, bien plus bas —
 	# on le fait dix fois de suite en descendant une liste.
@@ -178,9 +227,18 @@ func _ready() -> void:
 
 	GameEvents.enemy_died.connect(func(_e: Node2D, _p: Vector2) -> void: play(&"mort"))
 	GameEvents.boss_spawned.connect(func(_b: Node2D) -> void: play(&"boss"))
+	GameEvents.boss_died.connect(func(_b: Node2D) -> void: play(&"mort_boss"))
+	GameEvents.player_died.connect(func(_p: Node2D) -> void: play(&"mort_joueur"))
+	GameEvents.player_revived.connect(func(_p: Node2D) -> void: play(&"seconde_chance"))
+	GameEvents.player_health_changed.connect(_on_player_health)
+	GameEvents.player_died.connect(func(_p: Node2D) -> void: _set_coeur(false))
+	GameEvents.arena_depth_changed.connect(func(profond: bool) -> void: play_ambiance(profond))
+	# Chaque trait du joueur qui touche : le son le plus fréquent du jeu, d'où
+	# son volume bas et son anti-spam.
+	GameEvents.player_damage_dealt.connect(func(_a: float, _t: Node2D) -> void: play(&"impact"))
 	RunState.item_gained.connect(func(_i: ItemData, _n: int) -> void: play(&"objet"))
 	SaveGame.item_unlocked.connect(func(_id: StringName) -> void: play(&"objet"))
-	Forge.node_unlocked.connect(func(_id: StringName) -> void: play(&"objet"))
+	Forge.node_unlocked.connect(func(_id: StringName) -> void: play(&"forge"))
 
 	# TOUS LES BOUTONS, SANS TOUCHER À UN SEUL ÉCRAN. L'interface crée ses
 	# boutons à la volée (boutique, Forge, personnages) : les câbler un par un
@@ -191,7 +249,7 @@ func _ready() -> void:
 
 
 func _load(key: StringName, file: String, looping: bool) -> void:
-	var stream := _charger(DIR + file, looping)
+	var stream := _charger((AUDIO_DIR if file.contains("/") else DIR) + file, looping)
 	if stream != null:
 		_streams[key] = stream
 
@@ -235,7 +293,7 @@ func play(key: StringName) -> void:
 	player.stream = stream
 	player.volume_db = db
 	player.pitch_scale = 1.0 + _rng.randf_range(-pitch, pitch)
-	player.play()
+	player.play(float(cfg.get("debut", 0.0)))
 
 	_voice_key[index] = key
 	_voice_start[index] = _clock
@@ -344,6 +402,90 @@ func _gain_piste() -> float:
 
 func stop_music() -> void:
 	play_music(&"")
+
+
+# --- Boucles : ambiance de l'arène, battement de cœur ------------------------
+
+## L'AMBIANCE, sous la musique : le donjon en surface, la lave à partir de la
+## vague 11 — elle suit le sol, qui change au même moment. Deux lecteurs à part,
+## hors de la banque de voix : une boucle de deux minutes ne doit jamais se faire
+## voler sa voix par un tir.
+const AMBIANCES := {false: "Sfx/ambiance_donjon.ogg", true: "Sfx/ambiance_lave.ogg"}
+const AMBIANCE_DB := {false: -20.0, true: -24.0}
+const AMBIANCE_FONDU := 2.0
+## LA VIE BASSE : un battement de cœur en boucle sous ce seuil de PV. Il reprend
+## après le silence de tête du fichier (0,36 s), sinon chaque tour marquerait un
+## trou.
+const COEUR_SEUIL := 0.25
+const COEUR_DB := -8.0
+const COEUR_DEBUT := 0.36
+
+var _ambiance: AudioStreamPlayer
+var _ambiance_profond: int = -1
+var _coeur: AudioStreamPlayer
+var _coeur_actif: bool = false
+
+
+func play_ambiance(profond: bool) -> void:
+	if _ambiance_profond == int(profond) and is_instance_valid(_ambiance) and _ambiance.playing:
+		return
+	_ambiance_profond = int(profond)
+	var stream := _charger(AUDIO_DIR + AMBIANCES[profond], true)
+	if stream == null:
+		return
+	var ancien := _ambiance
+	_ambiance = AudioStreamPlayer.new()
+	_ambiance.bus = &"Effets"
+	_ambiance.process_mode = Node.PROCESS_MODE_ALWAYS
+	_ambiance.stream = stream
+	_ambiance.volume_db = SILENCE_DB
+	add_child(_ambiance)
+	_ambiance.play()
+	create_tween().tween_property(_ambiance, ^"volume_db", AMBIANCE_DB[profond], AMBIANCE_FONDU)
+	if is_instance_valid(ancien):
+		_eteindre(ancien)
+
+
+## Hors de l'arène : ambiance et battement se taisent.
+func stop_ambiance() -> void:
+	_ambiance_profond = -1
+	if is_instance_valid(_ambiance):
+		_eteindre(_ambiance)
+	_ambiance = null
+	_set_coeur(false)
+
+
+func _eteindre(player: AudioStreamPlayer) -> void:
+	var tween := create_tween()
+	tween.tween_property(player, ^"volume_db", SILENCE_DB, AMBIANCE_FONDU * 0.5)
+	tween.tween_callback(player.queue_free)
+
+
+func _on_player_health(current: float, maximum: float) -> void:
+	_set_coeur(current > 0.0 and maximum > 0.0 and current / maximum < COEUR_SEUIL)
+
+
+func _set_coeur(actif: bool) -> void:
+	if actif == _coeur_actif:
+		return
+	_coeur_actif = actif
+	if actif:
+		if not is_instance_valid(_coeur):
+			var stream := _charger(AUDIO_DIR + "Sfx/vie_basse.ogg", true)
+			if stream == null:
+				_coeur_actif = false
+				return
+			if stream is AudioStreamOggVorbis:
+				(stream as AudioStreamOggVorbis).loop_offset = COEUR_DEBUT
+			_coeur = AudioStreamPlayer.new()
+			_coeur.bus = &"Effets"
+			_coeur.process_mode = Node.PROCESS_MODE_ALWAYS
+			_coeur.stream = stream
+			add_child(_coeur)
+		_coeur.volume_db = COEUR_DB
+		_coeur.play(COEUR_DEBUT)
+	elif is_instance_valid(_coeur):
+		_coeur.stop()
 
 
 # --- Boutons -----------------------------------------------------------------

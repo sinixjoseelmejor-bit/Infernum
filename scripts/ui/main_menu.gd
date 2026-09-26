@@ -41,6 +41,7 @@ func _ready() -> void:
 	get_tree().paused = false
 	Curses.clear_all()
 	Audio.play_music(&"menu")
+	Audio.stop_ambiance()
 	_add_embers()
 	for screen in [character_select, profiles_screen, options_screen, forge_screen]:
 		screen.visibility_changed.connect(_update_hub)

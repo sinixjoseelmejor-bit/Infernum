@@ -333,6 +333,7 @@ func _next_line() -> void:
 		{"sceaux": sceaux, "reste": maxi(0, 3 - sceaux)})
 	_active_label.visible_characters = 0
 	_typing = true
+	Audio.play(&"texte_ligne")
 	_arrow.visible = false
 
 
@@ -598,6 +599,10 @@ func _process(delta: float) -> void:
 			_typing = false
 			_arrow.visible = true
 		else:
+			# Un petit « blip » toutes les deux lettres : le texte s'entend
+			# s'écrire, sans devenir une mitraille (l'anti-spam borne le débit).
+			if floori(shown / 2.0) != floori(_active_label.visible_characters / 2.0):
+				Audio.play(&"texte")
 			_active_label.visible_characters = shown
 	if _arrow.visible:
 		_arrow.modulate.a = 0.4 + 0.6 * absf(sin(_clock * 3.0))

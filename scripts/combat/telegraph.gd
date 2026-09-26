@@ -27,6 +27,10 @@ extends Node2D
 ## corresponde vraiment au rayon annoncé.
 @export var impact_content_width: float = 111.0
 
+## Son de la détonation, posé par le boss : la pierre de Golgota ne sonne pas
+## comme la braise de Lucifer. Rien pour une zone qui ne blesse pas.
+var son: StringName = &"explosion"
+
 var _elapsed: float = 0.0
 var _fired: bool = false
 ## Un impact a-t-il ete joue ? Si oui, c'est LUI le flash.
@@ -55,6 +59,8 @@ func _process(delta: float) -> void:
 
 func _detonate() -> void:
 	GameEvents.request_shake(shake)
+	if damage > 0.0 and son != &"":
+		Audio.play(son)
 	_spawn_impact()
 	var player := get_tree().get_first_node_in_group(Groups.PLAYER)
 	if player == null or not is_instance_valid(player):

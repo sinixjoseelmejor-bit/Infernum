@@ -63,6 +63,7 @@ collision_mask = 4
 script = ExtResource("4_targeting")
 range_radius = 340.0
 target_priority = 1
+require_line_of_sight = true
 aim_tolerance_deg = 110.0
 aim_weight = 0.35
 sticky_bonus = 0.18

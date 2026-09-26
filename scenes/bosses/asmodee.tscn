@@ -14,7 +14,7 @@ radius = 52.0
 
 [node name="Asmodee" type="CharacterBody2D" groups=["enemies"]]
 collision_layer = 4
-collision_mask = 7
+collision_mask = 6
 motion_mode = 1
 script = ExtResource("1_script")
 move_speed = 95.0

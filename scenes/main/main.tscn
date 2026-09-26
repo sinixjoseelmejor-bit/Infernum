@@ -19,7 +19,7 @@
 [ext_resource type="Texture2D" uid="uid://7de4da1kgwo4" path="res://assets/sprites/arena/floor/floor.png" id="20_floor"]
 [ext_resource type="Script" path="res://scripts/components/floor_tiler.gd" id="21_tiler"]
 [ext_resource type="Texture2D" path="res://assets/sprites/arena/floor/floor2.png" id="22_floor2"]
-[ext_resource type="Script" path="res://scripts/components/decor_scatter.gd" id="23_decor"]
+[ext_resource type="Script" path="res://scripts/world/carte.gd" id="23_decor"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause.tscn" id="22_pause"]
 [ext_resource type="PackedScene" path="res://scenes/ui/stats.tscn" id="24_stats"]
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="23_options"]
@@ -63,7 +63,7 @@ deep_modulate = Color(0.66, 0.52, 0.5, 1)
 [node name="Entities" type="Node2D" parent="." unique_id=543909541]
 y_sort_enabled = true
 
-[node name="Decor" type="Node2D" parent="Entities"]
+[node name="Carte" type="Node2D" parent="Entities"]
 y_sort_enabled = true
 script = ExtResource("23_decor")
 

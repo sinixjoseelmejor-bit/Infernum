@@ -184,6 +184,30 @@ func _construire_outils() -> void:
 	for v: int in VAGUES_BOSS:
 		ligne_boss.add_child(_bouton("Vague %d" % v, func() -> void: _aller(v)))
 
+	# --- Carte ----------------------------------------------------------------
+	# Une carte par run : sans ces boutons, juger le générateur demanderait de
+	# relancer des parties à la chaîne.
+	_boite.add_child(_section("Carte"))
+	var ligne_carte := HBoxContainer.new()
+	ligne_carte.add_theme_constant_override(&"separation", 8)
+	_boite.add_child(ligne_carte)
+	ligne_carte.add_child(_bouton("Nouvelle carte", func() -> void:
+		if Carte.courante == null:
+			_dire("seulement dans l'arène")
+			return
+		Carte.courante.nouvelle_graine()
+		_dire("graine %d" % Carte.courante.graine)))
+	var formes := CheckButton.new()
+	formes.text = "Voir obstacles et lave"
+	formes.button_pressed = Carte.courante != null and Carte.courante.montrer_formes
+	formes.toggled.connect(func(actif: bool) -> void:
+		if Carte.courante != null:
+			Carte.courante.montrer_formes = actif)
+	ligne_carte.add_child(formes)
+	ligne_carte.add_child(_bouton("Descendre (vague 11)", func() -> void: _aller(11)))
+	if Carte.courante != null:
+		_boite.add_child(_texte("Graine de la run : %d" % Carte.courante.graine))
+
 	# --- Ressources et objets ------------------------------------------------
 	_boite.add_child(_section("Run"))
 	var ligne_res := HBoxContainer.new()

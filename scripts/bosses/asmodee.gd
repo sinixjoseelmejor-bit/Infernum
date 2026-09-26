@@ -74,6 +74,7 @@ func _bull_charge() -> void:
 	if not is_instance_valid(target):
 		return
 	var destination := predicted_target_position(charge_windup)
+	Audio.play(&"meuglement")
 	# La charge est annoncée : le couloir d'arrivée est visible avant l'impact.
 	telegraph_at(destination, 110.0, charge_windup, bolt_damage, Color(1.0, 0.45, 0.3))
 	_winding_up = true
@@ -119,6 +120,7 @@ func _release_pressure() -> void:
 ## sur lui, elle mourrait avec lui, et un boss tué pendant sa propre traction
 ## laisserait le joueur glisser au bout d'une chaîne effacée.
 func _jeter_la_chaine() -> void:
+	Audio.play(&"chaine")
 	var lien := ChainLash.new()
 	lien.ancre = self
 	lien.proie = target

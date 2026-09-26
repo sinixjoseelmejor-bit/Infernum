@@ -311,7 +311,7 @@ func _glitch() -> void:
 	var material := _glitch_rect.material as ShaderMaterial
 	material.set_shader_parameter(&"graine", _rng.randf() * 100.0)
 	_glitch_rect.visible = true
-	Audio.play(&"objet")
+	Audio.play(StringName("glitch_%d" % _rng.randi_range(1, 4)))
 	var tween := _glitch_layer.create_tween()
 	tween.tween_method(func(v: float) -> void: material.set_shader_parameter(&"force", v),
 		1.0, 0.0, GLITCH_TIME)

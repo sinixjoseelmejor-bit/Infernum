@@ -11,12 +11,14 @@ ce script reconstruit tout le reste a l'identique.
 
 INSTALLATION
 ------------
-1. Recuperer les cinq packs et les deposer dans assets/packs/ :
+1. Recuperer les sept packs et les deposer dans assets/packs/ :
        PixelUIKit/
        Tiny RPG Character Asset Pack v1.03 -Full 20 Characters/
        Tiny RPG Character Asset Pack 02 -Full 20 Characters/
        ItemIconPack/
        Texture/
+       Hell Underworld Tileset/      (la carte : voir extract_enfer.py)
+       Touches/touches_clavier.png   (les touches affichees par l'interface)
 2. python tools/extract_assets.py
 3. Ouvrir le projet dans Godot une fois, pour l'import.
 
@@ -30,6 +32,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pngio import decode, encode
+import extract_enfer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPR = os.path.join(ROOT, "assets", "sprites")
@@ -41,6 +44,7 @@ P13 = os.path.join(PACKS, "Tiny RPG Character Asset Pack v1.03 -Full 20 Characte
 P02 = os.path.join(PACKS, "Tiny RPG Character Asset Pack 02 -Full 20 Characters",
                    "Characters(100x100 split)")
 DECOR_PACK = os.path.join(PACKS, "Texture", "Extra")
+TOUCHES_PACK = os.path.join(PACKS, "Touches", "touches_clavier.png")
 
 # (categorie, entite, pack, nom d'origine, separateur, nom de la planche de marche)
 ENTITIES = [
@@ -226,6 +230,36 @@ def ui():
         open(os.path.join(UI, "bar_fill.png"), "wb").write(encode(8, h, fill))
 
 
+def touches():
+    """La planche des touches clavier, et une touche VIERGE qu'on etire.
+
+    La planche a les lettres, les fleches et F1 a F12, en 16 px, normales
+    (rangees 0 a 6) et enfoncees (7 a 13) — mais ni Espace, ni Tab, ni Echap,
+    les touches que le jeu utilise le plus. On en tire donc une touche vierge
+    en effacant l'apostrophe de la sienne (la plus petite inscription de la
+    planche) : son etiquette prend la couleur de la face. Les colonnes 5 a 9
+    d'une touche sont identiques d'une rangee a l'autre, l'interface les etire
+    pour ecrire n'importe quel nom dessus. Sortie : 32 x 16, normale a gauche,
+    enfoncee a droite.
+    """
+    if not copy(TOUCHES_PACK, os.path.join(UI, "touches.png")):
+        return False
+    w, h, px = decode(TOUCHES_PACK)
+    face, face_enfoncee = (57, 64, 70), (40, 40, 40)
+    rows = []
+    for y in range(16):
+        row = []
+        for x in range(16):
+            p = px[6 * 16 + y][x]
+            row.append(face + (255,) if p[:3] == (255, 255, 255) and p[3] > 0 else p)
+        for x in range(16):
+            p = px[13 * 16 + y][x]
+            row.append(face_enfoncee + (255,) if p[:3] == (161, 201, 255) and p[3] > 0 else p)
+        rows.append(row)
+    open(os.path.join(UI, "touche_vide.png"), "wb").write(encode(32, 16, rows))
+    return True
+
+
 def item_icons():
     """Une icone 16x16 par objet du catalogue, nommee par son identifiant.
 
@@ -372,6 +406,8 @@ if __name__ == "__main__":
     ui()
     items = item_icons()
     props = decor()
+    clavier = touches()
+    enfer, enfer_attendues = extract_enfer.extraire()
     icon()
     if missing:
         print("\n%d fichier(s) source introuvable(s) :" % len(missing))
@@ -383,8 +419,10 @@ if __name__ == "__main__":
               " ce fichier), puis relancez.")
         sys.exit(1)
     print("  %d entites : planches repos + marche" % count)
-    print("  interface : panneau, 3 boutons, 2 barres, %d icones" % len(ICONS))
+    print("  interface : panneau, 3 boutons, 2 barres, %d icones%s"
+          % (len(ICONS), ", touches clavier" if clavier else ""))
     print("  objets : %d icones sur %d attendues" % (items, len(ITEM_ICONS)))
     print("  decor : %d objets sur %d attendus" % (props, len(DECOR)))
+    print("  carte de l'enfer : %d pieces sur %d attendues" % (enfer, enfer_attendues))
     print("  application : icon.png + icon.ico")
     print("\nOuvrez le projet dans Godot une fois pour lancer l'import.")

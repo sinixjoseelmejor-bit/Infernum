@@ -221,7 +221,9 @@ func _has_line_of_sight(target: Node2D) -> bool:
 	var query := PhysicsRayQueryParameters2D.create(
 		global_position, target.global_position, line_of_sight_mask
 	)
-	query.exclude = [self]
+	# Des RID, pas des nœuds : `exclude` est typé. Ce chemin n'avait jamais servi
+	# avant que la carte ait des obstacles — la visée ne regardait pas les murs.
+	query.exclude = [get_rid()]
 	return space.intersect_ray(query).is_empty()
 
 

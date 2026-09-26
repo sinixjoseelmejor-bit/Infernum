@@ -348,10 +348,19 @@ func _last_boss_base_health() -> float:
 	return _last_boss_health_cache
 
 
+## Un point de l'anneau d'apparition. Jamais dans un obstacle de la carte ni
+## dans la lave : quelques essais, puis le dernier tiré — un ennemi né contre une
+## statue en est repoussé par la physique, alors qu'une vague qui ne ferait
+## plus naître personne serait un blocage.
 func _random_ring_position() -> Vector2:
-	var angle := _rng.randf_range(0.0, TAU)
-	var distance := _rng.randf_range(min_spawn_distance, max_spawn_distance)
-	return target.global_position + Vector2.RIGHT.rotated(angle) * distance
+	var point := Vector2.ZERO
+	for _essai in 8:
+		var angle := _rng.randf_range(0.0, TAU)
+		var distance := _rng.randf_range(min_spawn_distance, max_spawn_distance)
+		point = target.global_position + Vector2.RIGHT.rotated(angle) * distance
+		if Carte.courante == null or Carte.courante.libre(point, 40.0):
+			break
+	return point
 
 
 # --- Fin de vague : soin et moisson ---

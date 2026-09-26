@@ -9,7 +9,7 @@ Dépôt GitHub **privé** `sinixjoseelmejor-bit/Infernum`, branche `main`.
   d'installation. Il contient le raisonnement et **toutes les mesures** derrière
   chaque réglage : équilibrage, économie des âmes, Forge, boss, arène, décor,
   audio. **Ne jamais refaire une mesure qui y est déjà écrite.**
-- **[CREDITS.md](CREDITS.md)** — licences des cinq packs sources.
+- **[CREDITS.md](CREDITS.md)** — licences des sept packs sources.
 
 Toute mesure nouvelle, toute décision et toute erreur corrigée se **reporte dans
 le README**, dans la section concernée. C'est la mémoire du projet.
@@ -56,6 +56,10 @@ révélées fausses ici, et les erreurs sont documentées dans le README.
   main, pas en lisant un total de run.
 - Une seule run ne prouve rien : le tirage d'objets domine tout le reste
   (1,22 puis 0,42 à la vague 15 pour la même configuration). **Moyenner.**
+- **Le joueur tire tout seul.** Un banc qui compte des ennemis — arrivés,
+  coincés, survivants — le désarme d'abord (`%Weapons`, `CharacterEffects`,
+  `ItemEffects`) : sans ça, chaque ennemi abattu en route fausse le compte. Le
+  premier banc de contournement de la carte l'a appris à ses dépens.
 
 ### Sauvegardes
 
@@ -64,6 +68,10 @@ Elles vivent dans
 
 **En faire une copie avant tout banc.** Si le fichier diffère à la fin,
 **COMPARER avant de restaurer** : ça peut être la partie du joueur, pas le banc.
+Et avant d'accuser le banc, vérifier que le code lancé PEUT écrire la clé qui
+diffère : `last_character` n'est écrit que par l'écran de choix du personnage,
+qu'aucun banc ne traverse — une fois, il avait changé parce que le joueur avait
+choisi Caïn dans le menu, et une restauration hâtive l'aurait effacé.
 
 ## Godot
 
@@ -76,11 +84,18 @@ godot --headless --path . --export-release "Windows Desktop"
 godot --headless --path . --export-release "Web"
 godot --headless --path . --export-release "Windows Desktop (dev)"
 godot --headless --path . res://tools/test_waves.tscn
+godot --headless --path . res://tools/test_carte.tscn
 ```
 
-- La dernière ligne lance les **tests des vagues** (courbes, boss, roster,
+- L'avant-dernière ligne lance les **tests des vagues** (courbes, boss, roster,
   moisson), code de sortie 0 si tout passe. À relancer après toute retouche de
   `scripts/systems/wave_manager.gd` ou de `scripts/systems/waves/`.
+- La dernière lance les **tests de la carte** : règles de jouabilité et de
+  composition sur 6 480 parcelles, poches fermées, part de lave à l'écran. À relancer après toute
+  retouche de `scripts/world/`. Il demande les planches extraites.
+- **Toujours sous `timeout`.** Une erreur de compilation dans le script d'une
+  scène de test laisse Godot ouvert au lieu de quitter : sans garde-fou, on
+  attend un test qui n'a jamais tourné.
 
 - Les deux premiers préréglages sont **pour les joueurs** et **excluent le
   panneau de développement**. Le troisième le garde et porte l'indicateur
@@ -110,9 +125,14 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   `assets/audio/Music/` et la planche `vfx-Sheet.png` sont dans un autre cas :
   elles ont été annoncées libres au téléchargement ou à l'achat, **sans fichier
   de licence joint** — c'est la page d'origine qui fait foi.
-- **Deux fichiers audio déposés et inutilisés**, en attente de décision : un
-  générique de logo de 13,8 s (irait au menu) et un effet de roche brisée de
-  2,9 s (irait à l'écrasement de Golgota, qui n'a pas de son).
+- **Un fichier audio déposé et inutilisé** : un générique de logo de 13,8 s
+  (irait au menu). La roche brisée sert à Golgota depuis la 0.9.1.
+- **La planche des touches clavier** (`assets/packs/Touches/`, 0.9.1) n'a ni
+  nom de pack ni licence consignés : à renseigner dans CREDITS avant une
+  diffusion publique.
+- **Les 26 effets de `Sfx/` n'ont pas leurs sources consignées** (CREDITS) :
+  lien et licence par fichier, avant une diffusion publique. Leur MIX n'est
+  réglé que sur les crêtes mesurées, pas à l'oreille.
 - **Un verbe par personnage, les trois sont faits** : Loth traverse (la ruée),
   Caïn dépense sa Marque (le Prix du sang), Job pare (le Refus de plier,
   qui charge son Jugement de paladin depuis la 0.9.0). Trois
@@ -131,16 +151,20 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   et le **Voile de l'Aurore** (mesurés, voir README) ; ce qui n'est pas
   mesuré, c'est le DANGER qu'il présente — le banc tenait le joueur
   invincible. Avec une build moyenne (18 objets) il tient 4 à 6 min.
-- **Aucun des trois pouvoirs n'a de son.** Avec le coup encaissé et l'âme
-  ramassée, ce sont les manques les plus visibles de la banque.
 - La **piste du menu est 4,8 dB sous celles de l'arène** (mesuré en LUFS) :
   passer du menu au jeu est une marche vers le haut. La remonter la ferait
   saturer, ses crêtes sortant déjà à +6,5 dBFS — ça se règle sur le fichier.
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.
-- Le **carreau de sol de la profondeur** est plus plat que celui de la surface,
-  alors que c'est lui la récompense visuelle de la vague 11.
+- **La carte de l'enfer** (0.9.1, voir README) : ses règles sont testées et le
+  contournement mesuré, mais deux choses ne le sont pas — le **danger réel de la
+  lave** dans une run (aucun banc ne l'évite ni ne la cherche) et l'effet des
+  obstacles sur **l'équilibrage des vagues**. Pas encore de son de brûlure.
+  Le lien de la page du pack est à consigner dans CREDITS.
+- Les **deux anciens carreaux de sol** (`assets/sprites/arena/floor/`) ne
+  servent plus qu'en repli, quand le pack de l'enfer n'est pas extrait. On peut
+  les supprimer si ce repli ne sert à personne.
 - Boutons de réglage si l'équilibrage sonne faux en jeu : `leftover_ratio` par
   personnage, `PUISSANCE_DECHAINEE` et `DEGATS_DECHAINES`, les 82 clés d'une
   Forge complète.

@@ -70,6 +70,9 @@ var is_elite: bool = false
 
 var _knockback: Vector2 = Vector2.ZERO
 var _contact_timer: float = 0.0
+## Rayon du corps, lu sur sa forme de collision : c'est la marge que
+## l'évitement garde autour des obstacles.
+var _rayon_corps: float = 16.0
 
 
 func _ready() -> void:
@@ -81,6 +84,11 @@ func _ready() -> void:
 		target = get_tree().get_first_node_in_group(Groups.PLAYER)
 	if is_elite:
 		sprite.modulate = elite_tint
+	for enfant in get_children():
+		var forme := enfant as CollisionShape2D
+		if forme != null and forme.shape is CircleShape2D:
+			_rayon_corps = (forme.shape as CircleShape2D).radius * absf(scale.x)
+			break
 	GameEvents.enemy_spawned.emit(self)
 
 
@@ -105,6 +113,11 @@ func make_elite() -> void:
 func _physics_process(delta: float) -> void:
 	_contact_timer = maxf(0.0, _contact_timer - delta)
 	_update_movement(delta)
+	# Les obstacles de la carte : la vitesse VOULUE est déviée le long de ceux
+	# qu'on s'apprête à percuter, avant le recul et le glissement.
+	if Carte.courante != null and _contourne_obstacles():
+		velocity = Carte.courante.contourner(global_position, velocity, _rayon_corps,
+			get_instance_id())
 
 	# `velocity` porte ici la vitesse VOULUE. Le recul s'y ajoute uniquement le
 	# temps du déplacement, puis on la restaure : l'ajouter durablement le
@@ -116,6 +129,15 @@ func _physics_process(delta: float) -> void:
 	velocity = intent
 
 	_handle_contact_damage()
+
+
+## Faut-il contourner les obstacles de la carte en ce moment ?
+##
+## Oui pour qui les heurte — les boss, eux, n'ont pas la couche du monde dans
+## leur masque et passent au travers. Surchargé par le chien, dont la charge est
+## un trait annoncé : la dévier mentirait sur ce qu'il a promis.
+func _contourne_obstacles() -> bool:
+	return (collision_mask & Layers.WORLD) != 0
 
 
 ## Surchargé par les variantes de comportement.

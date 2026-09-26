@@ -24,6 +24,9 @@ func _ready() -> void:
 	super()
 	weapon.setup(targeting)
 	weapon.damage_multiplier = _projectile_damage_multiplier
+	# Le tir du cultiste s'entend : c'est l'annonce d'un projectile à esquiver.
+	# Bas, et borné par l'anti-spam — ils tirent à plusieurs.
+	weapon.fired.connect(func(_t: Node2D) -> void: Audio.play(&"tir_ennemi"))
 	# Pas d'aide à la visée pour les ennemis : c'est au joueur d'esquiver, pas
 	# au tireur de rater. La tolérance large est un confort réservé au joueur.
 	weapon.aim_hint = Vector2.ZERO

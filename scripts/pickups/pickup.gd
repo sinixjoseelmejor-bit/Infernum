@@ -160,15 +160,19 @@ func collect() -> void:
 		Kind.SOULS:
 			var gain := maxi(1, roundi(value * (1.0 + RunState.stats.get_soul_gain_pct())))
 			RunState.add_souls(gain)
+			Audio.play(&"ame")
 		Kind.KEYS:
 			RunState.add_keys(value)
+			Audio.play(&"cle")
 		Kind.HEAL:
 			var player := get_tree().get_first_node_in_group(Groups.PLAYER) as Player
 			if player != null and not player.health.is_dead:
 				player.health.heal(maxf(heal_minimum, heal_hits * _hit_damage()))
+				Audio.play(&"soin")
 		Kind.ABYSS_KEY:
 			# Elle s'écrit dans le PROFIL et non dans la run : c'est la seule
 			# chose que Lucifer laisse et qu'on garde après la mort.
+			Audio.play(&"cle_abysses")
 			if SaveGame.grant_abyss_key():
 				GameEvents.announce.emit("LA CLÉ DES ABYSSES",
 					"Armez le Déchaînement à la Forge, pour le personnage de votre"

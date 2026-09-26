@@ -207,9 +207,16 @@ ouvrent, et la Forge Éternelle est littéralement un arbre de verrous.
 | `heart` | barre de vie |
 | `coin` | âmes |
 | `lock` | clés |
-| `star` · `gear` · `close` | disponibles, pas encore employées |
+| `star` | seconde chance, dans l'affichage en jeu |
+| `gear` · `close` | disponibles, pas encore employées |
+| `touches` · `touche_vide` | les touches dessinées de l'interface (voir `scripts/ui/touche.gd`) ; la seconde est une touche vierge tirée de la première, normale et enfoncée côte à côte |
 
 ## Le sol
+
+> Depuis la 0.9.1, quand le pack de l'enfer est extrait, le sol est son **pavé
+> sombre** (`sprites/enfer/sol/`), avec des régions de dallage et de lave
+> refroidie : voir le README principal, « Le sol de l'arène ». Les deux carreaux
+> décrits ici ne servent plus qu'en repli.
 
 `arena/floor/floor.png` est un **carreau répétable** de 420 × 420 découpé dans une
 carte d'arène. Deux précautions, sans lesquelles la répétition saute aux yeux :
