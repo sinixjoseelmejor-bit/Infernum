@@ -36,7 +36,13 @@ const VIOLET := Color(0.78, 0.45, 1.0)
 var _minuteur: float = 3.0
 var _incante: float = 0.0
 var _points: Array[Vector2] = []
-var _invoques: Array[Enemy] = []
+## NON TYPÉ, et c'est voulu : un imp tué est libéré, et une fonction typée
+## `func(e: Enemy)` qui le reçoit plante (« Cannot convert argument 1 from
+## Object to Object ») — le filtre rendait alors un tableau vide non typé,
+## l'affectation échouait, et l'invocatrice n'appelait plus JAMAIS, dès le
+## premier de ses imps abattu. Vu au tournage de la bande-annonce ; les
+## sondes ne tuaient aucun imp.
+var _invoques: Array = []
 
 
 func _update_movement(delta: float) -> void:
@@ -74,8 +80,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _vivants() -> int:
-	_invoques = _invoques.filter(func(e: Enemy) -> bool:
-		return is_instance_valid(e) and not e.is_queued_for_deletion())
+	# `is_instance_valid` d'abord : rien n'est lu sur un imp libéré.
+	_invoques = _invoques.filter(func(e) -> bool:
+		return is_instance_valid(e) and not (e as Enemy).is_queued_for_deletion())
 	return _invoques.size()
 
 
@@ -121,7 +128,10 @@ func _teinte_repos() -> Color:
 
 func _on_died(source: Node) -> void:
 	for imp in _invoques:
-		if is_instance_valid(imp) and not imp.is_queued_for_deletion() and not imp.health.is_dead:
-			imp.retourner_en_cendre()
+		if not is_instance_valid(imp):
+			continue
+		var e := imp as Enemy
+		if not e.is_queued_for_deletion() and not e.health.is_dead:
+			e.retourner_en_cendre()
 	_invoques.clear()
 	super(source)
