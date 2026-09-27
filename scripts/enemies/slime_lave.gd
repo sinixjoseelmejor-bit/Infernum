@@ -11,7 +11,7 @@ extends Enemy
 ## 4 + 1 + 1 âmes, soit 0,09 âme par PV — le 0,1 de tout le monde.
 ##
 ## IL EST FAIT DE LAVE. La lave ne le brûle pas, et il y avance 60 % plus vite :
-## c'est son terrain. Un joueur qui s'est adossé à une rivière de lave pour
+## c'est son terrain. Un joueur qui s'est adossé à une fosse de lave pour
 ## que la foule s'y consume le voit arriver par là, et vite.
 
 ## Part des PV du parent donnée à chaque enfant.

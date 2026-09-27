@@ -52,44 +52,48 @@ Utilisé ici, planches de repos et de marche uniquement :
 | Baal | Demon_C |
 | Asmodée | Demon_E |
 | Lucifer | Black Knight_C |
+| chauve-souris (0.9.2) | Hellbat (vol, repos compris) |
+| feu follet (0.9.2) | Ghostfire (vol, repos compris) |
+| slime de lave (0.9.2) | Lava Slime |
+| invocatrice (0.9.2) | Demoness_B |
 
 L'icône du jeu (`icon.png`, `icon.ico`) est dérivée du sprite du Flame Golem.
 
-### Texture — décor de l'arène
+### Texture — retiré en 0.9.2
 
-`assets/packs/Texture/` — deux atlas de 512 × 512, `LICENCE` fourni avec le pack.
+Le pack du décor d'origine de l'arène (ruines, éboulis, urnes, buissons passés
+à la cendre). **Sorti du projet en 0.9.2** : sa pierre beige, peinte et
+lissée, jurait à côté du pixel art net du pack de la carte, et plus rien ne
+l'employait. Ses 15 pièces extraites et leur code d'extraction ont été
+supprimés.
 
-- Usage **libre, personnel et commercial**.
-- Modification autorisée.
-- **Redistribution et revente interdites** — d'où l'exclusion du dépôt.
-- Crédit apprécié mais non exigé (d'où cette page) ; le fichier de licence ne
-  nomme pas son auteur.
+### 2DML SET 3 — la carte de l'enfer (0.9.2)
 
-15 pièces en sont tirées, découpées et renommées : pierres, gravats, dalles,
-autel, urnes, jarre, anneau, pierre levée, tour, et trois buissons reteintés en
-cendre. Quatre pièces de cimetière ont été découpées puis retirées, le décor ne
-composant que des ruines et des éboulis. Les rectangles de découpe sont dans `DECOR`, au sein de
-[`tools/extract_assets.py`](tools/extract_assets.py) ; les atlas n'ont aucune
-grille, ces relevés ne se retrouveraient pas autrement. Le reste du pack — caisses,
-tonneaux, portes, banc, panneaux gravés, tuiles d'herbe — n'est pas employé.
+`assets/packs/2DML_SET3_v1.0/` — trois planches (terrains, décor, petits
+objets), six planches d'animation et leurs sources PSD, `public-license.txt`
+fourni avec le pack. Art de **Szadi art**.
 
-### Hell Underworld Tileset — la carte de l'enfer (0.9.1)
+- Usage **personnel et commercial**, y compris dans un jeu vendu.
+- Modification, découpe et adaptation autorisées.
+- **Revente interdite**, originale ou modifiée — d'où l'exclusion du dépôt,
+  comme les autres packs d'images.
+- Emploi interdit dans un logo, une marque ou une marque de service.
+- Crédit non exigé mais apprécié : **Szadi art**, d'où cette page.
 
-`assets/packs/Hell Underworld Tileset/` — cinq planches de 768 × 768
-(`tile-B-01` à `tile-B-05`), `LICENCE.txt` fourni avec le pack.
+[`tools/extract_enfer.py`](tools/extract_enfer.py) en tire 71 fichiers :
+cheminées volcaniques, formations rocheuses, arbres morts, cailloux, herbes,
+buissons, fissures, fumerolles et bulles animées, trois carreaux de sol, et
+des bassins, lacs, fosses et plateaux **composés** à partir des blocs de tuiles
+du pack. Ne sont pas employés : les conteneurs métalliques à voyants verts
+(`other_props.png`), hors sujet dans un enfer ; les taches de sol en fleur ; le
+plateau aux bords de lave, dont le dessus a la couleur du sol.
 
-- Usage **personnel et commercial** autorisé dans des projets de jeu.
-- **Revente et redistribution interdites** en tant que ressources autonomes —
-  d'où l'exclusion du dépôt, comme les autres packs d'images.
-- Crédit apprécié mais non exigé ; le fichier de licence ne nomme pas son
-  auteur. Le lien de la page d'origine est à consigner ici avant une diffusion
-  publique.
+### Hell Underworld Tileset — retiré en 0.9.2
 
-210 pièces et 3 textures de sol en sont tirées par
-[`tools/extract_enfer.py`](tools/extract_enfer.py) : monuments, supplices,
-laves, rivières, ossements, braseros, damnés enfermés, pavé, dallage et lave
-refroidie. Les fantômes, les démons et les damnés libres de la planche B-02 ne
-sont pas employés : posés dans le décor, ils se liraient comme des ennemis.
+Le pack de la carte de la 0.9.1. **Retiré parce que son vendeur l'avait produit
+avec une IA.** Toutes les images qui en étaient tirées (210 pièces, 3 textures)
+ont été supprimées ; rien du jeu n'y renvoie plus. Les builds et la
+bande-annonce de la 0.9.1 le montrent encore.
 
 ### Touches clavier — l'affichage des touches (0.9.1)
 

@@ -9,7 +9,7 @@ Dépôt GitHub **privé** `sinixjoseelmejor-bit/Infernum`, branche `main`.
   d'installation. Il contient le raisonnement et **toutes les mesures** derrière
   chaque réglage : équilibrage, économie des âmes, Forge, boss, arène, décor,
   audio. **Ne jamais refaire une mesure qui y est déjà écrite.**
-- **[CREDITS.md](CREDITS.md)** — licences des sept packs sources.
+- **[CREDITS.md](CREDITS.md)** — licences des six packs sources.
 
 Toute mesure nouvelle, toute décision et toute erreur corrigée se **reporte dans
 le README**, dans la section concernée. C'est la mémoire du projet.
@@ -182,11 +182,14 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   des vagues mesurée inchangée. Pas mesuré : le danger réel du feu follet
   pour un joueur qui esquive, et celui d'une invocatrice qu'on laisse vivre.
   Pas de son propre à chacun (ils prennent ceux de tout le monde).
-- **La carte de l'enfer** (0.9.1, voir README) : ses règles sont testées et le
-  contournement mesuré, mais deux choses ne le sont pas — le **danger réel de la
-  lave** dans une run (aucun banc ne l'évite ni ne la cherche) et l'effet des
-  obstacles sur **l'équilibrage des vagues**. Pas encore de son de brûlure.
-  Le lien de la page du pack est à consigner dans CREDITS.
+- **La carte de l'enfer** (voir README) : depuis la 0.9.2, pack **2DML SET 3**
+  de Szadi art — l'ancien (Hell Underworld Tileset) a été retiré, son vendeur
+  l'ayant produit avec une IA ; les builds et la bande-annonce de la 0.9.1 le
+  montrent encore. Règles testées, mais pas mesurés : le **danger réel de la
+  lave** dans une run (trois fois plus présente qu'avant, en nappes), l'effet
+  des obstacles sur **l'équilibrage des vagues** (plus nombreux, plus petits),
+  et le temps de calcul des masques des nouvelles nappes. Pas encore de son de
+  brûlure.
 - Les **deux anciens carreaux de sol** (`assets/sprites/arena/floor/`) ne
   servent plus qu'en repli, quand le pack de l'enfer n'est pas extrait. On peut
   les supprimer si ce repli ne sert à personne.

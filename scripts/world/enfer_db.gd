@@ -3,274 +3,151 @@ extends Object
 ## Le catalogue des pièces de la carte : ce que chacune BLOQUE, BRÛLE, ÉCLAIRE,
 ## et à quelle couche elle se dessine.
 ##
-## Les images sortent du pack Hell Underworld Tileset par
-## `tools/extract_enfer.py`, qui en garde les rectangles de découpe. Ici ne vit
-## que ce que le jeu doit savoir d'elles — la carte ne lit jamais une image pour
-## deviner un rôle, sauf la lave (voir `Carte._masque_lave`).
+## Les images sortent du pack 2DML SET 3 (Szadi art) par
+## `tools/extract_enfer.py`, qui en garde les rectangles de découpe et compose
+## les terrains. Ici ne vit que ce que le jeu doit savoir d'elles — la carte ne
+## lit jamais une image pour deviner un rôle, sauf la lave (voir
+## `Carte._masque_lave`).
 ##
 ## LES CLÉS D'UNE PIÈCE, toutes facultatives :
-##   "c"     obstacle ROND, rayon en pixels du monde. Centré sur le nœud, c'est-à-
-##           dire `Carte.PIED` au-dessus de la base dessinée : le même repère que
-##           les créatures, dont l'origine est à mi-corps.
+##   "c"     obstacle ROND, rayon en pixels du monde. Centré sur le PIED mesuré
+##           dans l'image (voir `GenerateurCarte.forme_obstacle`) : les objets
+##           du pack portent leur ombre vers la droite, leur base n'est pas au
+##           milieu de l'image.
 ##   "k"     obstacle ALLONGÉ (capsule horizontale) : Vector2(demi-longueur,
-##           rayon). Pour les pièces larges et peu profondes — un chevalet, un mur
-##           de geôle — qu'un cercle rendrait bien trop hautes.
+##           rayon). Pour les pièces larges et peu profondes.
 ##   "sol"   pièce PLATE : dessinée sous toutes les créatures, sans tri en Y. La
-##           valeur est sa couche (voir SOL_*).
+##           valeur est sa couche (voir SOL_*). Un plateau est plat ET bloque :
+##           on ne peut jamais se tenir derrière lui, donc rien n'a à passer
+##           dessous ; son obstacle est centré sur l'image.
 ##   "lave"  la pièce brûle ce qui marche dessus. La forme brûlante est lue dans
 ##           l'image elle-même, pixel par pixel : elle suit le dessin exactement.
 ##   "feu"   pixels incandescents : ils vacillent (shader), rien de plus.
 ##   "lueur" la pièce ÉCLAIRE : rayon de sa lumière, en pixels du monde. Couleur
 ##           de lave par défaut ; "flamme" pour la couleur du feu, qui vacille.
 ##   "braises" des braises s'en élèvent.
-##   "fixe"  symétrie interdite : la pièce porte une gravure ou un texte, qu'un
-##           miroir trahirait.
-##   "creux" la pièce entoure un vide où d'autres peuvent se poser (un anneau de
-##           roches autour de ses braises) : son pied ne compte pas.
+##   "anim"  planche d'images de 32 px : Vector3i(colonnes, rangées, images
+##           utiles), jouée à `ANIM_IPS` images par seconde.
+##
+## LES OMBRES SONT DANS LES PLANCHES. Chaque objet du pack porte la sienne,
+## dessinée vers la droite : la carte n'ajoute plus d'ombre de contact, qui
+## ferait double emploi.
 ##
 ## POURQUOI CES PIÈCES-LÀ BLOQUENT. Le joueur doit pouvoir le deviner d'un coup
 ## d'œil, donc la règle est une règle de FORME et non de liste : tout ce qui est
-## gros et dressé bloque — statues, obélisques, autels, trônes, cratères,
-## chaudrons, machines de supplice, cages, murs. Tout ce qui est petit ou à plat
-## se traverse — os, pierres, braseros, torches, stèles basses, fissures. Deux
-## exceptions assumées, parce qu'on y passe DESSOUS : la potence et le portique,
-## des cadres ouverts.
+## dressé et plus haut que lui bloque — cheminées, formations rocheuses, arbres
+## morts, plateaux. Tout ce qui est bas ou à plat se traverse — cailloux, trous,
+## herbes, buissons, fissures, la petite cheminée qui lui arrive à la taille.
 
-## Échelle d'affichage. Le pack imite un pixel art d'environ 2 px de planche par
-## pixel, sans grille régulière (mesuré : aucune phase ne se distingue). À 1,5,
-## ce pseudo-pixel mesure 3 px d'écran — la taille du pixel de tout le reste du
-## jeu, personnages et décor compris.
-const ECHELLE := 1.5
+## Échelle d'affichage. Le pack est du VRAI pixel art, sur une grille nette (à
+## la différence de l'ancien, qui n'en imitait que l'apparence) : un facteur
+## entier, 2, met une cheminée à 104 px et un arbre mort à 140, pour un joueur
+## de 84.
+const ECHELLE := 2.0
 
 ## Couches des pièces plates, du bas vers le haut. Toutes sous les créatures
 ## (0), sous les zones annoncées et les jauges (-1, -2), au-dessus du sol (-100).
-const SOL_PLAQUE := -62   ## plaques de sol fondues
-const SOL_MARQUE := -60   ## fissures, dalles, sceaux, estrades
-const SOL_OMBRE := -59    ## ombres de contact et ombres portées
-const SOL_RIVIERE := -56  ## tronçons de rivière
-const SOL_LAVE := -55     ## bassins : ils coiffent les bouts des rivières
-const SOL_PONT := -52     ## ponts, posés sur la lave
+const SOL_MARQUE := -60   ## fissures
+const SOL_OMBRE := -59    ## ombres de contact (plus utilisées par ce pack)
+const SOL_LAVE := -56     ## bassins, lacs, fosses
+const SOL_BULLE := -55    ## bulles, posées sur la lave
+const SOL_RELIEF := -52   ## plateaux : au-dessus de tout le sol
 const BRAISES := -3       ## braises : au-dessus du sol, sous les zones annoncées
+
+## LA TEINTE DE CHAQUE ÉTAGE, la même pour le carreau de sol et pour TOUTES les
+## pièces du pack : ils ont été peints ensemble, les teinter différemment
+## casserait leur accord — et la bordure de sol d'un bassin se découperait sur
+## le carreau voisin. La lave, elle, garde sa couleur (voir `Carte.SHADER_FEU`).
+## Réglée pour retrouver à l'écran la teinte des étages d'avant : pierre froide
+## en surface, rouge en profondeur (README, « On part de la pierre froide »).
+const TEINTE_SURFACE := Color(0.61, 0.67, 0.68)
+const TEINTE_PROFONDEUR := Color(0.84, 0.63, 0.53)
+
+## Images par seconde des pièces animées.
+const ANIM_IPS := 7.0
 
 const CHEMIN := "res://assets/sprites/enfer/%s.png"
 
 const PIECES := {
-	# --- Petits objets : se traversent -------------------------------------
-	&"feu_camp": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"feu_camp_b": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"feu_camp_c": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"braises": {"feu": true, "lueur": 70.0},
-	&"tas_braise": {"feu": true, "lueur": 70.0},
-	&"braise_petite": {"feu": true},
-	&"braise_ronde": {"feu": true},
-	&"pierre_rune_a": {"fixe": true},
-	&"pierre_rune_b": {"fixe": true},
-	&"pierre_rune_c": {"fixe": true},
-	&"pierre_rune_d": {"fixe": true},
-	&"pierre_rune_e": {"fixe": true},
-	&"caillou_noir": {},
-	&"stalagmites_a": {},
-	&"stalagmites_b": {},
-	&"stalagmites_c": {},
-	&"stalagmite_a": {},
-	&"stalagmite_b": {},
-	&"stalagmite_c": {},
-	&"stalagmite_d": {},
-	&"arbre_mort": {},
-	&"racines_a": {},
-	&"racines_b": {},
-	&"racines_c": {},
-	&"racines_d": {},
-	&"ronces": {},
-	&"roche_braise": {"feu": true},
-	&"os_a": {},
-	&"os_b": {},
-	&"os_c": {},
-	&"os_d": {},
-	&"os_e": {},
-	&"carcasse": {},
-	&"crane_os": {},
-	&"crane_a": {},
-	&"crane_b": {},
-	&"crane_c": {},
-	&"crane_bouc": {},
-	&"statuette_a": {},
-	&"statuette_b": {},
-	&"eboulis_noir": {},
-	&"anneau_roches": {"creux": true},
-	&"obsidienne_a": {},
-	&"obsidienne_b": {},
-	&"obsidienne_c": {},
-	&"obsidienne_d": {},
-	&"obsidienne_e": {},
-	&"obsidienne_f": {},
-	&"plante_feu": {"feu": true},
-	&"cristal_feu": {"feu": true},
-	&"coupe_feu_a": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_feu_b": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_feu_c": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_feu_d": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_feu_e": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_feu_f": {"feu": true, "lueur": 160.0, "flamme": true},
-	&"coupe_braise": {"feu": true, "lueur": 80.0},
-	&"torchere_a": {"feu": true, "lueur": 140.0, "flamme": true},
-	&"torchere_b": {"feu": true, "lueur": 140.0, "flamme": true},
-	&"torche_a": {"feu": true, "lueur": 140.0, "flamme": true},
-	&"torche_b": {"feu": true, "lueur": 140.0, "flamme": true},
-	&"torche_c": {"feu": true, "lueur": 140.0, "flamme": true},
-	&"roche_lave_a": {"feu": true},
-	&"roche_lave_b": {"feu": true},
-	&"roche_lave_c": {"feu": true},
-	&"roche_lave_d": {"feu": true},
-	&"rochers_a": {},
-	&"rochers_b": {},
-	&"rochers_c": {},
-	&"rochers_d": {},
-	&"rochers_e": {},
-	&"rochers_f": {},
-	&"eclats": {},
-	&"boule_pointes": {},
-	# Cadres ouverts : on passe dessous.
-	&"potence": {},
-	&"portique": {},
-	&"porte_os": {},
+	# --- Cheminées volcaniques ------------------------------------------------
+	&"cheminee_a": {"c": 26.0},
+	&"cheminee_b": {"c": 22.0},
+	&"cheminee_c": {"c": 17.0},
+	&"cheminees_trio": {"c": 40.0},
+	&"cheminees_grappe": {"c": 34.0},
+	&"cheminee_haute": {"c": 25.0},
+	&"cheminees_paire": {"c": 43.0},
+	&"cheminees_duo": {"c": 24.0},
+	# Elle arrive à la taille du joueur : on la contourne des yeux, pas du corps.
+	&"cheminee_petite": {},
+	# --- Formations rocheuses -------------------------------------------------
+	&"aiguille": {"c": 20.0},
+	&"rocher_creuse": {"c": 33.0},
+	&"bloc_troue": {"c": 22.0},
+	&"menhir": {"c": 25.0},
+	&"rocher_penche": {"c": 27.0},
+	&"falaise": {"k": Vector2(26.0, 38.0)},
+	&"dome": {"c": 38.0},
+	&"colosse": {"c": 43.0},
+	&"galet": {},
+	# --- Arbres morts : bloquent au tronc -------------------------------------
+	&"arbre_a": {"c": 14.0},
+	&"arbre_b": {"c": 14.0},
+	&"arbre_c": {"c": 14.0},
+	&"arbre_mauve_a": {"c": 14.0},
+	&"arbre_mauve_b": {"c": 14.0},
+	&"arbre_mauve_c": {"c": 14.0},
+	# --- Petits objets : se traversent ----------------------------------------
+	&"caillou_a": {},
+	&"caillou_b": {},
+	&"caillou_c": {},
+	&"gravier_a": {},
+	&"gravier_b": {},
+	&"trou_a": {},
+	&"trou_b": {},
+	&"trou_c": {},
+	&"trou_d": {},
+	&"herbe_a": {},
+	&"herbe_b": {},
+	&"herbe_c": {},
+	&"herbe_seche_a": {},
+	&"herbe_seche_b": {},
+	&"herbe_seche_c": {},
+	&"buisson_rouge_a": {},
+	&"buisson_rouge_b": {},
+	&"buisson_rouge_c": {},
+	&"buisson_olive_a": {},
+	&"buisson_olive_b": {},
+	&"buisson_olive_c": {},
+	&"buisson_sombre_a": {},
+	&"buisson_sombre_b": {},
+	&"buisson_sombre_c": {},
+	# Des cratères qui fument : six images, la dernière rangée à moitié vide.
+	&"fumerolle_a": {"anim": Vector3i(4, 2, 6)},
+	&"fumerolle_b": {"anim": Vector3i(4, 2, 6)},
+	&"fumerolle_c": {"anim": Vector3i(4, 2, 6)},
+	&"fumerolle_d": {"anim": Vector3i(4, 2, 6)},
 
-	# --- Pièces plates ------------------------------------------------------
-	&"plaque_lave": {"sol": SOL_PLAQUE, "feu": true, "lueur": 110.0},
-	&"plaque_dallage": {"sol": SOL_PLAQUE, "fixe": true},
-	&"etoile_fissure": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_b": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_c": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_e": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_f": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_g": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_h": {"sol": SOL_MARQUE, "feu": true},
-	&"fissure_i": {"sol": SOL_MARQUE, "feu": true},
-	&"dalle_rune_a": {"sol": SOL_MARQUE, "fixe": true},
-	&"dalle_rune_b": {"sol": SOL_MARQUE, "fixe": true},
-	&"dalle_rune_c": {"sol": SOL_MARQUE, "fixe": true},
-	&"dalle_rune_d": {"sol": SOL_MARQUE, "fixe": true},
-	&"pentagramme": {"sol": SOL_MARQUE, "fixe": true, "feu": true},
-	&"sceau": {"sol": SOL_MARQUE, "fixe": true, "feu": true},
-	&"relief": {"sol": SOL_MARQUE, "fixe": true},
-	&"estrade_defenses": {"sol": SOL_MARQUE},
-	&"estrade_cranes": {"sol": SOL_MARQUE},
-	&"estrade_arc": {"sol": SOL_MARQUE},
-	&"estrade_fissures": {"sol": SOL_MARQUE, "feu": true},
-	&"bassin_trefle": {"sol": SOL_LAVE, "lave": true, "lueur": 170.0, "braises": true},
-	&"bassin_croix": {"sol": SOL_LAVE, "lave": true, "lueur": 170.0, "braises": true},
-	&"flaque_a": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"flaque_b": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"flaque_c": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"flaque_d": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"flaque_e": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"flaque_f": {"sol": SOL_LAVE, "lave": true, "lueur": 90.0},
-	&"riviere_droite": {"sol": SOL_RIVIERE, "lave": true, "lueur": 130.0, "braises": true},
-	&"riviere_courte": {"sol": SOL_RIVIERE, "lave": true, "lueur": 130.0, "braises": true},
-	&"riviere_coude": {"sol": SOL_RIVIERE, "lave": true, "lueur": 150.0, "braises": true},
-	&"pont_a": {"sol": SOL_PONT},
-	&"pont_b": {"sol": SOL_PONT},
-
-	# --- Monuments : bloquent ------------------------------------------------
-	&"gargouille_a": {"c": 17.0},
-	&"gargouille_b": {"c": 20.0},
-	&"gargouille_c": {"c": 22.0},
-	&"gargouille_d": {"c": 22.0},
-	&"gargouille_grande": {"c": 28.0},
-	&"gargouille_assise_a": {"c": 26.0},
-	&"gargouille_assise_b": {"c": 26.0},
-	&"gargouille_assise_c": {"c": 30.0},
-	&"gargouille_petite_a": {"c": 16.0},
-	&"gargouille_petite_b": {"c": 16.0},
-	&"gargouille_socle": {"c": 24.0},
-	&"gargouille_penseur": {"c": 28.0},
-	&"statue_voilee": {"c": 19.0},
-	&"statue_taureau": {"c": 22.0},
-	&"statue_bouc": {"c": 22.0},
-	&"gardien": {"c": 20.0},
-	&"buste_demon": {"c": 38.0, "fixe": true},
-	&"baphomet": {"c": 28.0},
-	&"obelisque_a": {"c": 20.0, "fixe": true},
-	&"obelisque_b": {"c": 20.0, "fixe": true},
-	&"obelisque_c": {"c": 20.0, "fixe": true},
-	&"obelisque_d": {"c": 20.0, "fixe": true},
-	&"obelisque_e": {"c": 20.0, "fixe": true},
-	&"obelisque_f": {"c": 18.0, "fixe": true},
-	&"obelisque_g": {"c": 20.0, "fixe": true},
-	&"obelisque_h": {"c": 20.0, "fixe": true},
-	&"autel_demon": {"c": 38.0, "fixe": true},
-	&"autel_squelette": {"c": 40.0, "fixe": true},
-	&"autel_squelette_b": {"c": 40.0, "fixe": true},
-	&"autel_os": {"c": 44.0},
-	&"trone_a": {"c": 26.0},
-	&"trone_b": {"c": 26.0},
-	&"trone_c": {"c": 26.0},
-	&"idole_braise": {"c": 34.0, "feu": true, "lueur": 150.0},
-	&"golem_a": {"c": 32.0, "feu": true, "lueur": 150.0},
-	&"golem_b": {"c": 30.0, "feu": true, "lueur": 150.0},
-	&"golem_c": {"c": 32.0, "feu": true, "lueur": 150.0},
-	&"golem_d": {"c": 30.0, "feu": true, "lueur": 150.0},
-	&"volcan": {"c": 40.0, "feu": true, "lueur": 170.0},
-	&"volcan_actif": {"c": 40.0, "feu": true, "lueur": 170.0, "braises": true},
-	&"cratere_a": {"c": 46.0, "feu": true, "lueur": 160.0, "braises": true},
-	&"cratere_b": {"c": 44.0, "feu": true, "lueur": 160.0, "braises": true},
-	&"cratere_c": {"c": 46.0, "feu": true, "lueur": 160.0, "braises": true},
-	&"fosse_a": {"c": 46.0, "feu": true, "lueur": 160.0, "braises": true},
-	&"fosse_b": {"c": 46.0, "feu": true, "lueur": 160.0, "braises": true},
-	&"puits_lave": {"c": 40.0, "feu": true, "lueur": 160.0},
-	&"cercle_pics": {"c": 44.0, "feu": true, "lueur": 140.0},
-	&"foyer": {"c": 34.0, "feu": true, "lueur": 250.0, "flamme": true, "braises": true},
-	&"pics_lave": {"c": 30.0, "feu": true, "lueur": 110.0},
-	&"rocher_fendu": {"c": 44.0, "feu": true, "lueur": 110.0},
-	&"bassin_braise": {"c": 40.0, "feu": true, "lueur": 160.0},
-	&"chaudron_a": {"c": 36.0, "feu": true, "lueur": 150.0},
-	&"chaudron_b": {"c": 38.0, "feu": true, "lueur": 150.0},
-	&"chaudron_c": {"c": 40.0, "feu": true, "lueur": 150.0},
-	&"aiguilles": {"c": 44.0},
-	&"aiguilles_b": {"c": 40.0},
-	&"pics_a": {"c": 24.0},
-	&"pics_b": {"c": 24.0},
-	&"cristaux_runes_a": {"c": 38.0, "fixe": true},
-	&"cristaux_runes_b": {"c": 36.0, "fixe": true},
-	&"brasier": {"c": 40.0, "feu": true, "lueur": 250.0, "flamme": true, "braises": true},
-	&"bucher": {"c": 36.0, "feu": true, "lueur": 250.0, "flamme": true, "braises": true},
-	# Supplices.
-	&"chevalet": {"k": Vector2(42.0, 20.0)},
-	&"pilori": {"k": Vector2(34.0, 18.0)},
-	&"roue_a": {"c": 34.0},
-	&"roue_b": {"c": 34.0},
-	&"echelle": {"k": Vector2(30.0, 18.0)},
-	&"chaise_pointes": {"c": 24.0},
-	&"chaise_pointes_b": {"c": 22.0},
-	&"trone_pointes": {"c": 24.0},
-	&"trone_rouge": {"c": 22.0},
-	&"trone_rouge_pointes": {"c": 24.0},
-	&"chaise_supplice": {"c": 26.0},
-	&"vierge_fermee": {"c": 22.0},
-	&"vierge_ouverte": {"c": 22.0},
-	&"vierge_sang": {"c": 24.0},
-	&"boite_pointes": {"k": Vector2(36.0, 20.0)},
-	&"boite_bois": {"k": Vector2(36.0, 20.0)},
-	&"guillotine": {"k": Vector2(44.0, 20.0)},
-	&"hachoir": {"k": Vector2(42.0, 20.0)},
-	&"presse": {"k": Vector2(38.0, 22.0)},
-	&"meule": {"c": 26.0},
-	&"banc_pointes": {"k": Vector2(44.0, 20.0)},
-	&"lit_pointes": {"k": Vector2(44.0, 22.0)},
-	&"lame": {"k": Vector2(40.0, 20.0)},
-	&"cage_grande": {"c": 28.0},
-	&"barreaux_a": {"k": Vector2(36.0, 14.0)},
-	&"barreaux_b": {"k": Vector2(48.0, 14.0)},
-	&"geole_porte_a": {"k": Vector2(46.0, 18.0), "fixe": true},
-	&"geole_mur": {"k": Vector2(46.0, 18.0), "fixe": true},
-	&"geole_porte_b": {"k": Vector2(44.0, 18.0), "fixe": true},
-	&"cage_ame_a": {"k": Vector2(44.0, 22.0)},
-	&"cage_ame_b": {"k": Vector2(44.0, 22.0)},
-	&"cage_ame_c": {"k": Vector2(44.0, 22.0)},
-	&"cage_ame_d": {"k": Vector2(44.0, 22.0)},
-	&"pieux_ame": {"k": Vector2(50.0, 22.0)},
-	&"bucher_ame": {"c": 38.0, "feu": true, "lueur": 250.0, "flamme": true, "braises": true},
+	# --- Pièces plates --------------------------------------------------------
+	&"fissure_cadre": {"sol": SOL_MARQUE, "feu": true, "lueur": 150.0},
+	&"fissure_longue": {"sol": SOL_MARQUE, "feu": true, "lueur": 90.0},
+	&"sol_fendu": {"sol": SOL_MARQUE, "feu": true},
+	&"bassin_6x6": {"sol": SOL_LAVE, "lave": true, "lueur": 230.0, "braises": true},
+	&"bassin_7x6": {"sol": SOL_LAVE, "lave": true, "lueur": 250.0, "braises": true},
+	&"lac_8x7": {"sol": SOL_LAVE, "lave": true, "lueur": 260.0, "braises": true},
+	&"lac_10x8": {"sol": SOL_LAVE, "lave": true, "lueur": 280.0, "braises": true},
+	&"fosse_12x6": {"sol": SOL_LAVE, "lave": true, "lueur": 230.0, "braises": true},
+	&"fosse_6x12": {"sol": SOL_LAVE, "lave": true, "lueur": 230.0, "braises": true},
+	&"bulle_a": {"sol": SOL_BULLE, "anim": Vector3i(4, 4, 9)},
+	&"bulle_b": {"sol": SOL_BULLE, "anim": Vector3i(4, 4, 9)},
+	&"plateau_6x6": {"sol": SOL_RELIEF, "c": 140.0},
+	&"plateau_7x6": {"sol": SOL_RELIEF, "k": Vector2(30.0, 140.0)},
+	&"plateau_b_6x6": {"sol": SOL_RELIEF, "c": 140.0},
 }
+
+
+static func teinte(profond: bool) -> Color:
+	return TEINTE_PROFONDEUR if profond else TEINTE_SURFACE
 
 
 static func chemin(id: StringName) -> String:
@@ -288,6 +165,11 @@ static func est_plate(id: StringName) -> bool:
 static func est_solide(id: StringName) -> bool:
 	var i := info(id)
 	return i.has("c") or i.has("k")
+
+
+## Planche animée : Vector3i(colonnes, rangées, images), ou Vector3i.ZERO.
+static func anim(id: StringName) -> Vector3i:
+	return info(id).get("anim", Vector3i.ZERO)
 
 
 ## Demi-étendue d'un obstacle (capsule horizontale) : Vector2(demi-longueur,
