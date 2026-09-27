@@ -43,7 +43,7 @@ const TICK_LAVE := 0.25
 ## Le joueur perd UN COUP ENNEMI MOYEN PAR SECONDE dans la lave — l'unité de
 ## `WaveManager.get_hit_damage`, qui suit la courbe des vagues et donc le
 ## Déchaînement : tout ce qui résiste au joueur suit la même courbe. Traverser
-## une rivière (0,5 s) coûte un demi-coup ; y rester, c'est mourir.
+## une fosse (0,5 s) coûte un demi-coup ; y rester, c'est mourir.
 ##
 ## La brûlure ne passe PAS par les i-frames et n'en donne pas : sans ça, se
 ## tenir dans la lave au milieu d'une mêlée rendrait intouchable au contact
@@ -68,9 +68,6 @@ const LAVE_EROSION := 2
 ## dont ces valeurs viennent).
 @export var teinte: Color = Color(0.59, 0.66, 0.75)
 @export var teinte_profonde: Color = Color(0.88, 0.76, 0.66)
-## Les pièces de l'enfer sont déjà sombres dans leurs planches : la teinte du
-## sol ne leur est appliquée qu'à moitié, sinon elles s'éteignent.
-@export_range(0.0, 1.0, 0.05) var part_teinte_enfer: float = 0.5
 ## LA LUMIÈRE du feu et de la lave : de vraies lumières 2D, additives, qui
 ## éclairent le sol et le décor — pas les créatures (voir `MASQUE_DECOR`).
 @export var energie_lave: float = 1.0
@@ -110,7 +107,9 @@ var _formes: Dictionary = {}            # clé -> Shape2D
 var _fenetre := Rect2i(0, 0, -1, -1)
 var _obstacles: Dictionary = {}         # Vector2i -> Array[Dictionary]
 var _laves: Dictionary = {}             # Vector2i -> Array[Dictionary]
-var _ponts: Dictionary = {}             # Vector2i -> Array[Dictionary]
+## Sprites animés visibles (fumerolles, bulles), et leur horloge.
+var _animes: Array[Sprite2D] = []
+var _horloge_anim: float = 0.0
 var _hauts: Array[Sprite2D] = []
 var _joueur: Node2D
 var _vagues: Node
@@ -155,6 +154,7 @@ func _ready() -> void:
 	GameEvents.arena_depth_changed.connect(_on_depth_changed)
 	_pret = _charger()
 	_preparer_rendu()
+	_regler_teinte()
 	_calque_formes = Node2D.new()
 	_calque_formes.z_index = 50
 	_calque_formes.draw.connect(_dessiner_formes)
@@ -186,15 +186,6 @@ func _charger() -> bool:
 		if not ResourceLoader.exists(chemin):
 			return false
 		_textures[id] = load(chemin)
-	var vieux: Array = GenerateurCarte.RUINE_MUR + GenerateurCarte.RUINE_COEUR \
-		+ GenerateurCarte.RUINE_SOL + GenerateurCarte.POTERIE + GenerateurCarte.VEGETATION \
-		+ GenerateurCarte.ROCHE_GROS + GenerateurCarte.ROCHE_MOYEN \
-		+ GenerateurCarte.ROCHE_PETIT + [GenerateurCarte.RUINE_COIN, GenerateurCarte.ROCHE_TETE]
-	for id: StringName in vieux:
-		var chemin := "res://assets/sprites/decor/%s.png" % id
-		if not ResourceLoader.exists(chemin):
-			return false
-		_textures[id] = load(chemin)
 	# Tailles et pieds de toutes les pièces : ce sont les emprises des règles du
 	# générateur, et le pied cale aussi l'ombre de contact.
 	for id: StringName in _textures.keys():
@@ -204,13 +195,13 @@ func _charger() -> bool:
 
 ## LE MASQUE DE LAVE d'une pièce : quels pixels brûlent.
 ##
-## Lu dans l'image et non décrit à la main : une rivière coudée ou un bassin en
+## Lu dans l'image et non décrit à la main : un bassin aux coins arrondis ou un lac
 ## trèfle n'ont pas de forme simple, et une forme approchée brûlerait sur la
 ## berge ou épargnerait le milieu. Critère de couleur mesuré sur les planches :
 ## la lave est orange à jaune (rouge fort, bleu faible), la berge est grise.
 ##
 ## Deux passes ensuite. Une FERMETURE bouche les îlots de roche dans le courant
-## — un pied posé sur un caillou de 4 px au milieu d'une rivière n'a rien à y
+## — un pied posé sur un caillou de 4 px au milieu d'une nappe n'a rien à y
 ## gagner. Puis l'ÉROSION de `LAVE_EROSION` px, qui rend la zone brûlante un peu
 ## plus petite que le dessin.
 func _masque_lave(id: StringName) -> Dictionary:
@@ -319,8 +310,14 @@ static func _radial(degrade: Gradient, taille: int) -> GradientTexture2D:
 ## reste immobile, c'est la flamme qui vacille. Un bruit de phase par endroit du
 ## monde : deux braseros voisins ne battent pas à l'unisson, ce qui se verrait
 ## tout de suite.
+##
+## CE QUI NE BRÛLE PAS PREND LA TEINTE DE L'ÉTAGE (`teinte_froide`) : la roche,
+## la falaise et la bordure de sol d'un bassin s'accordent au carreau voisin,
+## la lave garde sa couleur. Le partage suit le critère de la lave
+## (`_masque_lave`) — ce qui brûle brille, le reste est du décor.
 const SHADER_FEU := """
 shader_type canvas_item;
+uniform vec4 teinte_froide = vec4(1.0);
 varying vec2 monde;
 void vertex() {
 	monde = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
@@ -328,11 +325,20 @@ void vertex() {
 void fragment() {
 	vec4 c = COLOR;
 	float chaud = smoothstep(0.35, 0.75, c.r - c.b * 0.9) * step(0.15, c.g);
-	float phase = dot(floor(monde / 48.0), vec2(1.7, 2.3));
+	float lave = step(0.63, c.r) * step(0.2, c.g) * step(c.b, 0.43) * step(1.25 * c.g, c.r);
+	// Une phase CONTINUE : tirée par case de 48 px, elle dessinait un damier
+	// sur les grandes nappes uniformes du pack (vu en capture).
+	float phase = dot(monde / 150.0, vec2(1.7, 2.3));
 	float batt = sin(TIME * 7.0 + phase) * 0.5 + sin(TIME * 12.3 + phase * 1.9) * 0.3;
-	COLOR.rgb = c.rgb * (1.0 + chaud * batt * 0.16);
+	vec3 vif = c.rgb * (1.0 + chaud * batt * 0.16);
+	COLOR.rgb = mix(c.rgb * teinte_froide.rgb, vif, max(chaud, lave));
 }
 """
+
+
+func _regler_teinte() -> void:
+	var t := EnferDB.teinte(_gen.etage == GenerateurCarte.PROFONDEUR)
+	_feu_materiau.set_shader_parameter(&"teinte_froide", Vector4(t.r, t.g, t.b, 1.0))
 
 
 # --- Parcelles ---------------------------------------------------------------
@@ -341,6 +347,7 @@ func _process(delta: float) -> void:
 	_voiler(delta)
 	_bruler_si_besoin(delta)
 	_vaciller(delta)
+	_animer(delta)
 	var camera := get_viewport().get_camera_2d()
 	if camera == null:
 		return
@@ -419,7 +426,9 @@ func _engendrer(parcelle: Vector2i) -> void:
 			# Le décor d'origine porte ses ombres dans ses planches.
 			continue
 		var info := EnferDB.info(pose["id"])
-		if not info.has("sol"):
+		# Les objets du pack portent leur ombre dans leur planche : une ombre de
+		# contact en plus ferait double emploi. Elle reste pour qui la demande.
+		if not info.has("sol") and info.get("ombre", false):
 			_poser_ombres(pose, info, sprites)
 		if info.has("lueur"):
 			_poser_lumieres(pose, info, lumieres)
@@ -445,6 +454,20 @@ func _poser(pose: Dictionary) -> Sprite2D:
 	var info := EnferDB.info(id) if not pose["vieux"] else {}
 	var plate := info.has("sol")
 	sprite.texture = texture
+	# Un sprite est recyclé d'une pièce à l'autre : une fumerolle qui redevient
+	# un rocher doit perdre son découpage en images.
+	var cadre := EnferDB.anim(id) if not pose["vieux"] else Vector3i.ZERO
+	sprite.hframes = maxi(1, cadre.x)
+	sprite.vframes = maxi(1, cadre.y)
+	sprite.frame = 0
+	if cadre.z > 0:
+		# Une phase par pièce, tirée de sa position : deux fumerolles voisines ne
+		# soufflent pas à l'unisson.
+		var phase := absi(int(Vector2(pose["p"]).x * 0.37 + Vector2(pose["p"]).y * 0.61)) % cadre.z
+		sprite.set_meta(&"anim", Vector2i(cadre.z, phase))
+		sprite.frame = phase
+	elif sprite.has_meta(&"anim"):
+		sprite.remove_meta(&"anim")
 	sprite.scale = Vector2(ech, ech)
 	sprite.rotation = pose["r"]
 	sprite.skew = 0.0
@@ -456,35 +479,26 @@ func _poser(pose: Dictionary) -> Sprite2D:
 	# est déjà la chose la plus claire de l'écran, éclairée elle saturait.
 	sprite.light_mask = 0 if info.get("lave", false) else MASQUE_DECOR
 	sprite.material = _feu_materiau if info.get("feu", false) or info.get("lave", false) else null
-	# Filtrage net, comme les personnages. Comparé en capture au filtrage doux :
-	# le net garde le trait du pixel art, le doux l'estompe sans rien gagner —
-	# ces planches n'ayant pas de grille régulière, l'irrégularité d'un pixel
-	# sur deux à l'échelle 1,5 ne s'y voit pas. Sur un écran de 1440 lignes,
-	# l'échelle réelle tombe à 2, et le rendu est exact.
+	# Filtrage net, comme les personnages : c'est du pixel art sur une grille
+	# régulière, affiché à une échelle entière (EnferDB.ECHELLE).
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# Une pièce plate est centrée sur sa position ; une pièce dressée pose sa
 	# base `PIED` px sous son nœud (voir l'en-tête du générateur).
 	sprite.offset = Vector2.ZERO if plate \
-		else Vector2(0.0, -texture.get_height() * 0.5 + PIED / ech)
+		else Vector2(0.0, -texture.get_height() / float(sprite.vframes) * 0.5 + PIED / ech)
 	sprite.self_modulate = _teinte_de(pose, info)
 	sprite.visible = true
 	return sprite
 
 
 func _teinte_de(pose: Dictionary, info: Dictionary) -> Color:
-	var base := teinte_profonde if _gen.etage == GenerateurCarte.PROFONDEUR else teinte
+	var profond := _gen.etage == GenerateurCarte.PROFONDEUR
 	if pose["vieux"]:
-		return base
-	# Ce qui brûle éclaire : la lave et le feu ne prennent pas la lumière du sol.
-	if info.get("lave", false):
+		return teinte_profonde if profond else teinte
+	# Ce qui brûle ou rougeoie est teint par son shader, qui épargne la lave.
+	if info.get("lave", false) or info.get("feu", false):
 		return Color.WHITE
-	# Les fissures et la roche refroidie autour des bassins sont ÉTEINTES : à
-	# pleine lumière, elles rougeoyaient autant que la lave (vu en capture), et
-	# le joueur ne pouvait plus distinguer ce qui brûle de ce qui a brûlé.
-	if info.has("sol") and info.get("feu", false):
-		return Color.WHITE.lerp(base, part_teinte_enfer) * Color(0.62, 0.55, 0.55)
-	var part := part_teinte_enfer * (0.5 if info.get("feu", false) else 1.0)
-	return Color.WHITE.lerp(base, part)
+	return EnferDB.teinte(profond)
 
 
 ## L'OMBRE d'une pièce dressée : une ellipse sombre GLISSÉE SOUS SON PIED,
@@ -530,21 +544,24 @@ func _poser_ombres(pose: Dictionary, _info: Dictionary, sprites: Array[Sprite2D]
 
 
 ## LA LUMIÈRE d'une pièce qui éclaire. Posée au sol — aux pieds d'une pièce
-## dressée —, ovale comme le sol vu en perspective. Une rivière en porte une par
-## tronçon de 220 px, le long de son cours.
+## dressée —, ovale comme le sol vu en perspective. Une grande nappe en porte une
+## par case de 260 px.
 func _poser_lumieres(pose: Dictionary, info: Dictionary, lumieres: Array[PointLight2D]) -> void:
 	var rayon: float = info["lueur"]
 	var flamme: bool = info.get("flamme", false)
 	var p: Vector2 = pose["p"]
 	var points: Array[Vector2] = [p if info.has("sol") else p + Vector2(0.0, PIED)]
-	if String(pose["id"]).begins_with("riviere_") and pose["id"] != &"riviere_coude":
-		var t: Texture2D = _textures[pose["id"]]
-		var longueur: float = t.get_height() * float(pose["e"])
-		var n := maxi(1, roundi(longueur / 220.0))
+	# Une grande nappe porte une lumière par case de 260 px : une seule, au
+	# milieu d'un lac de 640 px, laissait ses rives dans le noir.
+	if info.get("lave", false):
+		var boite := GenerateurCarte.emprise(pose).grow(-60.0)
+		var nx := maxi(1, roundi(boite.size.x / 260.0))
+		var ny := maxi(1, roundi(boite.size.y / 260.0))
 		points.clear()
-		for i in n:
-			var le_long := (float(i) + 0.5) / float(n) * longueur - longueur * 0.5
-			points.append(p + Vector2(0.0, le_long).rotated(float(pose["r"])))
+		for iy in ny:
+			for ix in nx:
+				points.append(boite.position + boite.size * Vector2(
+					(float(ix) + 0.5) / float(nx), (float(iy) + 0.5) / float(ny)))
 	for point in points:
 		var lumiere: PointLight2D
 		if _lumieres_libres.is_empty():
@@ -606,6 +623,15 @@ func _poser_braises(pose: Dictionary, info: Dictionary) -> CPUParticles2D:
 	return braises
 
 
+## Les fumerolles et les bulles jouent leur planche, chacune avec sa phase.
+func _animer(delta: float) -> void:
+	_horloge_anim += delta * EnferDB.ANIM_IPS
+	var pas := int(_horloge_anim)
+	for sprite: Sprite2D in _animes:
+		var a: Vector2i = sprite.get_meta(&"anim")
+		sprite.frame = (pas + a.y) % a.x
+
+
 ## Les flammes vacillent : deux sinus sans rapport simple, une phase par flamme.
 ## La lave, elle, reste stable — elle couve, elle ne danse pas.
 func _vaciller(delta: float) -> void:
@@ -633,7 +659,7 @@ func _poser_corps(pose: Dictionary) -> StaticBody2D:
 	# La capsule de Godot est verticale : couchée d'un quart de tour.
 	forme.rotation = PI * 0.5 if dims.x > 0.0 else 0.0
 	corps.rotation = pose["r"]
-	corps.position = pose["p"]
+	corps.position = GenerateurCarte.centre_obstacle(pose)
 	corps.process_mode = Node.PROCESS_MODE_INHERIT
 	corps.visible = true
 	return corps
@@ -664,8 +690,8 @@ func _forme(dims: Vector2) -> Shape2D:
 func _indexer() -> void:
 	_obstacles.clear()
 	_laves.clear()
-	_ponts.clear()
 	_hauts.clear()
+	_animes.clear()
 	_flammes.clear()
 	for entree: Dictionary in _actives.values():
 		for lumiere: PointLight2D in entree["lumieres"]:
@@ -674,6 +700,8 @@ func _indexer() -> void:
 					+ lumiere.position.y * 0.021})
 		var sprites: Array = entree["sprites"]
 		for sprite: Sprite2D in sprites:
+			if sprite.has_meta(&"anim"):
+				_animes.append(sprite)
 			if sprite.z_index == 0 and sprite.texture != null \
 					and sprite.texture.get_height() * sprite.scale.y >= voile_hauteur_min:
 				_hauts.append(sprite)
@@ -689,7 +717,7 @@ func _indexer() -> void:
 					.grow(float(o["r"]) + PORTEE_EVITEMENT + 40.0)
 				_inscrire(_obstacles, boite, o)
 			var info := EnferDB.info(id)
-			if info.get("lave", false) or id in GenerateurCarte.PONTS:
+			if info.get("lave", false):
 				var t: Texture2D = _textures[id]
 				var xf := Transform2D(float(pose["r"]), Vector2(pose["e"], pose["e"]), 0.0,
 					pose["p"])
@@ -698,11 +726,8 @@ func _indexer() -> void:
 					"fh": pose["fh"], "fv": pose["fv"], "id": id}
 				var boite := GenerateurCarte.emprise(pose)
 				entree_lave["boite"] = boite
-				if info.get("lave", false):
-					entree_lave["masque"] = _masque_lave(id)
-					_inscrire(_laves, boite, entree_lave)
-				else:
-					_inscrire(_ponts, boite, entree_lave)
+				entree_lave["masque"] = _masque_lave(id)
+				_inscrire(_laves, boite, entree_lave)
 	if _calque_formes != null:
 		_calque_formes.queue_redraw()
 
@@ -780,15 +805,12 @@ func contourner(pos: Vector2, vitesse: Vector2, rayon: float, cote: int) -> Vect
 
 
 ## Ce point brûle-t-il ? C'est la question que pose la brûlure avec les PIEDS
-## d'une créature. Un pont posé sur la lave protège.
+## d'une créature.
 func en_lave(point: Vector2) -> bool:
 	var cellule := _cellule(point)
 	var laves: Array = _laves.get(cellule, [])
 	if laves.is_empty():
 		return false
-	for pont: Dictionary in _ponts.get(cellule, []):
-		if _dans_image(pont, point, false):
-			return false
 	for lave: Dictionary in laves:
 		if _dans_image(lave, point, true):
 			return true
@@ -942,8 +964,9 @@ func _on_depth_changed(profond: bool) -> void:
 	tween.tween_property(noir, ^"color:a", 1.0, FONDU)
 	tween.tween_callback(func() -> void:
 		_gen.etage = cible
-		# Les masques de lave coûtent 75 ms en tout (mesuré), dont 13 à 26 par
-		# tronçon de rivière : calculés à la première rencontre, ils faisaient
+		_regler_teinte()
+		# Les masques de lave coûtaient 75 ms en tout sur les rivières de la
+		# 0.9.1 (mesuré) : calculés à la première rencontre, ils faisaient
 		# saccader le jeu. Ici l'écran est noir.
 		if cible == GenerateurCarte.PROFONDEUR:
 			for id: StringName in EnferDB.PIECES.keys():

@@ -24,17 +24,18 @@ extends Sprite2D
 ## perçue (49 contre 53) : ce qui change est la couleur, pas la lisibilité, et
 ## les ennemis se lisent aussi bien aux deux étages.
 ##
-## LE SOL DE L'ENFER. Quand le pack Hell Underworld est extrait, le sol est son
-## pavé sombre aux deux étages, dans le même pseudo-pixel art que le décor qu'il
-## porte — l'ancien dallage peint, bien plus lisse, faisait deux jeux superposés.
-## Sans le pack (dépôt fraîchement cloné), l'ancien carreau de la scène reste.
+## LE SOL DE L'ENFER. Quand le pack de la carte (2DML SET 3, depuis la 0.9.2)
+## est extrait, le sol est son carreau sombre aux deux étages, teinté comme
+## toutes les pièces de la carte — l'ancien dallage peint, bien plus lisse,
+## faisait deux jeux superposés. Sans le pack (dépôt fraîchement cloné),
+## l'ancien carreau de la scène reste.
 ##
 ## DES RÉGIONS. Un carreau unique répété à l'infini, c'est un sol sans lieu : on
 ## ne sait jamais si l'on a avancé. Un shader y découpe des RÉGIONS d'un second
 ## sol selon un bruit tiré à chaque run, avec un liseré sombre à la frontière
 ## pour qu'elle se lise comme un changement de matière et non comme une tache.
-## En surface, le dallage d'un temple enfoui ; en profondeur, de la lave
-## refroidie, ÉTEINTE — elle ne doit jamais passer pour de la lave qui brûle.
+## En surface un sol brun, en profondeur un sol rougeâtre — jamais orange :
+## rien au sol ne doit passer pour de la lave qui brûle.
 ## Purement visuel : ni la carte ni le jeu n'en dépendent, d'où un bruit à part
 ## plutôt que celui du générateur.
 
@@ -51,38 +52,34 @@ extends Sprite2D
 @export var deep_from_wave: int = 11
 
 @export_group("Sol de l'enfer")
-## Teintes du pavé. Il sort de sa planche à 29/26/29 en RGB : il est ramené à la
-## luminance des anciens sols à l'écran (51 à 55, README) — ce qui change d'un
-## étage à l'autre est la teinte, pas la lisibilité.
-@export var teinte_surface: Color = Color(1.65, 2.0, 1.93)
-@export var teinte_profondeur: Color = Color(2.35, 1.92, 1.48)
-## Teintes des régions.
-@export var region_teinte: Color = Color(1.5, 1.95, 1.6)
-## La lave refroidie sort de sa planche à 127/56/33 : orange vif. Assombrie
-## ET ramenée vers sa moyenne (voir `contraste_croute`), sans quoi le joueur
-## debout sur une croûte avait l'air d'être dans la lave — vu en capture.
-@export var region_teinte_profonde: Color = Color(0.5, 0.46, 0.52)
-@export_range(0.0, 1.0, 0.05) var contraste_croute: float = 0.55
-## Contraste gardé du pavé. À pleine force, son motif fin et serré occupait
-## tout l'écran et le joueur, petite silhouette sombre, s'y détachait moins bien
-## que sur l'ancien dallage — vu en capture. Le pavé est donc ramené vers sa
-## couleur moyenne : on garde la matière, on calme le fond.
-@export_range(0.0, 1.0, 0.05) var contraste: float = 0.5
+## Les teintes du carreau sont celles de TOUTES les pièces de la carte
+## (`EnferDB.TEINTE_SURFACE` et `TEINTE_PROFONDEUR`) : le sol et le décor du
+## pack ont été peints ensemble, et la bordure de sol d'un bassin doit se
+## fondre dans le carreau voisin.
+##
 ## Part du sol couverte par les régions, en seuil de bruit. Moins en
-## profondeur : les croûtes, même éteintes, restent le sol le plus chargé.
-@export_range(0.0, 0.6, 0.01) var region_part: float = 0.36
-@export_range(0.0, 0.6, 0.01) var region_part_profonde: float = 0.26
+## profondeur : le sol rougeâtre y est plus chargé.
+@export_range(0.0, 0.6, 0.01) var region_part: float = 0.34
+@export_range(0.0, 0.6, 0.01) var region_part_profonde: float = 0.24
 ## Période du bruit des régions, en pixels du monde. Deux lectures à des
 ## échelles sans rapport simple se superposent : la répétition du bruit, qui
 ## boucle, ne se voit pas.
 @export var region_echelle: float = 4200.0
 
-const SOL_ENFER := "res://assets/sprites/enfer/sol/tex_pave_sombre.png"
-const REGION_SURFACE := "res://assets/sprites/enfer/sol/tex_dallage.png"
-const REGION_PROFONDEUR := "res://assets/sprites/enfer/sol/tex_lave_refroidie.png"
-## Pseudo-pixel art à 2 px par pixel, affiché à 1,5 comme toutes les pièces de
-## l'enfer (voir EnferDB.ECHELLE).
-const ECHELLE_ENFER := 1.5
+## Le carreau est LE SOL QUE BORDE LE BASSIN dans la planche (72/71/75 contre
+## 71/70/74) : une nappe de lave posée dessus s'y fond sans liseré. Mesuré sans
+## couture sur 192 × 160 : joints de 0,44 et 0,18 pour un bruit interne de 0,5
+## et 0,8 (méthode du README).
+const SOL_ENFER := "res://assets/sprites/enfer/sol/tex_sol.png"
+## Les régions : un sol brun en surface, un sol rougeâtre en profondeur, tous
+## deux sans couture (joints sous le bruit interne). Le premier choix, un grand
+## carreau olive, portait une des taches en fleur de la planche : répété, il
+## semait des nuages festonnés sur toute la région (vu en capture).
+const REGION_SURFACE := "res://assets/sprites/enfer/sol/tex_brun.png"
+const REGION_PROFONDEUR := "res://assets/sprites/enfer/sol/tex_rouge.png"
+## Vrai pixel art, affiché à l'échelle entière de toutes les pièces
+## (voir EnferDB.ECHELLE).
+const ECHELLE_ENFER := 2.0
 
 const SHADER_REGIONS := """
 shader_type canvas_item;
@@ -109,7 +106,7 @@ void fragment() {
 	vec3 base = mix(moyenne.rgb, COLOR.rgb, contraste);
 	vec3 r = mix(moyenne_region.rgb,
 		texture(region_tex, monde / taille_region).rgb * teinte_region.rgb, contraste_region);
-	float lisere = 1.0 - 0.4 * (1.0 - smoothstep(0.0, 0.02, abs(n - seuil)));
+	float lisere = 1.0 - 0.15 * (1.0 - smoothstep(0.0, 0.02, abs(n - seuil)));
 	COLOR.rgb = mix(base, r, m) * lisere;
 }
 """
@@ -142,8 +139,8 @@ func _preparer_enfer() -> void:
 	texture = sol
 	deep_texture = sol
 	scale = Vector2(ECHELLE_ENFER, ECHELLE_ENFER)
-	modulate = teinte_surface
-	deep_modulate = teinte_profondeur
+	modulate = EnferDB.TEINTE_SURFACE
+	deep_modulate = EnferDB.TEINTE_PROFONDEUR
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_region_surface = load(REGION_SURFACE)
 	_region_profondeur = load(REGION_PROFONDEUR)
@@ -162,7 +159,8 @@ func _preparer_enfer() -> void:
 	_regions.shader = shader
 	_regions.set_shader_parameter(&"bruit", tex)
 	_regions.set_shader_parameter(&"part", region_part)
-	_regions.set_shader_parameter(&"contraste", contraste)
+	# Le carreau est lisse (bruit interne de 0,5) : rien à calmer, pleine force.
+	_regions.set_shader_parameter(&"contraste", 1.0)
 	_regions.set_shader_parameter(&"echelle", region_echelle)
 	material = _regions
 	_regions_de(false)
@@ -172,7 +170,7 @@ func _regions_de(profond: bool) -> void:
 	if _regions == null:
 		return
 	var region := _region_profondeur if profond else _region_surface
-	var t := region_teinte_profonde if profond else region_teinte
+	var t := EnferDB.teinte(profond)
 	_regions.set_shader_parameter(&"region_tex", region)
 	_regions.set_shader_parameter(&"taille_region",
 		Vector2(region.get_width(), region.get_height()) * ECHELLE_ENFER)
@@ -180,11 +178,11 @@ func _regions_de(profond: bool) -> void:
 	# COLOR) ; la région est lue à part, donc sa teinte est absolue. La moyenne
 	# vers laquelle on ramène le pavé prend la teinte de l'étage.
 	_regions.set_shader_parameter(&"teinte_region", Vector4(t.r, t.g, t.b, 1.0))
-	var m := _moyenne * (teinte_profondeur if profond else teinte_surface)
+	var m := _moyenne * EnferDB.teinte(profond)
 	_regions.set_shader_parameter(&"moyenne", Vector4(m.r, m.g, m.b, 1.0))
 	var mr := _couleur_moyenne(region) * t
 	_regions.set_shader_parameter(&"moyenne_region", Vector4(mr.r, mr.g, mr.b, 1.0))
-	_regions.set_shader_parameter(&"contraste_region", contraste_croute if profond else 1.0)
+	_regions.set_shader_parameter(&"contraste_region", 1.0)
 	_regions.set_shader_parameter(&"part", region_part_profonde if profond else region_part)
 
 

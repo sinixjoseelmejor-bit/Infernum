@@ -3,7 +3,7 @@ extends Enemy
 ## LA CHAUVE-SOURIS INFERNALE (0.9.2) — elle punit le joueur qui s'abrite.
 ##
 ## Depuis la carte de la 0.9.1, le décor a pris de la place dans le jeu : un
-## chevalet, une statue, une rivière de lave arrêtent la foule, et se placer
+## plateau, une cheminée, une fosse de lave arrêtent la foule, et se placer
 ## derrière est devenu une défense. Rien ne la contournait. La chauve-souris
 ## VOLE : ni obstacle, ni lave, ni mêlée ne l'arrêtent — son masque ne voit que
 ## le joueur. Elle ne rend pas le décor inutile, elle rappelle qu'il n'est pas
