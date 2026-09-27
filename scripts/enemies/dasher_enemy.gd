@@ -71,24 +71,39 @@ func _contourne_obstacles() -> bool:
 	return super() and phase != Phase.WINDUP and phase != Phase.DASH
 
 
+## Ni l'élan ni la charge ne se ralentissent : la charge tomberait plus court
+## que le trait annoncé. L'entrave reprend à la récupération.
+func _entravable() -> bool:
+	return super() and phase != Phase.WINDUP and phase != Phase.DASH
+
+
+## L'élan garde sa teinte d'annonce quoi qu'il arrive : un coup reçu pendant
+## l'élan la ramenait au blanc, et la brûlure l'aurait teintée d'orange — dans
+## les deux cas, l'annonce disparaissait au moment où elle compte.
+const TEINTE_ELAN := Color(1.8, 1.2, 0.6)
+
+func _teinte_repos() -> Color:
+	return TEINTE_ELAN if phase == Phase.WINDUP else super()
+
+
 func _enter(next: Phase) -> void:
 	phase = next
 	match next:
 		Phase.APPROACH:
 			_phase_timer = 0.0
 			contact_damage = _base_contact_damage
-			sprite.modulate = elite_tint if is_elite else Color.WHITE
+			sprite.modulate = _teinte_repos()
 		Phase.WINDUP:
 			_phase_timer = windup_duration
 			contact_damage = _base_contact_damage
-			sprite.modulate = Color(1.8, 1.2, 0.6)
+			sprite.modulate = TEINTE_ELAN
 		Phase.DASH:
 			_phase_timer = dash_duration
 			contact_damage = _base_contact_damage * dash_damage_multiplier
 		Phase.RECOVER:
 			_phase_timer = recover_duration
 			contact_damage = _base_contact_damage
-			sprite.modulate = elite_tint if is_elite else Color.WHITE
+			sprite.modulate = _teinte_repos()
 
 
 func apply_wave_scaling(health_mult: float, damage_mult: float, speed_mult: float) -> void:

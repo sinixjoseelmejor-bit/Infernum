@@ -62,11 +62,42 @@ const DEATH_VFX := preload("res://scenes/vfx/mort.tscn")
 @export_range(0.0, 1.0, 0.01) var elite_heal_chance: float = 0.08
 @export var elite_tint: Color = Color(1.35, 0.75, 1.3)
 
+## LES DEUX ÉTATS que les objets posent sur un ennemi (0.9.2) : la BRÛLURE et
+## l'ENTRAVE. Ils vivent ici, sur le corps, et non dans un gestionnaire qui
+## parcourrait tous les ennemis : deux cents corps en feu coûtent deux cents
+## soustractions, rien de plus.
+##
+## LA BRÛLURE EST UNE RÉSERVE DE DÉGÂTS, qui se vide d'un quart toutes les
+## 0,5 s : 68 % tombent en 2 s, 90 % en 4 s. Chaque coup qui enflamme AJOUTE à
+## la réserve au lieu de la remplacer — sans ça, une arme rapide rafraîchirait
+## sans cesse la même petite flamme et la brûlure ne vaudrait rien sur elle.
+## Chaque pas est un vrai coup — éclair blanc compris, c'est ce qui fait lire
+## « il brûle » sur un corps parmi quarante — et 0,5 s est le rythme où cet
+## éclair se lit comme un battement plutôt que comme un scintillement.
+const TICK_BRULURE := 0.5
+const PART_BRULURE_PAR_TICK := 0.25
+## Teintes de repos des états, multipliées à celle du corps. Orange pour le
+## feu, bleu froid pour l'entrave : on doit lire l'état d'une foule d'un coup
+## d'œil, c'est lui qui dit si une synergie travaille.
+const TEINTE_FEU := Color(1.3, 0.78, 0.5)
+const TEINTE_ENTRAVE := Color(0.7, 0.86, 1.25)
+
 @onready var health: Health = $Health
 @onready var sprite: Sprite2D = $Sprite
 
 var target: Node2D
 var is_elite: bool = false
+
+var _brulure: float = 0.0
+var _brulure_generation: int = 0
+var _brulure_auteur: Node = null
+var _tick_brulure: float = 0.0
+## Vrai le temps d'un pas de brûlure : si ce pas tue, l'ennemi est mort EN
+## FEU, même si la réserve vient d'être vidée par ce même pas.
+var _pas_de_brulure: bool = false
+var _entrave: float = 0.0
+var _entrave_restante: float = 0.0
+var _tween_flash: Tween
 
 var _knockback: Vector2 = Vector2.ZERO
 var _contact_timer: float = 0.0
@@ -112,6 +143,9 @@ func make_elite() -> void:
 
 func _physics_process(delta: float) -> void:
 	_contact_timer = maxf(0.0, _contact_timer - delta)
+	_avancer_etats(delta)
+	if health.is_dead:
+		return
 	_update_movement(delta)
 	# Les obstacles de la carte : la vitesse VOULUE est déviée le long de ceux
 	# qu'on s'apprête à percuter, avant le recul et le glissement.
@@ -124,7 +158,11 @@ func _physics_process(delta: float) -> void:
 	# réinjecterait à chaque frame et ferait diverger la vitesse.
 	var intent := velocity
 	_knockback = _knockback.move_toward(Vector2.ZERO, knockback_friction * delta)
-	velocity = intent + _knockback
+	# L'entrave ne touche que le DÉPLACEMENT de l'instant, jamais la vitesse
+	# voulue qu'on restaure ensuite : réduite à chaque image, elle se
+	# composerait avec l'accélération et figerait l'ennemi bien en dessous de
+	# ce qu'annonce l'objet.
+	velocity = intent * (1.0 - _entrave) + _knockback
 	move_and_slide()
 	velocity = intent
 
@@ -188,9 +226,108 @@ func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2
 
 
 func _flash() -> void:
-	var tween := create_tween()
+	if _tween_flash != null:
+		_tween_flash.kill()
+	_tween_flash = create_tween()
 	sprite.modulate = Color(3.0, 2.2, 2.2)
-	tween.tween_property(sprite, ^"modulate", elite_tint if is_elite else Color.WHITE, 0.12)
+	_tween_flash.tween_property(sprite, ^"modulate", _teinte_repos(), 0.12)
+
+
+# --- États : brûlure et entrave ----------------------------------------------
+
+## Ajoute `reserve` dégâts à brûler. `generation` compte les propagations du
+## Feu grégeois : 0 pour un feu allumé par le joueur.
+func enflammer(reserve: float, auteur: Node, generation: int = 0) -> void:
+	if reserve <= 0.0 or health.is_dead:
+		return
+	if _brulure <= 0.0:
+		_tick_brulure = TICK_BRULURE
+		_brulure_generation = generation
+	else:
+		# Un feu ravivé par le joueur redevient un feu de première main.
+		_brulure_generation = mini(_brulure_generation, generation)
+	_brulure += reserve
+	_brulure_auteur = auteur
+	_teinter()
+
+
+## Retire `part` de la vitesse pendant `duree` secondes. La plus forte entrave
+## en cours l'emporte ; elles ne s'additionnent pas — deux sources à 30 % ne
+## font pas un ennemi à 60 %.
+func entraver(part: float, duree: float) -> void:
+	if not _entravable() or health.is_dead:
+		return
+	_entrave = maxf(_entrave, clampf(part, 0.0, 0.9))
+	_entrave_restante = maxf(_entrave_restante, duree)
+	_teinter()
+
+
+func est_en_feu() -> bool:
+	return _brulure > 0.0 or _pas_de_brulure
+
+
+func est_entrave() -> bool:
+	return _entrave_restante > 0.0
+
+
+func get_brulure() -> float:
+	return _brulure
+
+
+func get_generation_feu() -> int:
+	return _brulure_generation
+
+
+## Faut-il laisser l'entrave agir en ce moment ? Non pour les boss et pour une
+## charge annoncée (voir `DasherEnemy`) : ralentie, elle tomberait plus court
+## que le trait qu'elle a promis, et rien ne doit mentir sur une annonce.
+func _entravable() -> bool:
+	return not is_in_group(Groups.BOSSES)
+
+
+func _avancer_etats(delta: float) -> void:
+	if _entrave_restante > 0.0:
+		_entrave_restante -= delta
+		if _entrave_restante <= 0.0 or not _entravable():
+			_entrave_restante = 0.0
+			_entrave = 0.0
+			_teinter()
+	if _brulure <= 0.0:
+		return
+	_tick_brulure -= delta
+	if _tick_brulure > 0.0:
+		return
+	_tick_brulure += TICK_BRULURE
+	var coup := minf(_brulure, maxf(_brulure * PART_BRULURE_PAR_TICK, 1.0))
+	_brulure -= coup
+	var auteur: Node = _brulure_auteur if is_instance_valid(_brulure_auteur) else null
+	GameEvents.damage_dealt.emit(coup, global_position, false)
+	_pas_de_brulure = true
+	apply_damage(coup, auteur, Vector2.ZERO)
+	_pas_de_brulure = false
+	if _brulure < 0.5 and not health.is_dead:
+		_brulure = 0.0
+		_teinter()
+
+
+func _teinte_repos() -> Color:
+	var teinte := elite_tint if is_elite else Color.WHITE
+	# Les boss gardent leurs propres teintes de phase et d'enragement.
+	if is_in_group(Groups.BOSSES):
+		return teinte
+	if _brulure > 0.0:
+		teinte *= TEINTE_FEU
+	if _entrave_restante > 0.0:
+		teinte *= TEINTE_ENTRAVE
+	return teinte
+
+
+func _teinter() -> void:
+	if is_in_group(Groups.BOSSES):
+		return
+	if _tween_flash != null and _tween_flash.is_running():
+		_tween_flash.kill()
+	sprite.modulate = _teinte_repos()
 
 
 ## L'ANIMATION DE MORT, la même pour tous les ennemis.

@@ -522,9 +522,12 @@ première mesure à 0,5 s n'avait rien prouvé du tout :
 | Œil vivant | 1, puis le tir part | **15** |
 | Œil tué pendant la charge | 1 → **0** en moins de 0,05 s | **0** |
 
-### Objets — 36 objets, 4 raretés
+### Objets — 48 objets, 4 raretés
 
-9 communes · 9 rares · 9 épiques · 5 légendaires, plus **4 objets à débloquer aux clés**.
+**36 au tirage de départ** (9 communes · 12 rares · 10 épiques · 5 légendaires) et
+**12 à débloquer aux clés**, les « Sacrés ». Depuis la 0.9.2, 20 objets sur 48 ont un
+**effet** et non une simple statistique : voir « Les objets à
+effets de la 0.9.2 ».
 Tout est déclaré en données dans [item_database.gd](scripts/items/item_database.gd) :
 ajouter un objet purement statistique ne demande aucune ligne de code.
 
@@ -604,6 +607,12 @@ qui s'emballent.
 explosions ne s'enchaînent pas**, et son explosion suit les dégâts d'UN projectile
 (donc taxée par le multishot, et indifférente à la cadence) : elle ne scale pas
 seule.
+
+*Réécrite en 0.9.2* : la règle interdisait toute réaction en chaîne ; elle
+interdit désormais la chaîne **sans fin**. Le *Feu grégeois* propage la
+brûlure de mort en mort, mais sur **deux générations** au plus. Et la règle 1
+connaît une exception, les multiplicateurs **selon la cible** (*Fronde de
+David*, *Sel de Sodome*) : voir « Les règles réécrites ».
 
 ### La passe d'équilibrage de la 0.5.0
 
@@ -830,6 +839,183 @@ la métrique : ils changent la porte de boss, l'esquive, le risque ou la boutiqu
   vérifier en jeu**, manette en main.
 - Les nœuds et objets d'effet — seconde chance, soin après boss, vol de vie,
   vitesse, portée, gain d'âmes — ne se chiffrent pas avec cette métrique.
+
+### Les objets à effets de la 0.9.2
+
+**Le diagnostic.** Sur 36 objets, 28 étaient de pures statistiques : deux runs
+du même personnage se jouaient pareil, seuls les chiffres changeaient. Douze
+objets s'ajoutent, et chacun change **ce que le joueur fait** — où il se tient,
+ce qu'il vise, quand il utilise son pouvoir — plutôt que de combien il frappe.
+
+**Pourquoi presque tous à débloquer.** La 0.8.6 a mesuré qu'au-delà d'environ
+35 objets au tirage, la dilution rend les builds aléatoires (« Douze objets de
+plus »). Quatre objets rejoignent le tirage de départ, qui passe de 32 à 36 ;
+les huit autres sont des **Sacrés**, à ouvrir aux clés (29 clés en tout). Le
+catalogue grandit avec le profil, et les clés, qui ne servaient presque plus
+une fois la Forge complète, retrouvent un usage.
+
+#### Deux états : la brûlure et l'entrave
+
+Portés par l'ennemi lui-même ([enemy.gd](scripts/enemies/enemy.gd)), posés par
+tout ce qui frappe au nom du joueur — l'arme, l'Encensoir, la Trompette, le
+Bâton — via `ItemEffects.sur_coup`, pour que les synergies ne s'arrêtent pas au
+premier objet qui ne tire pas.
+
+- **La brûlure est une réserve de dégâts** qui se vide d'un quart toutes les
+  0,5 s (68 % en 2 s, 90 % en 4 s). Chaque coup qui enflamme **ajoute** à la
+  réserve au lieu de la remplacer : sans ça, une arme rapide rafraîchirait
+  sans cesse la même petite flamme. Elle touche les boss.
+- **L'entrave retire une part de la vitesse**, la plus forte l'emporte (deux
+  sources ne s'additionnent pas). Elle ne touche que le déplacement de
+  l'instant, jamais la vitesse voulue — réduite à chaque image, elle se
+  composerait avec l'accélération et figerait l'ennemi bien en dessous de
+  l'annonce. **Les boss et les charges annoncées y échappent** : une charge
+  ralentie tomberait plus court que le trait qu'elle a promis, et rien ne doit
+  mentir sur une annonce.
+- **Ils se voient.** Teinte orange pour le feu, bleu froid pour l'entrave :
+  c'est ce qui dit au joueur qu'une synergie travaille. L'élan du limier garde
+  sa teinte d'annonce quoi qu'il arrive — un coup reçu pendant l'élan la
+  ramenait déjà au blanc avant la 0.9.2, et l'annonce disparaissait au moment
+  où elle compte.
+
+#### Les douze
+
+| Objet | Rareté | Effet | Ce qu'il change |
+|---|---|---|---|
+| *Soufre* | rare | les coups enflamment pour 40 % des dégâts | la porte d'entrée du feu |
+| *Chaînes du Tartare* | rare | les coups ralentissent de 40 % pendant 2 s | le contrôle : de la place, pas des morts |
+| *Fronde de David* | rare | +60 % sur un ennemi intact | les seuils : un imp tué en un tir au lieu de deux |
+| *Mâchoire de Samson* | épique | sous 50 % de PV : +30 % de dégâts, +15 % de cadence | le risque, tenu par la santé |
+| *Sel de Sodome* | rare, 2 clés | +35 % contre un ennemi en feu ou entravé | la synergie des états |
+| *Trente deniers* | rare, 2 clés | 10 % des âmes gardées versées à chaque fin de vague (40 au plus) | épargner devient un choix |
+| *Peau de salamandre* | rare, 3 clés | la lave ne brûle plus le joueur | la carte : la lave devient un refuge qui brûle ceux qui suivent |
+| *Feu grégeois* | épique, 3 clés | un mort en feu enflamme 3 voisins, deux générations | le feu de foule |
+| *Clou du Golgotha* | épique, 4 clés | +10 % de critique ; un critique enflamme (100 %) et ralentit | le pont entre critique et états |
+| *Encensoir* | épique, 4 clés | deux flammes tournent à 110 px (60 % d'un tir par touche) | le seul objet qui paie la proximité |
+| *Bâton de Moïse* | épique, 5 clés | le pouvoir repousse et frappe à 220 px (150 % d'un tir) | les verbes des trois personnages |
+| *Trompette de Jéricho* | légendaire, 6 clés | toutes les 6 s, une onde à 230 px (200 % d'un tir, fort recul) | respirer dans la mêlée |
+
+Trois décisions de détail. Le Bâton part à l'**arrivée** de la ruée de Loth et
+non au départ : la ruée sert à être ailleurs, et c'est là qu'il faut faire de
+la place. Il a sa propre recharge (1,5 s), sans quoi la ruée, qui revient en
+2,2 s, en ferait une onde permanente. La Trompette **attend qu'un ennemi soit
+à portée** pour sonner : une onde lâchée dans le vide entre deux vagues ne
+dirait rien et ferait rater celle qui compte. Les flammes de l'Encensoir sont
+**dorées**, avec un cercle de portée à peine visible : la première version,
+orange, passait en capture pour les tirs de Caïn.
+
+#### Les règles réécrites
+
+Le Déchaînement mis à part, c'est la première fois que les règles
+d'équilibrage sont réécrites plutôt que contournées par un objet :
+
+- **Règle 1 — une exception, les multiplicateurs selon la cible.** Fronde et
+  Sel se multiplient entre eux (×2,16 sur une cible intacte en feu). Ils ne
+  visent pas les mêmes coups — le premier sur un corps intact, les suivants
+  sur un corps affaibli — et leur produit ne touche qu'un coup rare.
+- **Règle 9 — la chaîne est bornée, plus interdite.** Le Feu grégeois
+  propage de mort en mort sur deux générations ; au-delà, une mêlée serrée
+  brûlerait jusqu'au bord de l'écran à partir d'un seul corps.
+- **Les bornes des nouveaux objets tombent au Déchaînement** quand elles
+  bornent la puissance : les Trente deniers n'y sont plus plafonnés. Celles
+  qui bornent une **lecture** restent — deux générations de feu, l'entrave
+  qui ne touche ni boss ni annonce.
+
+#### Sondes
+
+Chaque effet déclenché à la main, sur des cibles à 10⁶ PV immobiles, lave et
+passifs coupés. Certaines valeurs ont été relevées depuis (voir plus bas) : la
+sonde vérifie la mécanique, le chiffre entre parenthèses est celui du moment.
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Soufre (25 %), coup de 100 : à 2 s / à 8 s | 17,1 / 25 | **17,1 / 24,7** *(le reliquat sous 0,5 s'éteint)* |
+| Soufre, deux coups de 100 | 50 | **50,0** |
+| Chaînes (30 %), distance parcourue en 1 s | ×0,70 | **×0,70**, et finie à 2 s |
+| Chaînes sur un limier en élan | aucune | **aucune** |
+| Fronde : intact / entamé | ×1,60 / ×1,00 | **×1,60 / ×1,00** |
+| Sel : intact et en feu / entamé et entravé | ×2,16 / ×1,35 | **×2,16 / ×1,35** |
+| Clou (60 %) : critique / normal | réserve 60, entrave / rien | **60, entrave / rien** |
+| Clou + Soufre, critique de 100 | réserve 85 | **85** |
+| Feu grégeois (4 voisins) : voisins enflammés sur 5 | 4, réserve 160 | **4, 160**, le lointain intact |
+| Feu grégeois, mort de 2ᵉ génération | aucune propagation | **aucune** |
+| Samson (+40 %) sous 50 % puis remonté | +0,40 puis retour | **+0,40 puis +0** ; bonus effacé à la revente |
+| Salamandre, brûlure de 10 | 0 | **0** (10 sans) |
+| Trente deniers : 300 / 1 000 / 1 000 déchaîné | +30 / +40 / +100 | **+30 / +40 / +100** |
+| Encensoir, cible sur le cercle, 5 s | 4 touches | **4,1** |
+| Trompette : à 5,5 s / à 6,5 s | 0 / 2,00 tirs | **0 / 2,06**, recul 150 → 275 px |
+| Bâton : une fois, aussitôt, après 1,6 s | 1,5 / 1,5 / 3,0 tirs | **1,54 / 1,54 / 3,09** |
+
+Les 3 % d'écart de l'Encensoir, de la Trompette et du Bâton sont la Marque de
+Caïn, montée avec les éliminations du banc : ses signaux restaient branchés.
+L'effet suit bien les dégâts de l'arme.
+
+#### Ce qu'ils valent en horde
+
+La métrique de puissance ne voit aucun de ces effets. Un banc de horde les a
+mesurés sur les vraies classes : Caïn, build de milieu de partie (Fiel ×2,
+Percuteur ×2, Croc, Cuir ×2, Éclat), vague 10, **quarante ennemis gardés en vie
+en permanence**, le joueur tourne en rond, invincible, Marque coupée. On compte
+les éliminations en 30 s. Même suite d'apparitions et de critiques pour chaque
+objet, essai par essai ; **24 essais par ligne**.
+
+| Configuration | Éliminations / 30 s | Gain |
+|---|---|---|
+| Base | 34,5 ± 0,9 | — |
+| + *Gant du bourreau* (commune, +8 % dégâts) | 34,0 ± 1,0 | 0 % |
+| + *Fiel de démon* (rare, +18 % dégâts) | 39,0 ± 1,2 | +13 % |
+| + *Cœur de forge* (épique) | 40,8 ± 1,0 | +18 % |
+| + *Braise éternelle* (légendaire) | 56,9 ± 1,9 | +65 % |
+| + *Soufre* | 39,2 ± 0,8 | +14 % |
+| + *Fronde* | 42,0 ± 1,4 | +22 % |
+| + *Chaînes* | 34,3 ± 1,0 | 0 % |
+| + *Samson*, sous 50 % de PV | 43,8 ± 0,9 | +27 % |
+| + *Encensoir* | 42,5 ± 1,1 | +23 % |
+| + *Trompette* | 51,3 ± 0,9 | +49 % |
+| + *Soufre* + *Sel* | 44,9 ± 0,9 | +30 % |
+| + *Chaînes* + *Sel* | 38,9 ± 0,9 | +13 % |
+| + *Soufre* + *Feu grégeois* | 62,4 ± 2,2 | +81 % |
+| + *Clou* *(après relèvement ; base 33,8 ce passage-là)* | 40,3 ± 1,1 | +19 % |
+| Build critique (Couronne, Chapelet ×2) | 46,8 ± 1,3 | — |
+| … + *Clou* | 56,1 ± 0,9 | +20 % |
+| … + *Cœur de forge* | 47,5 ± 1,1 | +1,5 % |
+
+**Le banc a d'abord appris sur lui-même.** À 8 essais, deux mesures identiques
+ont bougé de 3 à 7 éliminations d'un passage à l'autre : il ne tranchait que
+les gros écarts. À 24 essais l'erreur type tombe sous ±1,5, et un écart de
+plus de 3 devient significatif. Et le *Gant* (+8 % de dégâts) ne change **rien** :
+contre une foule, ce qui compte est le nombre de coups pour tuer, et +8 % ne
+fait franchir aucun seuil. C'est exactement ce que la *Fronde* exploite.
+
+**Cinq objets ont bougé après la première mesure** : le *Soufre* (25 → 40 % ;
+à 25 % il ne valait que +9 %, la brûlure se perd sur ce qui meurt déjà), les
+*Chaînes* (30 % 1,5 s → 40 % 2 s, pour qu'un objet qui ne tue pas se sente),
+la *Mâchoire* (+40/+20 → +30/+15, elle valait +55 %), le *Feu grégeois*
+(4 → 3 voisins, plancher 0,5 → 0,4 : la paire valait +96 %, au-dessus de la
+légendaire) et le *Clou* (+8 % seulement ; critique +5 → +10 %, brûlure 60 →
+100 %). Relevé, le Clou apporte +20 % à une build critique là où le Cœur de
+forge n'ajoute presque rien : il récompense la build à laquelle il est
+destiné.
+
+**Soufre + Feu grégeois reste la paire la plus forte, et c'est voulu** : le
+Feu grégeois ne vaut **rien** seul (rien ne brûle sans Soufre, Clou ou
+Encensoir allié au Soufre), et la paire demande un Sacré à 3 clés.
+
+**Coût par image** : 160 ennemis en feu et entravés, sept objets actifs, en
+fenêtré sans vsync — 3,0 → 3,7 ms par image. Négligeable.
+
+#### Ce que le banc ne voit pas
+
+- **La valeur défensive.** Les coups au contact comptés par le banc suivent
+  surtout le nombre d'éliminations — plus on tue, moins il reste de corps au
+  contact — et varient trop pour être publiés. Deux signaux nets seulement :
+  la *Trompette* (−44 %) et les *Chaînes*, qui ôtent un quart des contacts
+  sans rien tuer de plus. À juger en jeu.
+- **La Peau de salamandre** change la carte, pas le combat : aucun banc ne
+  cherche ni n'évite la lave (voir « La carte de l'enfer »).
+- **Les Trente deniers** se jugent sur une économie de run entière.
+- **Le Bâton de Moïse** dépend de la fréquence du pouvoir : Loth toutes les
+  2,2 s, Job environ toutes les 4,4 s, Caïn selon sa Marque.
 
 ### Archétypes, ~10 objets sur Caïn
 
@@ -3207,6 +3393,7 @@ scripts/
   components/ health.gd                   PV réutilisable
   player/     player.gd
   combat/     targeting_system.gd · weapon.gd · projectile.gd · telegraph.gd
+              encensoir.gd                les flammes de l'Encensoir (0.9.2)
   enemies/    enemy.gd · ranged_enemy.gd · dasher_enemy.gd
   bosses/     boss.gd                     socle : phases + anti-kite
               golgota.gd · lilith.gd · baal.gd · asmodee.gd · lucifer.gd

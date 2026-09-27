@@ -2338,3 +2338,99 @@ msgstr "+%d soul"
 #: scripts/ui/shop.gd:316
 msgid "Relancer (%d âme)"
 msgstr "Reroll (%d soul)"
+
+#: scripts/items/item_database.gd
+msgid "Soufre"
+msgstr "Brimstone"
+
+#: scripts/items/item_database.gd
+msgid "Chaînes du Tartare"
+msgstr "Chains of Tartarus"
+
+#: scripts/items/item_database.gd
+msgid "Fronde de David"
+msgstr "David's Sling"
+
+#: scripts/items/item_database.gd
+msgid "Mâchoire de Samson"
+msgstr "Samson's Jawbone"
+
+#: scripts/items/item_database.gd
+msgid "Sel de Sodome"
+msgstr "Salt of Sodom"
+
+#: scripts/items/item_database.gd
+msgid "Trente deniers"
+msgstr "Thirty Pieces of Silver"
+
+#: scripts/items/item_database.gd
+msgid "Peau de salamandre"
+msgstr "Salamander Skin"
+
+#: scripts/items/item_database.gd
+msgid "Feu grégeois"
+msgstr "Greek Fire"
+
+#: scripts/items/item_database.gd
+msgid "Clou du Golgotha"
+msgstr "Nail of Golgotha"
+
+#: scripts/items/item_database.gd
+msgid "Encensoir"
+msgstr "Censer"
+
+#: scripts/items/item_database.gd
+msgid "Bâton de Moïse"
+msgstr "Staff of Moses"
+
+#: scripts/items/item_database.gd
+msgid "Trompette de Jéricho"
+msgstr "Trumpet of Jericho"
+
+#: scripts/items/item_database.gd
+msgid "Vos coups enflamment la cible : elle brûle pour 40 % des dégâts reçus."
+msgstr "Your hits set the target ablaze: it burns for 40% of the damage taken."
+
+#: scripts/items/item_database.gd
+msgid "Vos coups ralentissent de 40 % pendant 2 s. Sans effet sur les boss."
+msgstr "Your hits slow by 40% for 2 s. No effect on bosses."
+
+#: scripts/items/item_database.gd
+msgid "+60 % de dégâts sur un ennemi encore intact."
+msgstr "+60% damage against an unharmed enemy."
+
+#: scripts/items/item_database.gd
+msgid "Sous la moitié de vos PV : +30 % de dégâts et +15 % de cadence."
+msgstr "Below half HP: +30% damage and +15% fire rate."
+
+#: scripts/items/item_database.gd
+msgid "+35 % de dégâts contre les ennemis en feu ou ralentis."
+msgstr "+35% damage against burning or slowed enemies."
+
+#: scripts/items/item_database.gd
+msgid "À chaque fin de vague, 10 % de vos âmes vous sont versées (40 au plus)."
+msgstr "At the end of each wave, you gain 10% of your souls (40 at most)."
+
+#: scripts/items/item_database.gd
+msgid "La lave ne vous brûle plus. Elle brûle toujours ceux qui vous y suivent."
+msgstr "Lava no longer burns you. It still burns whoever follows you in."
+
+#: scripts/items/item_database.gd
+msgid "Un ennemi qui meurt en feu enflamme jusqu'à trois voisins. Le feu se propage deux fois au plus."
+msgstr "An enemy that dies burning sets up to three neighbors ablaze. The fire spreads twice at most."
+
+#: scripts/items/item_database.gd
+msgid "+10 % de critique. Vos coups critiques enflamment (100 % des dégâts) et ralentissent."
+msgstr "+10% crit chance. Your critical hits ignite (100% of the damage) and slow."
+
+#: scripts/items/item_database.gd
+msgid "Deux flammes tournent autour de vous et brûlent ce qu'elles touchent (60 % des dégâts d'un tir)."
+msgstr "Two flames circle around you and burn whatever they touch (60% of a shot's damage)."
+
+#: scripts/items/item_database.gd
+msgid "Votre pouvoir ouvre la foule : tout ce qui est proche est repoussé et prend 150 % des dégâts d'un tir."
+msgstr "Your power parts the crowd: everything nearby is pushed back and takes 150% of a shot's damage."
+
+#: scripts/items/item_database.gd
+msgid "Toutes les 6 s, une onde repousse et frappe tout ce qui vous entoure (200 % des dégâts d'un tir)."
+msgstr "Every 6 s, a shockwave pushes back and strikes everything around you (200% of a shot's damage)."

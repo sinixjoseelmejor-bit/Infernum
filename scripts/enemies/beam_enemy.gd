@@ -58,6 +58,9 @@ func make_elite() -> void:
 
 func _physics_process(delta: float) -> void:
 	super(delta)
+	# Une brûlure peut l'avoir tué pendant `super` : un mort ne tire plus.
+	if health.is_dead:
+		return
 	_beam_timer = maxf(0.0, _beam_timer - delta)
 	if _beam_timer <= 0.0 and not _charge_en_cours() and _cible_a_portee():
 		_tirer()

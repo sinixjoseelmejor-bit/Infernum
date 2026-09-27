@@ -250,6 +250,10 @@ func _avancer_ruee(delta: float) -> void:
 		# sinon la ruée se termine par un temps mort, ce qui est le contraire de
 		# ce qu'on lui demande.
 		_move_velocity = _dash_direction * move_speed
+		# Émis à l'ARRIVÉE : la ruée sert à être ailleurs, et c'est là qu'un
+		# objet qui ouvre la foule (Bâton de Moïse) doit faire de la place —
+		# pas derrière, dans la mêlée qu'on vient de quitter.
+		GameEvents.pouvoir_utilise.emit(global_position)
 
 
 ## LA PARADE DE JOB — les trois temps, puis la recharge.
@@ -262,6 +266,7 @@ func _lancer_parade() -> void:
 	if _parade_amorce > 0.0 or _parade_fenetre > 0.0:
 		return
 	_parade_amorce = Characters.PARADE_AMORCE
+	GameEvents.pouvoir_utilise.emit(global_position)
 
 
 func _avancer_parade(delta: float) -> void:
@@ -411,6 +416,7 @@ func _rendre_jugement() -> void:
 	(bacs[0] if not bacs.is_empty() else get_parent()).add_child(onde)
 	onde.global_position = global_position
 	jugement_rendu.emit(global_position)
+	GameEvents.pouvoir_utilise.emit(global_position)
 	if degats <= 0.0:
 		return
 	GameEvents.damage_dealt.emit(degats, global_position, true)
@@ -609,6 +615,10 @@ func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2
 ## consommées, pas de secousse — elle tombe quatre fois par seconde. L'armure
 ## s'applique, la seconde chance aussi : mourir dans la lave reste une mort.
 func brule(amount: float) -> void:
+	# Peau de salamandre : la lave ne brûle plus le joueur. Elle brûle toujours
+	# ceux qui l'y suivent — c'est tout l'objet.
+	if RunState.has_special(&"salamandre"):
+		return
 	var reduced := amount * (1.0 - RunState.stats.get_damage_reduction())
 	if health.is_dead or health.is_invulnerable() or reduced <= 0.0:
 		return

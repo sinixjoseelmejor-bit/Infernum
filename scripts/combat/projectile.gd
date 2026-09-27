@@ -85,14 +85,19 @@ func _resolve_hit(node: Node2D) -> void:
 	# La source peut avoir été libérée entre le tir et l'impact (tireur tué en
 	# vol) : passer une référence morte lève une erreur de type côté appelé.
 	var origin: Node = source if is_instance_valid(source) else null
+	var du_joueur := origin != null and origin.is_in_group(Groups.PLAYER)
 	var dealt := damage * pow(1.0 - pierce_falloff, float(_hit.size() - 1))
 	if giant_multiplier != common_multiplier:
 		var giant: bool = node.is_in_group(Groups.BOSSES) or node.get(&"is_elite") == true
 		dealt *= giant_multiplier if giant else common_multiplier
+	# Lu AVANT le coup : la Fronde regarde si la cible est encore intacte.
+	if du_joueur:
+		dealt *= ItemEffects.multiplicateur_cible(node)
 	node.call(&"apply_damage", dealt, origin, direction * knockback)
 	GameEvents.damage_dealt.emit(dealt, global_position, is_crit)
-	if origin != null and origin.is_in_group(Groups.PLAYER):
+	if du_joueur:
 		GameEvents.player_damage_dealt.emit(dealt, node)
+		ItemEffects.sur_coup(node, dealt, is_crit, origin)
 
 	if _remaining_pierce > 0:
 		_remaining_pierce -= 1
