@@ -56,6 +56,12 @@ ENTITIES = [
     ("enemies",    "cultist", P02, "Warlock",        "_", "Walk"),
     ("enemies",    "brute",   P02, "Minotaur",       "_", "Walk"),
     ("enemies",    "oeil",    P02, "Eyeball Monster","_", "Walk"),
+    # 0.9.2. Les deux volants n'ont pas de planche de repos : ils volent tout
+    # le temps, le vol sert aux deux (septieme champ).
+    ("enemies",    "chauve_souris", P02, "Hellbat",   "_", "Flying", "Flying"),
+    ("enemies",    "feu_follet",    P02, "Ghostfire", "_", "Flying", "Flying"),
+    ("enemies",    "slime_lave",    P02, "Lava Slime","_", "Walk"),
+    ("enemies",    "invocatrice",   P02, "Demoness_B","_", "Walk"),
     ("bosses",     "golgota", P02, "Flame Golem",    "_", "Walk"),
     ("bosses",     "lilith",  P02, "Demoness_A",     "_", "Walk"),
     ("bosses",     "baal",    P02, "Demon_C",        "_", "Walk"),
@@ -190,10 +196,11 @@ def entities():
     """Version « with shadows » : l'ombre pose la creature au sol, indispensable
     en vue de dessus. Les recalages verticaux des scenes sont mesures dessus."""
     done = 0
-    for cat, ent, pack, src, sep, walk in ENTITIES:
+    for cat, ent, pack, src, sep, walk, *repos in ENTITIES:
+        idle = repos[0] if repos else "Idle"
         folder = os.path.join(pack, src, src + " with shadows")
         dst = os.path.join(SPR, cat, ent)
-        ok = copy(os.path.join(folder, src + sep + "Idle.png"),
+        ok = copy(os.path.join(folder, src + sep + idle + ".png"),
                   os.path.join(dst, ent + "_idle.png"))
         ok = copy(os.path.join(folder, src + sep + walk + ".png"),
                   os.path.join(dst, ent + "_walk.png")) and ok

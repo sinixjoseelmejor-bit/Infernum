@@ -261,7 +261,7 @@ Deux détails qui comptent :
 L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
 instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
-### Ennemis — 5 comportements
+### Ennemis — 9 comportements
 
 | Type | Script | Comportement | Vague |
 |---|---|---|---|
@@ -270,6 +270,10 @@ instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 | **Cultiste** | `ranged_enemy.gd` | distance : garde ~320 px, recule si on l'approche, tire | 3 |
 | **Brute** | `enemy.gd` | tanky : lent, 90 PV, résistant au recul, gros dégâts de contact | 4 |
 | **Œil** | `beam_enemy.gd` | rayon : vise, verrouille, frappe en ligne droite | 11 |
+| **Chauve-souris** | `chauve_souris.gd` | vole en zigzag, par-dessus le décor et la lave | 6 |
+| **Slime de lave** | `slime_lave.gd` | se divise en deux à sa mort ; né de la lave | 8 |
+| **Feu follet** | `feu_follet.gd` | s'arrête à portée et pose une zone annoncée, s'y consume | 13 |
+| **Invocatrice** | `invocatrice.gd` | garde ses distances, annonce puis appelle des imps | 16 |
 
 Âmes par ennemi : imp 3, limier 3, cultiste 5, brute 6, œil 8 — soit environ 0,1 âme par
 point de PV pour tout le monde. La brute était réglée sur une propriété morte
@@ -280,6 +284,85 @@ son poids d'apparition qui croît le plus vite.
 Le limier s'immobilise pendant son armement : la menace vient de la pression au sol,
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
+
+#### Quatre ennemis de plus (0.9.2)
+
+Chaque ennemi du jeu punit une habitude : le limier l'immobilité face à une
+charge, le cultiste l'oubli des tireurs, l'Œil le fait de se poser. Les quatre
+nouveaux en visent quatre autres, et aucun n'est une variante plus costaude
+d'un ancien.
+
+| Ennemi | Ce qu'il punit | Sa faiblesse |
+|---|---|---|
+| *Chauve-souris* (16 PV, 170 de vitesse) | s'abriter derrière le décor : elle vole, ni obstacle, ni lave, ni mêlée ne l'arrêtent | elle tombe au premier tir |
+| *Slime de lave* (40 PV) | la build qui ne frappe qu'un corps : tué, il se divise en deux petits (35 % des PV chacun), une fois | la perforation, le multishot et le feu sont faits pour lui |
+| *Feu follet* (18 PV) | laisser venir : à 95 px il s'embrase, pose une zone bleue de 105 px et détone au bout d'une seconde | l'abattre pendant la mèche annule l'explosion |
+| *Invocatrice* (60 PV) | ignorer l'arrière : tant qu'elle vit, elle appelle trois imps toutes les 7 s (six au plus) | ses imps tombent en cendre avec elle |
+
+**Les règles qui les tiennent, toutes reprises de leçons déjà écrites :**
+
+- **Rien n'arrive sans annonce.** La zone du feu follet est la brique des
+  boss ; les points d'apparition de l'invocatrice sont marqués par des cercles
+  violets sans dégâts, comme Lilith annonce sa téléportation.
+- **Tuer annule.** Le feu follet abattu pendant sa mèche emporte sa zone : la
+  leçon de l'Œil, dont le rayon survivait à sa mort. Embrasé, il ne recule
+  plus — repoussé, il s'éloignerait de sa propre explosion et le dessin
+  mentirait.
+- **Pas de ferme à âmes.** Les imps d'une invocatrice ne rapportent rien : la
+  garder en vie pour farmer serait sinon la bonne stratégie. Abattue, ses imps
+  retournent **en cendre** et non en morts — ni butin, ni Marque, ni feu
+  propagé ne naît d'un corps qu'elle reprend. Une détonation de feu follet
+  n'est pas une élimination non plus : il faut l'abattre pour être payé.
+- **Le budget d'âmes tient.** 0,1 âme par PV comme tout le monde : le slime et
+  ses deux enfants font 68 PV pour 6 âmes.
+- **Ce qu'on engendre suit la courbe.** Les enfants du slime et les imps de
+  l'invocatrice héritent des multiplicateurs de vague de leur parent. Les
+  renforts des boss ne le font pas et n'en ont pas besoin ; sans ça, un slime
+  de la vague 20 lâcherait des enfants de la vague 1.
+- **Le terrain compte.** Chauve-souris et feu follet flottent : leur masque ne
+  voit pas le décor, et la lave ne les brûle pas. Le slime en est fait : elle
+  ne le brûle pas et il y avance 1,6 fois plus vite — mesuré 99 px/s contre 62
+  hors de la lave. La lave n'existe qu'à l'étage profond (vague 11) : la
+  chauve-souris et le slime arrivent avant elle, et la croisent ensuite.
+
+**Écarté : le porte-bouclier.** Un chevalier qui bloque les tirs de face
+aurait appris à contourner. Mais l'auto-visée tire sur l'ennemi le plus proche
+sans regarder s'il est protégé : le joueur aurait vu ses tirs s'écraser sur un
+bouclier sans pouvoir rien y faire d'autre que se déplacer, ce qui punit
+l'arme plutôt que le joueur.
+
+**Sondes**, sur les vraies scènes :
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Chauve-souris, masque de collision | le joueur seul | **2** (le joueur seul) |
+| Chauve-souris, approche | plus rapide que l'imp | **≈ 143 px/s** d'approche (le zigzag prend sa part des 170) |
+| Lave, 2 s : chauve-souris / slime / imp témoin | intacts / −60 % | **16/16, 40/40 / 10/26** |
+| Slime de vague ×3 (120 PV) tué | 2 enfants à 42 PV, qui ne se divisent plus | **2 × 42**, 0 corps après, **3 morts** comptées |
+| Feu follet laissé faire | s'embrase à 95 px, −14 au joueur, aucune mort comptée | **95 px, 85 → 71, 0** |
+| Feu follet abattu pendant la mèche | 0 dégât, zone effacée, 1 mort | **0, 0 zone, 1** |
+| Invocatrice (vague ×2) | 3 annonces, puis 3 imps à 0 âme et 52 PV | **3, 3, [0, 0, 0], 52** |
+| Invocatrice, troisième appel | plafond de 6 | **6** |
+| Invocatrice abattue | ses imps en cendre, 1 seule mort | **0 corps, 1 mort** |
+
+**Ce qu'ils changent à la difficulté : rien, et c'est voulu.** Un banc a joué
+de vraies vagues — WaveManager, apparitions et durées réelles — avec Caïn et une
+build par palier, qui tourne en rond sans esquiver, PV énormes mais sans
+invincibilité : on compte ce qu'il encaisse, armure et i-frames comprises.
+Ancien roster (5 types) contre nouveau (9), mêmes graines, 8 essais par ligne :
+
+| Vague | Encaissé, ancien → nouveau | Éliminations | Survivants en fin de vague | Âmes |
+|---|---|---|---|---|
+| 8 | 197 → 202 (±25) | 37 → 39 | 35 → 37 | 155 → 151 |
+| 13 | 542 → 501 (±45) | 48 → 56 | 87 → 86 | 246 → 237 |
+| 18 | 1 022 → 1 044 (±90) | 46 → 74 | 135 → 139 | 259 → 262 |
+
+Dégâts, survivants et âmes restent dans le bruit : les vagues ne deviennent
+pas plus dures, elles deviennent **différentes**, et la courbe n'a pas eu à
+bouger. Seules les éliminations montent — les enfants du slime et les
+chauves-souris tombent vite. Le banc ne dit rien du danger réel d'un feu
+follet pour un joueur qui esquive, ni de celui d'une invocatrice qu'on laisse
+vivre : le bot n'esquive rien et ne choisit pas ses cibles. **À juger en jeu.**
 
 ### La fiche de run montre d'OÙ viennent les chiffres
 
@@ -3371,6 +3454,7 @@ scenes/
   main/main.tscn              arène, câble les systèmes entre eux
   player/player.tscn          joueur + Targeting + Weapons + Camera
   enemies/                    imp · hound · cultist · brute · oeil
+                              chauve_souris · slime_lave · feu_follet · invocatrice
   projectiles/                hell_bolt (joueur) · cursed_bolt (ennemi)
   pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
@@ -3394,7 +3478,8 @@ scripts/
   player/     player.gd
   combat/     targeting_system.gd · weapon.gd · projectile.gd · telegraph.gd
               encensoir.gd                les flammes de l'Encensoir (0.9.2)
-  enemies/    enemy.gd · ranged_enemy.gd · dasher_enemy.gd
+  enemies/    enemy.gd · ranged_enemy.gd · dasher_enemy.gd · beam_enemy.gd
+              chauve_souris.gd · slime_lave.gd · feu_follet.gd · invocatrice.gd
   bosses/     boss.gd                     socle : phases + anti-kite
               golgota.gd · lilith.gd · baal.gd · asmodee.gd · lucifer.gd
   systems/    wave_manager.gd · drop_system.gd (autoload) · item_effects.gd
