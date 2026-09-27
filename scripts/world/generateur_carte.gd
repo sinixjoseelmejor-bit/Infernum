@@ -20,39 +20,42 @@ extends RefCounted
 ## CE QUI CHANGE :
 ##   - la graine est TIRÉE À CHAQUE RUN : chaque partie a sa carte ;
 ##   - deux ÉTAGES, deux familles de lieux. En surface la pierre froide, les
-##     sanctuaires, les geôles et les supplices ; à la vague 11, on descend dans
-##     la lave, les cratères et les ossuaires ;
+##     forêts mortes, les cheminées éteintes, les buttes ; à la vague 11, on
+##     descend dans la lave, les fosses et le sol qui se fend (pack 2DML SET 3,
+##     depuis la 0.9.2) ;
 ##   - certaines pièces BLOQUENT et d'autres BRÛLENT, et ça impose des règles.
 ##
 ## LES RÈGLES DE JOUABILITÉ, garanties par construction et vérifiées par le test :
-##   1. Entre deux obstacles, soit ils se touchent (un mur de geôle en trois
-##      pièces), soit il reste `ECART` px libres — cinq imps de front. Jamais de
-##      goulet où la horde s'aligne pour se faire faucher, jamais de poche.
+##   1. Entre deux obstacles, soit ils se touchent, soit il reste `ECART` px
+##      libres — cinq imps de front. Jamais de goulet où la horde s'aligne pour
+##      se faire faucher, jamais de poche.
 ##   2. Obstacles et lave restent à `BORD` px à l'intérieur de LEUR parcelle.
 ##      C'est ce qui garantit la règle 1 entre deux parcelles voisines, qui
 ##      s'engendrent sans se connaître : 2 × 80 = 160.
 ##   3. Rien de ce qui bloque ou brûle à moins de `EXCLUSION` px du point de
 ##      départ, ni de l'endroit où l'on se trouve quand on change d'étage.
 ##   4. La lave laisse `ECART_LAVE` px aux obstacles, ou les touche : pas de
-##      couloir étroit entre un mur et une rivière.
-##   5. Une rivière est FINIE : elle tient dans sa parcelle, coiffée d'un bassin
-##      à chaque bout. Elle ne peut donc jamais enfermer personne.
+##      couloir étroit entre un rocher et une fosse.
+##   5. Une nappe de lave est FINIE : elle tient dans sa parcelle, d'une seule
+##      pièce. Elle ne peut donc jamais enfermer personne.
 ##
 ## LES RÈGLES DE COMPOSITION, qui font qu'un lieu a un sens :
 ##   6. RIEN NE SE CHEVAUCHE. Chaque pièce dressée a une emprise au sol — son
 ##      PIED, mesuré dans son image — et deux pieds ne se recouvrent pas. Deux
-##      marques au sol (sceau, fissure) non plus.
-##   7. RIEN NE TOMBE DANS LA LAVE : ni pièce dressée, ni marque au sol.
+##      pièces plates (fissure, nappe, plateau) non plus, et rien ne se dresse
+##      sur le dessus d'un plateau.
+##   7. RIEN NE TOMBE DANS LA LAVE : ni pièce dressée, ni fissure.
 ##   8. RIEN NE DÉBORDE DE SA PARCELLE : deux lieux voisins ne se mêlent pas.
-##   9. CHAQUE PIÈCE A UN RÔLE ET UNE PLACE. On encadre ce qu'on vénère de deux
-##      braseros, on laisse les restes au pied d'une machine de supplice, on pose
-##      les roches refroidies sur la rive des bassins. Une pièce qui gêne cherche
-##      une place à côté (`_placer`) avant de renoncer.
+##   9. CHAQUE PIÈCE A UN RÔLE ET UNE PLACE. L'herbe pousse au pied des arbres,
+##      les fumerolles s'ouvrent au pied des cheminées, les cailloux gisent sur
+##      la rive des bassins et au pied de la falaise d'un plateau, un monolithe
+##      se dresse au milieu de la terre qu'il a fendue. Une pièce qui gêne
+##      cherche une place à côté (`_placer`) avant de renoncer.
 ##
 ## Une pose qui enfreindrait une règle n'est pas posée : la pièce « est tombée ».
-## Un lieu se lit encore avec un crâne en moins ; sans ce qu'on y vénère, il ne se
-## lirait plus, donc le lieu s'arrête là. Une rivière coupée en deux non plus :
-## elle se pose d'un bloc ou pas du tout.
+## Un lieu se lit encore avec un caillou en moins ; sans sa pièce maîtresse (la
+## grappe de cheminées, le monolithe, le plateau), il ne se lirait plus, donc le
+## lieu s'arrête là.
 
 const ZONE_COTE := 950.0
 const ECART := 160.0
@@ -76,138 +79,55 @@ const POIDS_TAILLE := [58, 32, 10]
 ## des points de contact.
 const PIED := 37.5
 
-# --- Le décor d'origine (pack Texture), repris tel quel ----------------------
-
-const DECOR_ECHELLE := 3.0
-const DECOR_ECHELLE_PIECE := {
-	&"autel": 2.0, &"gravats": 2.0, &"pierre_levee": 2.0, &"tour": 2.0,
-}
-const DECOR_MIROIR := [&"caillou", &"roche_petite", &"roche", &"dalles", &"rocaille",
-	&"gravats", &"touffe", &"buisson_petit", &"buisson", &"urne", &"jarre",
-	&"pierre_levee", &"anneau"]
-const MODULE := 95.0
-const RUINE_MUR := [&"pierre_levee", &"gravats"]
-const RUINE_COIN := &"tour"
-const RUINE_COEUR := [&"autel", &"anneau"]
-const RUINE_SOL := [&"dalles", &"gravats", &"roche_petite"]
-const POTERIE := [&"urne", &"jarre"]
-const VEGETATION := [&"touffe", &"buisson_petit", &"buisson"]
-const ROCHE_TETE := &"rocaille"
-const ROCHE_GROS := [&"roche", &"rocaille"]
-const ROCHE_MOYEN := [&"roche", &"roche_petite"]
-const ROCHE_PETIT := [&"caillou", &"dalles", &"roche_petite"]
-
-# --- Les rôles des pièces de l'enfer -----------------------------------------
+# --- Les rôles des pièces ----------------------------------------------------
 #
 # Un rôle ne mélange jamais les étages : la surface est l'enfer FROID, rien n'y
-# couve ni n'y rougeoie hors des flammes qu'on y a allumées. Les pics de lave,
-# les roches incandescentes et les braises sont réservés à la profondeur.
+# couve ni n'y rougeoie. Fissures ardentes, lave et bulles sont réservées à la
+# profondeur ; les arbres y sont mauves, les buissons rouges.
 
-const STATUES := [&"gargouille_a", &"gargouille_b", &"gargouille_c", &"gargouille_d",
-	&"gargouille_grande", &"gargouille_assise_a", &"gargouille_assise_b",
-	&"gargouille_assise_c", &"gargouille_socle", &"gargouille_penseur",
-	&"statue_taureau", &"statue_bouc", &"gardien", &"obelisque_a", &"obelisque_c",
-	&"obelisque_e", &"obelisque_g"]
-const PETITES_STATUES := [&"gargouille_petite_a", &"gargouille_petite_b",
-	&"obelisque_b", &"obelisque_f", &"statue_voilee"]
-const STATUETTES := [&"statuette_a", &"statuette_b"]
-const CENTRES_SANCTUAIRE := [&"autel_demon", &"autel_squelette", &"autel_squelette_b",
-	&"autel_os", &"trone_a", &"trone_b", &"trone_c", &"baphomet", &"buste_demon"]
-const SIGLES := [&"pentagramme", &"sceau", &"relief"]
-## Sur la roche refroidie d'un autel de braise, seuls les sceaux qui rougeoient :
-## le relief de pierre grise y faisait une dalle posée là par erreur.
-const SIGLES_BRAISE := [&"pentagramme", &"sceau"]
-const COUPES := [&"coupe_feu_a", &"coupe_feu_b", &"coupe_feu_c", &"coupe_feu_d",
-	&"coupe_feu_e", &"coupe_feu_f", &"torchere_a", &"torchere_b"]
-const CRANES := [&"crane_a", &"crane_b", &"crane_c", &"crane_os", &"crane_bouc"]
-const OSSEMENTS := [&"os_a", &"os_b", &"os_c", &"os_d", &"os_e", &"carcasse"]
-const RESTES := CRANES + OSSEMENTS
-const RUNES := [&"pierre_rune_a", &"pierre_rune_b", &"pierre_rune_c", &"pierre_rune_d",
-	&"pierre_rune_e"]
-const DALLES_RUNE := [&"dalle_rune_a", &"dalle_rune_b", &"dalle_rune_c", &"dalle_rune_d"]
-const STALAGMITES := [&"stalagmite_a", &"stalagmite_b", &"stalagmite_c", &"stalagmite_d",
-	&"stalagmites_a", &"stalagmites_b", &"stalagmites_c"]
-## Le feu de la surface : un feu de camp qu'on a allumé. Les braises qui couvent
-## seules sont de la profondeur.
-const FEUX_SURFACE := [&"feu_camp", &"feu_camp_b", &"feu_camp_c"]
-const FEUX := [&"feu_camp", &"feu_camp_b", &"feu_camp_c", &"braises", &"tas_braise"]
-const SUPPLICES_RONDS := [&"roue_a", &"roue_b", &"chaise_pointes", &"chaise_pointes_b",
-	&"trone_pointes", &"trone_rouge_pointes", &"chaise_supplice", &"vierge_fermee",
-	&"vierge_ouverte", &"vierge_sang", &"meule", &"cage_grande"]
-const SUPPLICES_LONGS := [&"chevalet", &"pilori", &"echelle", &"boite_pointes",
-	&"boite_bois", &"guillotine", &"hachoir", &"presse", &"banc_pointes",
-	&"lit_pointes", &"lame"]
-const CAGES_AMES := [&"cage_ame_a", &"cage_ame_b", &"cage_ame_c", &"cage_ame_d",
-	&"pieux_ame"]
-const TORCHES := [&"torche_a", &"torche_b", &"torche_c"]
-const GEOLE_PORTES := [&"geole_porte_a", &"geole_porte_b"]
-const ROCHES_LAVE := [&"roche_lave_a", &"roche_lave_b", &"roche_lave_c", &"roche_lave_d",
-	&"roche_braise"]
-const ROCHERS := [&"rochers_a", &"rochers_b", &"rochers_c", &"rochers_d", &"rochers_e",
-	&"rochers_f", &"eclats", &"eboulis_noir", &"caillou_noir"]
-const ECLATS_NOIRS := [&"eclats", &"caillou_noir", &"braise_petite", &"braise_ronde",
-	&"eboulis_noir"]
-const OBSIDIENNES := [&"obsidienne_a", &"obsidienne_b", &"obsidienne_c", &"obsidienne_d",
-	&"obsidienne_e", &"obsidienne_f"]
-const FISSURES := [&"fissure_b", &"fissure_c", &"fissure_e", &"fissure_f", &"fissure_g",
-	&"fissure_h", &"fissure_i"]
-const BASSINS := [&"bassin_trefle", &"bassin_croix"]
-const FLAQUES := [&"flaque_a", &"flaque_b", &"flaque_c", &"flaque_d", &"flaque_e",
-	&"flaque_f"]
-const CRATERES := [&"cratere_a", &"cratere_b", &"cratere_c", &"fosse_a", &"fosse_b",
-	&"volcan", &"volcan_actif", &"puits_lave", &"bassin_braise"]
-const GOLEMS := [&"golem_a", &"golem_b", &"golem_c", &"golem_d"]
-const CENTRES_BRAISE := [&"idole_braise", &"cercle_pics", &"brasier", &"bucher",
-	&"chaudron_a", &"chaudron_b", &"chaudron_c", &"bucher_ame"]
-const ESTRADES := [&"estrade_defenses", &"estrade_cranes", &"estrade_arc",
-	&"estrade_fissures"]
-const PONTS := [&"pont_a", &"pont_b"]
-const CRISTAUX := [&"cristaux_runes_a", &"cristaux_runes_b"]
-const PLANTES_FEU := [&"plante_feu", &"cristal_feu"]
-const ROCS_FROIDS := [&"aiguilles", &"aiguilles_b", &"pics_a", &"pics_b"]
-const ROCS_BRULANTS := [&"aiguilles", &"aiguilles_b", &"pics_a", &"pics_b", &"pics_lave",
-	&"rocher_fendu"]
+const CHEMINEES := [&"cheminee_a", &"cheminee_b", &"cheminee_c", &"cheminee_haute",
+	&"cheminees_duo"]
+const GRAPPES := [&"cheminees_trio", &"cheminees_grappe", &"cheminees_paire"]
+const ROCS := [&"aiguille", &"bloc_troue", &"menhir", &"rocher_creuse", &"rocher_penche"]
+const MONOLITHES := [&"falaise", &"dome", &"colosse"]
+const ARBRES := [&"arbre_a", &"arbre_b", &"arbre_c"]
+const ARBRES_MAUVES := [&"arbre_mauve_a", &"arbre_mauve_b", &"arbre_mauve_c"]
+const CAILLOUX := [&"caillou_a", &"caillou_b", &"caillou_c", &"galet"]
+const GRAVIERS := [&"gravier_a", &"gravier_b"]
+## Les têtes d'éboulis : des blocs BAS, qui se traversent.
+const TETES_EBOULIS := [&"galet", &"cheminee_petite"]
+const TROUS := [&"trou_a", &"trou_b", &"trou_c", &"trou_d"]
+const FUMEROLLES := [&"fumerolle_a", &"fumerolle_b", &"fumerolle_c", &"fumerolle_d"]
+const HERBES := [&"herbe_a", &"herbe_b", &"herbe_c"]
+const HERBES_SECHES := [&"herbe_seche_a", &"herbe_seche_b", &"herbe_seche_c"]
+const BUISSONS_FROIDS := [&"buisson_olive_a", &"buisson_olive_b", &"buisson_olive_c",
+	&"buisson_sombre_a", &"buisson_sombre_b", &"buisson_sombre_c"]
+const BUISSONS_ROUGES := [&"buisson_rouge_a", &"buisson_rouge_b", &"buisson_rouge_c"]
+const FISSURES := [&"fissure_longue", &"sol_fendu"]
+const BASSINS := [&"bassin_6x6", &"bassin_7x6"]
+const LACS := [&"lac_8x7", &"lac_10x8"]
+const FOSSES := [&"fosse_12x6", &"fosse_6x12"]
+const BULLES := [&"bulle_a", &"bulle_b"]
+const PLATEAUX := [&"plateau_6x6", &"plateau_7x6", &"plateau_b_6x6"]
 
-## Les rivières : longueur (px de planche) et décalage latéral du cours d'un
-## bout à l'autre. Mesuré sur les planches : la lave des deux tronçons droits va
-## de x 20 à 76, centrée sur 48, EN HAUT COMME EN BAS — ils se raccordent au
-## pixel près. Le coude entre centré sur 143,5 et sort centré sur 47,5.
-const RIVIERE_LONGUEUR := {&"riviere_droite": 288.0, &"riviere_courte": 192.0,
-	&"riviere_coude": 192.0}
-const COUDE_ENTREE := 47.5   ## centre de la lave en haut, depuis le centre de l'image
-const COUDE_SORTIE := -48.5  ## centre de la lave en bas
-## Demi-largeur d'un tronçon droit berges comprises, en px de planche (96 / 2).
-const RIVIERE_DEMI_LARGEUR := 48.0
-## Les enchaînements permis. Ils tiennent tous dans une parcelle, bassins
-## compris (576 px de planche au plus, soit 864 px de monde... moins le bord).
-const RIVIERES := [
-	[&"riviere_droite"],
-	[&"riviere_courte", &"riviere_courte"],
-	[&"riviere_courte", &"riviere_coude"],
-	[&"riviere_coude", &"riviere_courte"],
-]
-## Les bassins coiffent les bouts : agrandis pour couvrir les berges du tronçon
-## (96 px de planche contre 82 pour un bassin).
-const BASSIN_BOUT := 1.25
-
-## Les lieux de chaque étage, et leur poids. L'éboulis domine en surface comme
-## avant : c'est du terrain. En profondeur, c'est la lave qui domine.
-##
-## La SOUFRIÈRE a été retirée : ses plaques de soufre jaune vif se lisaient
-## comme des mines d'or (retour de jeu) et juraient avec tout le reste.
-enum Lieu { EBOULIS, RUINE, SANCTUAIRE, SUPPLICES, GEOLE, OSSUAIRE, CERCLE,
-	CHAMP_LAVE, AUTEL_BRAISE, CRATERE, RIVIERE, EBOULIS_NOIR }
+## Les lieux de chaque étage, et leur poids. L'éboulis du décor d'origine garde
+## sa place en surface : c'est du terrain. En profondeur, c'est la lave qui
+## domine.
+enum Lieu { EBOULIS, FORET, CHEMINEES, ROCHERS, BUTTE, BROUSSAILLES,
+	CHAMP_LAVE, LAC, FOSSE }
 const LIEUX := {
-	SURFACE: {Lieu.EBOULIS: 28, Lieu.RUINE: 18, Lieu.SANCTUAIRE: 17, Lieu.SUPPLICES: 15,
-		Lieu.GEOLE: 10, Lieu.OSSUAIRE: 6, Lieu.CERCLE: 6},
-	PROFONDEUR: {Lieu.CHAMP_LAVE: 26, Lieu.RIVIERE: 18, Lieu.EBOULIS_NOIR: 20,
-		Lieu.AUTEL_BRAISE: 15, Lieu.CRATERE: 14, Lieu.OSSUAIRE: 7},
+	SURFACE: {Lieu.EBOULIS: 24, Lieu.FORET: 20, Lieu.CHEMINEES: 18, Lieu.ROCHERS: 16,
+		Lieu.BUTTE: 10, Lieu.BROUSSAILLES: 12},
+	PROFONDEUR: {Lieu.CHAMP_LAVE: 24, Lieu.LAC: 12, Lieu.FOSSE: 14, Lieu.CHEMINEES: 16,
+		Lieu.FORET: 12, Lieu.ROCHERS: 14, Lieu.BUTTE: 8},
 }
+## Les lieux de pur décor, qui ne bloquent presque pas : ils gardent plus de
+## jeu dans leur parcelle (voir `engendrer`).
+const LIEUX_LEGERS := [Lieu.EBOULIS, Lieu.BROUSSAILLES]
 
 ## Tolérance de chevauchement des pieds (règle 6), en part de la somme des
 ## rayons : 1 interdit tout contact, moins laisse des pièces SE TOUCHER. Une
-## grappe de roches ou de stalagmites se tient serrée ; une statue et un crâne
-## ne se touchent pas.
+## touffe d'herbe au pied d'un arbre le touche ; deux arbres, non.
 const TOLERANCE := 1.0
 const TOLERANCE_GRAPPE := 0.72
 
@@ -232,6 +152,7 @@ var _obstacles: Array[Dictionary] = []   # {"a", "b", "r"}
 var _laves: Array[Rect2] = []
 var _pieds: Array[Dictionary] = []       # {"c", "rx", "ry"}
 var _marques: Array[Rect2] = []
+var _reliefs: Array[Rect2] = []
 var _interieur := Rect2()
 var _zone := Rect2()
 
@@ -248,6 +169,7 @@ func engendrer(parcelle: Vector2i) -> Array[Dictionary]:
 	_laves = []
 	_pieds = []
 	_marques = []
+	_reliefs = []
 	var coin := Vector2(parcelle) * ZONE_COTE
 	var carre := Rect2(coin, Vector2(ZONE_COTE, ZONE_COTE))
 	_interieur = carre.grow(-BORD)
@@ -258,30 +180,27 @@ func engendrer(parcelle: Vector2i) -> Array[Dictionary]:
 	# Un lieu qui bloque ou qui brûle reste près du centre de sa parcelle : il
 	# doit tenir dans l'intérieur (règle 2). Le décor pur garde plus de jeu,
 	# assez pour que la trame de 950 px ne se voie pas — mais il ne déborde plus
-	# de sa parcelle (règle 8), ses pièces sont ramenées dedans.
-	var jeu := 420.0 if lieu in [Lieu.EBOULIS, Lieu.RUINE, Lieu.OSSUAIRE, Lieu.CERCLE,
-			Lieu.EBOULIS_NOIR] \
-		else 300.0
-	if lieu == Lieu.RIVIERE:
-		jeu = 90.0
+	# de sa parcelle (règle 8), ses pièces sont ramenées dedans. Les grandes
+	# nappes de lave n'ont presque pas de jeu : une fosse fait 700 px de long
+	# pour 790 d'intérieur.
+	var jeu := 420.0 if lieu in LIEUX_LEGERS else 300.0
+	if lieu in [Lieu.LAC, Lieu.FOSSE]:
+		jeu = 60.0
 	var ancre := coin + Vector2(ZONE_COTE, ZONE_COTE) * 0.5 \
 		+ Vector2(_d() - 0.5, _d() - 0.5) * jeu
 	if _px == 0 and _py == 0:
 		ancre = Vector2.RIGHT.rotated(_d() * TAU) * DEPART_DISTANCE
 
 	match lieu:
-		Lieu.EBOULIS: _zone_rochers(ancre, taille)
-		Lieu.EBOULIS_NOIR: _eboulis_noir(ancre, taille)
-		Lieu.RUINE: _zone_ruine(ancre, taille)
-		Lieu.SANCTUAIRE: _sanctuaire(ancre, taille)
-		Lieu.SUPPLICES: _supplices(ancre, taille)
-		Lieu.GEOLE: _geole(ancre, taille)
-		Lieu.OSSUAIRE: _ossuaire(ancre, taille)
-		Lieu.CERCLE: _cercle(ancre, taille)
+		Lieu.EBOULIS: _eboulis(ancre, taille)
+		Lieu.FORET: _foret(ancre, taille)
+		Lieu.CHEMINEES: _cheminees(ancre, taille)
+		Lieu.ROCHERS: _rochers(ancre, taille)
+		Lieu.BUTTE: _butte(ancre, taille)
+		Lieu.BROUSSAILLES: _broussailles(ancre, taille)
 		Lieu.CHAMP_LAVE: _champ_lave(ancre, taille)
-		Lieu.AUTEL_BRAISE: _autel_braise(ancre, taille)
-		Lieu.CRATERE: _cratere(ancre, taille)
-		Lieu.RIVIERE: _riviere(ancre, taille)
+		Lieu.LAC: _lac(ancre, taille)
+		Lieu.FOSSE: _fosse(ancre, taille)
 	return _poses
 
 
@@ -299,426 +218,228 @@ func _tirer_lieu() -> int:
 	return table.keys()[_tirer_pondere(poids)]
 
 
-# --- Surface : les lieux de l'enfer froid ------------------------------------
+# --- Les lieux des deux étages -----------------------------------------------
 
-## LE SANCTUAIRE : un parvis dallé, un sceau au sol, et ce qu'on y vénère au
-## fond — deux braseros L'ENCADRENT, les offrandes gisent À SES PIEDS. La grande
-## version ajoute deux gardiens aux bords du parvis, en miroir, et deux stèles
-## qui marquent l'entrée. La petite n'est qu'un oratoire : une statue sur une
-## dalle gravée, un brasero à côté.
-func _sanctuaire(a: Vector2, taille: int) -> void:
-	if taille == PETIT:
-		_placer(_dans(DALLES_RUNE), a + Vector2(0.0, PIED + 6.0), 30.0)
-		var dressee := _d() < 0.5
-		var statue := _placer(_dans(PETITES_STATUES) if dressee else _dans(STATUETTES), a, 40.0)
-		if statue.is_empty():
-			return
-		_a_cote(statue, _dans(COUPES), _signe())
-		_au_pied(statue, CRANES, _entre(1, 2))
+## LA FORÊT MORTE : des arbres espacés — assez pour qu'on passe entre eux, c'est
+## l'écart des obstacles —, de l'herbe sèche et des buissons À LEURS PIEDS. En
+## profondeur, les arbres sont mauves, les buissons rouges, et le sol se fend.
+func _foret(a: Vector2, taille: int) -> void:
+	var froid := etage == SURFACE
+	var arbres := ARBRES if froid else ARBRES_MAUVES
+	var touffes: Array = (HERBES + BUISSONS_FROIDS) if froid else (HERBES_SECHES + BUISSONS_ROUGES)
+	var premier := _placer(_dans(arbres), a, 40.0)
+	if premier.is_empty():
 		return
-	var plaque := _placer(&"plaque_dallage", a + Vector2(0.0, 10.0), 0.0,
-		0.72 if taille == MOYEN else 0.95)
-	_placer(_dans(SIGLES), a + Vector2(0.0, 30.0), 20.0)
-	var centre := _placer(_dans(CENTRES_SANCTUAIRE), a + Vector2(0.0, -105.0), 40.0)
-	if centre.is_empty():
-		return
-	_encadrer(centre, _dans(COUPES))
-	_au_pied(centre, RESTES, _entre(1, 2))
-	if taille < GRAND:
-		return
-	# Les gardiens tiennent les BORDS du parvis, face à face.
-	var demi := 200.0
-	if not plaque.is_empty():
-		demi = emprise(plaque).size.x * 0.5
-	var gardien := _dans(STATUES)
-	_paire(gardien, a + Vector2(0.0, 50.0), demi + 30.0)
-	_paire(_dans(RUNES), a + Vector2(0.0, 175.0), 150.0)
-
-
-## LES SUPPLICES : une ou deux machines, chacune avec SA torche plantée à côté
-## et ses restes AU PIED. En grand, une cage d'âmes au fond, qu'encadrent deux
-## torches. En petit, parfois il ne reste que les restes, autour d'une torche.
-func _supplices(a: Vector2, taille: int) -> void:
-	if taille == PETIT:
-		if _d() < 0.4:
-			var machine := _placer(_dans(SUPPLICES_RONDS), a, 40.0)
-			_a_cote(machine, _dans(TORCHES), _signe())
-			_au_pied(machine, RESTES, _entre(1, 2))
-		else:
-			var torche := _placer(_dans(TORCHES), a, 30.0)
-			_au_pied(torche, RESTES, _entre(2, 3))
-		return
-	if taille == MOYEN:
-		var machine := _placer(_dans(SUPPLICES_RONDS + SUPPLICES_LONGS), a, 40.0)
-		if machine.is_empty():
-			return
-		_encadrer(machine, _dans(TORCHES))
-		_au_pied(machine, RESTES, _entre(2, 3))
-		return
-	var longue := _placer(_dans(SUPPLICES_LONGS), a + Vector2(-190.0, 10.0), 40.0)
-	var ronde := _placer(_dans(SUPPLICES_RONDS), a + Vector2(190.0, -10.0), 40.0)
-	var cage := _placer(_dans(CAGES_AMES), a + Vector2(0.0, -215.0), 40.0)
-	# Chaque machine a sa torche, du côté du dehors : les deux flammes cadrent
-	# la scène au lieu de se serrer au milieu.
-	_a_cote(longue, _dans(TORCHES), -1.0)
-	_a_cote(ronde, _dans(TORCHES), 1.0)
-	_au_pied(longue, RESTES, _entre(1, 2))
-	_au_pied(ronde, RESTES, _entre(1, 2))
-	_encadrer(cage, _dans(TORCHES))
-	_au_pied(cage, CRANES, 1)
-
-
-## LA GEÔLE : un pan de mur de cellules, porte, mur, porte — les pièces se
-## touchent et forment UN obstacle. Deux torches aux deux bouts du mur, les os
-## des prisonniers au pied des portes, et en grand une cage d'âmes devant.
-func _geole(a: Vector2, taille: int) -> void:
-	if taille == PETIT:
-		var cage := _placer(&"cage_grande", a, 40.0)
-		_au_pied(cage, RESTES, _entre(1, 2))
-		return
-	var pas := 86.0 * EnferDB.ECHELLE - 2.0
-	var pieces := [_dans(GEOLE_PORTES), &"geole_mur"]
-	if taille == GRAND:
-		pieces.append(_dans(GEOLE_PORTES))
-	var x0 := -pas * float(pieces.size() - 1) * 0.5
-	# UN MUR, UN OBSTACLE. Trois capsules jointives laissaient à chaque jonction
-	# une encoche entre leurs bouts arrondis, où un corps restait pris, et deux
-	# tangentes contraires qui le renvoyaient de l'une à l'autre : mesuré, pas un
-	# imp sur douze ne franchissait un mur de geôle. Les pans sont donc de purs
-	# dessins et le mur entier est une seule capsule, convexe.
-	var bloc: Array[Dictionary] = []
-	var pans: Array[Dictionary] = []
-	for i in pieces.size():
-		var pan := _pose(pieces[i], a + Vector2(x0 + pas * float(i), -60.0))
-		pan["sans_corps"] = true
-		bloc.append(pan)
-		pans.append(pan)
-	var mur := _pose(&"", a + Vector2(0.0, -60.0))
-	mur["mur"] = Vector2(-x0 + EnferDB.obstacle(&"geole_mur").x, EnferDB.obstacle(&"geole_mur").y)
-	bloc.append(mur)
-	if not _poser_bloc(bloc):
-		return
-	_a_cote(pans[0], _dans(TORCHES), -1.0)
-	_a_cote(pans[-1], _dans(TORCHES), 1.0)
-	for pan: Dictionary in pans:
-		if pan["id"] in GEOLE_PORTES and _d() < 0.7:
-			_au_pied(pan, RESTES, 1)
-	if taille == GRAND:
-		var cage := _placer(_dans(CAGES_AMES), a + Vector2(_signe() * 110.0, 190.0), 50.0)
-		_au_pied(cage, RESTES, 1)
-
-
-## LE CERCLE DE PIERRES : des stèles gravées en rond autour d'un feu de camp.
-## Rien n'y bloque, les stèles sont basses ; c'est un repère qu'on voit de loin.
-func _cercle(a: Vector2, taille: int) -> void:
-	var n: int = [4, 5, 7][taille]
-	var rayon: float = [95.0, 125.0, 165.0][taille]
+	_au_pied(premier, touffes, _entre(1, 2))
+	var n: int = [0, _entre(2, 3), _entre(4, 5)][taille]
 	var phase := _d() * TAU
+	for i in n:
+		var ang := phase + TAU * (float(i) + _d() * 0.5) / float(maxi(n, 1))
+		var p := a + Vector2(cos(ang), sin(ang) * 0.75) * lerpf(200.0, 290.0, _d())
+		var arbre := _placer(_dans(arbres), p, 50.0)
+		_au_pied(arbre, touffes, _entre(0, 2))
+	if not froid:
+		_semer(a, Vector2(260.0, 190.0), FISSURES, _entre(1, 2))
 	if taille == GRAND:
-		_placer(_dans(DALLES_RUNE), a + Vector2(0.0, PIED), 0.0)
-	_placer(_dans(FEUX_SURFACE), a, 20.0)
+		_semer(a, Vector2(300.0, 220.0), touffes, _entre(1, 3), true)
+
+
+## LES CHEMINÉES : une grappe de cheminées volcaniques au centre, d'autres
+## isolées autour, des fumerolles et du gravier À LEURS PIEDS. Le petit n'est
+## qu'une cheminée et son trou. En profondeur, le sol se fend entre elles.
+func _cheminees(a: Vector2, taille: int) -> void:
+	if taille == PETIT:
+		var seule := _placer(_dans(CHEMINEES), a, 40.0)
+		_au_pied(seule, TROUS + FUMEROLLES, 1)
+		return
+	var grappe := _placer(_dans(GRAPPES), a, 40.0)
+	if grappe.is_empty():
+		return
+	_au_pied(grappe, FUMEROLLES, 1)
+	_au_pied(grappe, GRAVIERS + [&"cheminee_petite"], 1)
+	var n: int = 1 if taille == MOYEN else _entre(2, 3)
+	var phase := _d() * TAU
 	for i in n:
 		var ang := phase + TAU * float(i) / float(n)
-		_placer(_dans(RUNES), a + Vector2(cos(ang), sin(ang) * 0.7) * rayon, 18.0)
+		var p := a + Vector2(cos(ang), sin(ang) * 0.75) * lerpf(230.0, 300.0, _d())
+		var autre := _placer(_dans(CHEMINEES), p, 50.0)
+		_au_pied(autre, TROUS + FUMEROLLES, _entre(0, 1))
+	if etage == PROFONDEUR:
+		_semer(a, Vector2(280.0, 200.0), FISSURES, _entre(1, 2))
 
 
-## L'OSSUAIRE, commun aux deux étages : une estrade, les ossements EN TAS dessus
-## et autour, parfois une porte d'os au fond avec des crânes à son pied, et un
-## rocher dressé en marge.
-func _ossuaire(a: Vector2, taille: int) -> void:
+## LES ROCHERS : en grand, un monolithe qui se voit de loin, deux rocs à ses
+## côtés et des cailloux à son pied ; en profondeur, la terre CRAQUELÉE tout
+## autour de lui. Sinon quelques rocs dressés et leurs cailloux.
+func _rochers(a: Vector2, taille: int) -> void:
 	if taille == PETIT:
-		var tas := _placer(_dans(OSSEMENTS), a, 40.0)
-		_au_pied(tas, CRANES, _entre(1, 2))
+		var roc := _placer(_dans(ROCS), a, 40.0)
+		_au_pied(roc, CAILLOUX, _entre(1, 2))
 		return
-	var estrade := _placer(_dans(ESTRADES), a + Vector2(0.0, 20.0), 30.0)
-	if estrade.is_empty():
-		return
-	var dessus := emprise(estrade)
-	for _i in _entre(2, 4):
-		var p := dessus.position + Vector2(_d(), _d()) * dessus.size
-		_placer(_dans(OSSEMENTS), p - Vector2(0.0, PIED), 24.0, 1.0, 0.0, false, true)
-	_au_pied_rect(dessus, CRANES, _entre(1, 3))
 	if taille == GRAND:
-		var porte := _placer(&"porte_os", Vector2(dessus.get_center().x,
-			dessus.position.y - 10.0) - Vector2(0.0, PIED), 30.0)
-		_au_pied(porte, CRANES, 1)
-		var rocs := ROCS_FROIDS if etage == SURFACE else ROCS_BRULANTS
-		_placer(_dans(rocs), a + Vector2(_signe() * 270.0, 30.0), 50.0)
+		if etage == PROFONDEUR:
+			# Le cadre de fissures d'abord : le monolithe se dresse AU MILIEU.
+			_placer(&"fissure_cadre", a + Vector2(0.0, PIED), 0.0)
+		var monolithe := _placer(_dans(MONOLITHES), a, 30.0)
+		if monolithe.is_empty():
+			return
+		_au_pied(monolithe, CAILLOUX + GRAVIERS, _entre(2, 3))
+		_a_cote(monolithe, _dans(ROCS), -1.0)
+		_a_cote(monolithe, _dans(ROCS), 1.0)
+		return
+	var premier := _placer(_dans(ROCS), a, 40.0)
+	_au_pied(premier, CAILLOUX, _entre(1, 2))
+	var second := _placer(_dans(ROCS), a + Vector2.RIGHT.rotated(_d() * TAU) * 240.0, 60.0)
+	_au_pied(second, CAILLOUX + GRAVIERS, 1)
+	if etage == PROFONDEUR:
+		_semer(a, Vector2(240.0, 170.0), FISSURES, 1)
+
+
+## LA BUTTE : un plateau de roche, le plus gros obstacle du jeu, avec ses
+## éboulis AU PIED de sa falaise. La petite n'est qu'un rocher penché.
+func _butte(a: Vector2, taille: int) -> void:
+	if taille == PETIT:
+		var roc := _placer(&"rocher_penche", a, 40.0)
+		_au_pied(roc, CAILLOUX, _entre(1, 2))
+		return
+	var plateau := _placer(_dans(PLATEAUX), a, 60.0, 1.0, 0.0, false)
+	if plateau.is_empty():
+		return
+	_au_pied_rect(emprise(plateau), CAILLOUX + GRAVIERS, _entre(2, 3))
+	if taille == GRAND:
+		var cote := _signe()
+		var bord := emprise(plateau)
+		var p := Vector2(bord.get_center().x + cote * (bord.size.x * 0.5 + 200.0), bord.end.y - 60.0)
+		var roc := _placer(_dans(ROCS), p - Vector2(0.0, PIED), 50.0)
+		_au_pied(roc, CAILLOUX, 1)
+
+
+## LES BROUSSAILLES : des buissons serrés et de l'herbe, rien qui bloque. Un
+## repère qui se traverse.
+func _broussailles(a: Vector2, taille: int) -> void:
+	var n: int = [3, 5, 8][taille]
+	var etendue: float = [110.0, 170.0, 250.0][taille]
+	for _i in n:
+		var p := a + Vector2(_d() - 0.5, (_d() - 0.5) * 0.7) * etendue * 2.0
+		_placer(_dans(BUISSONS_FROIDS), p, 30.0, 1.0, 0.0, false, true)
+	_semer(a, Vector2(etendue * 1.3, etendue), HERBES, _entre(1, 3), true)
+	if taille == GRAND:
+		_semer(a, Vector2(etendue * 1.2, etendue), CAILLOUX, _entre(1, 2), true)
 
 
 # --- Profondeur : la lave ----------------------------------------------------
+#
+# LES NAPPES NE TOURNENT JAMAIS : la falaise est dessinée sur leur bord haut,
+# un quart de tour la mettrait sur le côté (voir `tools/extract_enfer.py`).
 
-## LE CHAMP DE LAVE : des bassins cernés de roche refroidie, qui ne se touchent
-## pas ; des flaques entre eux ; des blocs encore rouges et de l'obsidienne SUR
-## LA RIVE des bassins, pas au milieu du sol. En grand, un volcan le domine.
+## LE CHAMP DE LAVE : un ou deux bassins qui ne se touchent pas, leurs bulles,
+## des cailloux SUR LA RIVE et des fumerolles autour. En grand, une cheminée à
+## l'écart des bassins.
 func _champ_lave(a: Vector2, taille: int) -> void:
 	var bassins: Array[Dictionary] = []
-	for i in [1, 2, 3][taille]:
-		# Le second bassin s'écarte du premier : deux bassins qui se chevauchent
-		# se liraient comme une seule tache mal découpée.
+	for i in [1, 1, 2][taille]:
+		# Le second bassin s'écarte du premier : deux nappes soudées se liraient
+		# comme une seule tache mal découpée.
 		var p := a
 		if i > 0:
-			p += Vector2.RIGHT.rotated(_d() * TAU) * lerpf(190.0, 260.0, _d())
-		var bassin := _placer(_dans(BASSINS), p, 40.0, 1.0, _quart())
+			p += Vector2.RIGHT.rotated(_d() * TAU) * lerpf(400.0, 440.0, _d())
+		var bassin := _placer(_dans(BASSINS), p, 50.0, 1.0, 0.0, false)
 		if bassin.is_empty():
 			continue
-		_placer(&"plaque_lave", bassin["p"], 0.0, lerpf(1.2, 1.5, _d()), _quart())
 		bassins.append(bassin)
-	for _i in [2, 3, 4][taille]:
-		var p := a + Vector2.RIGHT.rotated(_d() * TAU) * lerpf(150.0, 300.0, _d())
-		_placer(_dans(FLAQUES), p, 50.0, 1.0, _quart())
 	for bassin: Dictionary in bassins:
-		_sur_la_rive(bassin, ROCHES_LAVE + OBSIDIENNES, _entre(1, 2))
-	_semer(a, Vector2(280.0, 200.0), FISSURES, _entre(1, 3))
+		_bulles(bassin, _entre(1, 2))
+		_sur_la_rive(bassin, CAILLOUX, _entre(1, 2))
+	_semer(a, Vector2(300.0, 230.0), FUMEROLLES, _entre(1, 2), true)
+	if taille >= MOYEN:
+		_semer(a, Vector2(300.0, 230.0), FISSURES, _entre(1, 2))
 	if taille == GRAND:
-		var volcan := _placer(_dans([&"volcan", &"volcan_actif"]),
-			a + Vector2(_signe() * 250.0, -170.0), 60.0)
-		_au_pied(volcan, ECLATS_NOIRS, _entre(1, 2))
+		var cheminee := _placer(_dans(CHEMINEES), a + Vector2(_signe() * 300.0, -220.0), 80.0)
+		_au_pied(cheminee, FUMEROLLES, 1)
 
 
-## L'AUTEL DE BRAISE : ce qu'on y brûle au centre, sur un sceau ; deux coupes de
-## feu l'encadrent. En grand, deux golems de lave gardent les bords, face à face.
-func _autel_braise(a: Vector2, taille: int) -> void:
+## LE LAC : une grande nappe, bulles et cailloux de rive. Le petit et le moyen
+## ne sont qu'un bassin.
+func _lac(a: Vector2, taille: int) -> void:
+	var id: StringName = _dans(LACS) if taille == GRAND else _dans(BASSINS)
+	var lac := _placer(id, a, 40.0, 1.0, 0.0, false)
+	if lac.is_empty():
+		_champ_lave(a, PETIT)
+		return
+	_bulles(lac, _entre(2, 4))
+	_sur_la_rive(lac, CAILLOUX + GRAVIERS, _entre(2, 3))
+
+
+## LA FOSSE : une longue nappe, couchée ou debout, qui coupe la parcelle sans
+## jamais en sortir — elle est FINIE, on en fait le tour (règle 5). Posée d'un
+## bloc ou pas du tout : faute de place, la parcelle devient un champ de lave.
+func _fosse(a: Vector2, taille: int) -> void:
 	if taille == PETIT:
-		var coupe := _placer(_dans(COUPES), a, 30.0)
-		_a_cote(coupe, _dans(RUNES), -1.0)
-		_au_pied(coupe, ECLATS_NOIRS, 1)
+		_lac(a, PETIT)
 		return
-	_placer(&"plaque_lave", a + Vector2(0.0, 30.0), 0.0, 1.3, _quart())
-	_placer(_dans(SIGLES_BRAISE), a + Vector2(0.0, 40.0), 20.0)
-	var centre := _placer(_dans(CENTRES_BRAISE), a + Vector2(0.0, -80.0), 40.0)
-	if centre.is_empty():
-		return
-	_encadrer(centre, _dans(COUPES))
-	if taille == GRAND:
-		_paire(_dans(GOLEMS), a + Vector2(0.0, 20.0), 260.0)
-	for _i in _entre(1, 2):
-		var p := a + Vector2.RIGHT.rotated(_d() * TAU) * lerpf(220.0, 300.0, _d())
-		_placer(_dans(FLAQUES), p, 50.0, 1.0, _quart())
-
-
-## LE CRATÈRE : une gueule de lave dressée sur une étoile de fissures, des éclats
-## à son pied. Le petit n'est qu'un anneau de roches où couvent des braises.
-func _cratere(a: Vector2, taille: int) -> void:
-	if taille == PETIT:
-		# L'anneau est creux : les braises vont DEDANS (voir EnferDB, « creux »).
-		_placer(&"anneau_roches", a, 30.0)
-		_placer(_dans([&"braises", &"tas_braise"]), a + Vector2(0.0, 6.0), 0.0)
-		_semer(a, Vector2(130.0, 90.0), FISSURES, _entre(1, 2))
-		return
-	_placer(&"etoile_fissure", a + Vector2(0.0, PIED), 0.0, 1.4, _quart())
-	var cratere := _placer(_dans(CRATERES), a, 40.0)
-	if cratere.is_empty():
-		return
-	_au_pied(cratere, ECLATS_NOIRS + ROCHES_LAVE, _entre(1, 3))
-	_semer(a, Vector2(260.0, 190.0), FISSURES, _entre(1, 2))
-	if taille == GRAND:
-		var second := _placer(_dans(CRATERES + ROCS_BRULANTS),
-			a + Vector2(_signe() * 260.0, 150.0), 60.0)
-		_au_pied(second, ECLATS_NOIRS, 1)
-		_placer(_dans(FLAQUES), a + Vector2(_signe() * 170.0, -170.0), 50.0, 1.0, _quart())
-
-
-## LA RIVIÈRE : des tronçons raccordés au pixel, un bassin à chaque bout, un pont
-## au milieu. Posée d'un bloc ou pas du tout (voir l'en-tête).
-##
-## Le cours est construit à la verticale puis, une fois sur deux, couché : la
-## lave est vue de dessus, une rotation d'un quart de tour ne se voit pas. Les
-## roches se posent sur les BERGES des tronçons droits, calculées tronçon par
-## tronçon : la première version les plaçait de part et d'autre de l'axe de
-## départ, et le coude, qui déporte le cours, les jetait dans le courant.
-func _riviere(a: Vector2, taille: int) -> void:
-	var couchee := _d() < 0.5
-	var choix := _entre(0, RIVIERES.size() - 1)
-	# En petit, un seul tronçon court entre deux bassins : un ruisseau.
-	var suite: Array = [&"riviere_courte"] if taille == PETIT else RIVIERES[choix]
-	var miroir := _d() < 0.5
-	var e := EnferDB.ECHELLE
-	var longueur := 0.0
-	for id: StringName in suite:
-		longueur += RIVIERE_LONGUEUR[id] * e
-	# Toutes les poses sont construites dans un repère local (cours vertical,
-	# centré sur l'ancre), puis validées ensemble avant d'être retenues.
-	var locales: Array[Dictionary] = []
-	# Le cours part de l'axe (x = 0) : le coude se pose de sorte que sa lave
-	# ENTRE sur l'axe, et décale la suite de ce qu'il déporte.
-	var y := -longueur * 0.5
-	var x := 0.0
-	for i in suite.size():
-		var id: StringName = suite[i]
-		var l: float = RIVIERE_LONGUEUR[id] * e
-		if id == &"riviere_coude":
-			var entree := COUDE_ENTREE * e * (-1.0 if miroir else 1.0)
-			var sortie := COUDE_SORTIE * e * (-1.0 if miroir else 1.0)
-			var cx := x - entree
-			locales.append({"id": id, "p": Vector2(cx, y + l * 0.5), "fh": miroir, "fv": false})
-			x = cx + sortie
-		else:
-			# Un tronçon sur deux est retourné : le joint devient un miroir, donc
-			# parfait, quel que soit le dessin des bords.
-			locales.append({"id": id, "p": Vector2(x, y + l * 0.5), "fh": miroir,
-				"fv": i % 2 == 1, "l": l})
-		y += l
-	# Les bassins aux deux bouts, sur la lave et non sur l'image.
-	var bouts := [Vector2(0.0, -longueur * 0.5), Vector2(x, longueur * 0.5)]
-	var extras: Array[Dictionary] = []
-	for b: Vector2 in bouts:
-		extras.append({"id": &"plaque_lave", "p": b, "e": 1.3})
-		extras.append({"id": _dans(BASSINS), "p": b, "e": BASSIN_BOUT})
-	# Le pont, sur le premier tronçon droit, en travers du cours.
-	var pont_local := Vector2.INF
-	for pose: Dictionary in locales:
-		if pose["id"] != &"riviere_coude":
-			pont_local = pose["p"]
-			extras.append({"id": _dans(PONTS), "p": pose["p"], "e": 1.0})
-			break
-
-	var rot := PI * 0.5 if couchee else 0.0
-	var retenues: Array[Dictionary] = []
-	for pose: Dictionary in locales + extras:
-		var p: Vector2 = pose["p"]
-		var r := rot
-		# Les bassins tournent librement ; le pont reste en travers du cours.
-		if pose["id"] in BASSINS:
-			r = _quart()
-		retenues.append(_pose(pose["id"], a + p.rotated(rot), pose.get("e", 1.0), r,
-			pose.get("fh", false), pose.get("fv", false)))
-	if not _poser_bloc(retenues):
-		# Pas de place pour la rivière : la parcelle devient un champ de lave.
+	var fosse := _placer(_dans(FOSSES), a, 40.0, 1.0, 0.0, false)
+	if fosse.is_empty():
 		_champ_lave(a, MOYEN)
 		return
-	# Des blocs sur les berges des tronçons droits, jamais devant le pont.
-	var berge := RIVIERE_DEMI_LARGEUR * e
-	for pose: Dictionary in locales:
-		if pose["id"] == &"riviere_coude":
-			continue
-		for _i in _entre(1, 2):
-			var id := _dans(ROCHES_LAVE + ROCHERS + OBSIDIENNES)
-			var cote := _signe()
-			var le_long := (_d() - 0.5) * float(pose["l"]) * 0.8
-			var local := Vector2(pose["p"]) + Vector2(cote * (berge + _demi_pied(id) + 6.0), le_long)
-			if pont_local != Vector2.INF and absf(local.y - pont_local.y) < 90.0:
-				continue
-			# `local` est le point de contact au sol : le nœud est `PIED` au-dessus.
-			_placer(id, a + local.rotated(rot) - Vector2(0.0, PIED), 16.0, 1.0, 0.0, false, true)
+	_bulles(fosse, _entre(2, 3))
+	_sur_la_rive(fosse, CAILLOUX, _entre(1, 3))
 
 
-# --- Le décor d'origine : la ruine et l'éboulis ------------------------------
-#
-# Repris de `decor_scatter.gd`, qu'ils remplacent : même empreinte, même pente,
-# mêmes rôles. Leurs pièces restent dans leur parcelle (règle 8).
-
-func _zone_ruine(ancre: Vector2, taille: int) -> void:
-	var axe := _d() * TAU
-	if taille == PETIT:
-		for i in _entre(1, 2):
-			var debout: StringName = _dans(RUINE_MUR)
-			_vieux(debout, ancre + Vector2.RIGHT.rotated(axe) * (float(i) * MODULE * 0.85))
-		_remplir(ancre, axe, Vector2(70.0, 60.0), RUINE_SOL, _entre(1, 2))
+## Des bulles sur la lave d'une nappe : dans son milieu, jamais sur la falaise
+## ni sur la rive. Posées sans règle — elles ne bloquent ni ne brûlent, et
+## elles sont DANS la lave, qui ne se partage avec rien d'autre.
+func _bulles(nappe: Dictionary, n: int) -> void:
+	if nappe.is_empty():
 		return
-	var mods_x := 2 if taille == MOYEN else _entre(3, 4)
-	var mods_y := 2 if taille == MOYEN else _entre(2, 3)
-	var erosion := lerpf(0.30, 0.62, _d())
-	var demi := Vector2(float(mods_x), float(mods_y)) * MODULE * 0.5
-	for iy in mods_y + 1:
-		for ix in mods_x + 1:
-			if not (ix == 0 or iy == 0 or ix == mods_x or iy == mods_y):
-				continue
-			var tombe := _d()
-			var d_coin := _d()
-			var mur: StringName = _dans(RUINE_MUR)
-			if tombe < erosion:
-				continue
-			var coin := (ix == 0 or ix == mods_x) and (iy == 0 or iy == mods_y)
-			var id: StringName = RUINE_COIN if coin and d_coin < 0.45 else mur
-			var local := Vector2(float(ix), float(iy)) * MODULE - demi
-			local += Vector2(_d() - 0.5, _d() - 0.5) * 26.0
-			_vieux(id, ancre + local.rotated(axe))
-	_remplir(ancre, axe, demi * 1.7, RUINE_SOL, _entre(1, 2))
-	if taille < GRAND:
-		return
-	var coeur := _d()
-	var id_coeur: StringName = _dans(RUINE_COEUR)
-	if coeur < 0.55:
-		_vieux(id_coeur, ancre)
-	_remplir(ancre, axe, demi * 1.5, POTERIE, _entre(1, 2))
-	_remplir(ancre, axe, demi * 2.1, VEGETATION, _entre(0, 2))
+	var rect := emprise(nappe)
+	# La falaise occupe le quart haut, la rive le bord : le milieu utile.
+	var utile := Rect2(rect.position + rect.size * Vector2(0.28, 0.38), rect.size * Vector2(0.44, 0.38))
+	for _i in n:
+		var p := utile.position + Vector2(_d(), _d()) * utile.size
+		_poses.append(_pose(_dans(BULLES), p))
 
 
-func _remplir(ancre: Vector2, axe: float, demi: Vector2, role: Array, nombre: int) -> void:
-	for _i in nombre:
-		var id: StringName = _dans(role)
-		var p := Vector2((_d() - 0.5) * demi.x * 2.0, (_d() - 0.5) * demi.y * 2.0)
-		_vieux(id, ancre + p.rotated(axe))
+# --- L'éboulis ---------------------------------------------------------------
 
-
-## L'ÉBOULIS DE LA PROFONDEUR : la même pente que celui de la surface — têtes
-## en haut, débris de plus en plus petits et écartés vers le bas — mais en roche
-## noire et en obsidienne, sur lesquelles couvent encore des braises. Les pièces
-## se serrent sans se chevaucher : trois pierres qui se touchent font une chose.
-func _eboulis_noir(a: Vector2, taille: int) -> void:
+## L'ÉBOULIS, repris du décor d'origine (README, « Le décor de l'arène ») : une
+## PENTE, et rien qui bloque — comme l'éboulis d'origine, c'est du terrain, pas
+## un mur. Un ou deux blocs bas en tête, puis les débris dont la taille
+## DÉCROÎT et l'écart CROÎT à mesure qu'on descend — un éventail. C'est ce
+## double gradient qui donne une direction à la chute ; un nuage de pierres de
+## taille égale ne raconte rien. Le petit n'a pas de pente : un roc et deux
+## éclats à son pied. Les pièces se serrent sans se chevaucher : trois pierres
+## qui se touchent font une chose.
+##
+## Le décor d'origine (pack Texture) a quitté le jeu en 0.9.2 : sa pierre
+## beige, peinte et lissée, jurait à côté du pixel art net du nouveau pack,
+## comme elle jurait déjà en profondeur avec l'ancien.
+func _eboulis(a: Vector2, taille: int) -> void:
 	var pente := _d() * TAU
 	if taille == PETIT:
-		var tete := _placer(_dans(OBSIDIENNES), a, 40.0)
-		_au_pied(tete, ECLATS_NOIRS, _entre(1, 2))
+		var tete := _placer(_dans(TETES_EBOULIS), a, 40.0)
+		_au_pied(tete, CAILLOUX + GRAVIERS, _entre(1, 2))
 		return
 	var longueur: float = lerpf(220.0, 320.0, _d()) if taille == MOYEN \
 		else lerpf(300.0, 430.0, _d())
 	for _i in (1 if taille == MOYEN else _entre(1, 2)):
-		_placer(_dans(OBSIDIENNES), a + Vector2((_d() - 0.5) * 90.0, (_d() - 0.5) * 70.0),
+		_placer(_dans(TETES_EBOULIS), a + Vector2((_d() - 0.5) * 90.0, (_d() - 0.5) * 70.0),
 			40.0, 1.0, 0.0, false, true)
 	var nombre: int = _entre(4, 6) if taille == MOYEN else _entre(7, 10)
 	for i in nombre:
 		var t := (float(i) + _d()) / float(nombre)
-		var gros: StringName = _dans(ROCHES_LAVE)
-		var moyen: StringName = _dans(ROCHERS)
-		var petit: StringName = _dans(ECLATS_NOIRS)
+		var gros: StringName = _dans([&"galet", &"caillou_a", &"caillou_b"])
+		var moyen: StringName = _dans(GRAVIERS + TROUS)
+		var petit: StringName = _dans(CAILLOUX)
 		var id: StringName = gros if t < 0.35 else (moyen if t < 0.7 else petit)
 		var travers := (_d() - 0.5) * 2.0 * (45.0 + t * 120.0)
 		var p := Vector2.RIGHT.rotated(pente) * (t * longueur) \
 			+ Vector2.DOWN.rotated(pente) * travers
 		_placer(id, a + p, 30.0, 1.0, 0.0, false, true)
 	if taille == GRAND:
-		_semer(a, Vector2(longueur * 0.6, 150.0), FISSURES, _entre(1, 2))
-		_semer(a, Vector2(longueur * 0.6, 150.0), PLANTES_FEU, _entre(0, 1))
-		# Des cristaux runiques dressés au sommet de la pente, en repère.
-		_placer(_dans(CRISTAUX), a - Vector2.RIGHT.rotated(pente) * 130.0, 60.0)
-
-
-func _zone_rochers(ancre: Vector2, taille: int) -> void:
-	var pente := _d() * TAU
-	if taille == PETIT:
-		_vieux(ROCHE_TETE, ancre)
-		for _i in _entre(1, 2):
-			var id: StringName = _dans(ROCHE_PETIT)
-			var p := Vector2.RIGHT.rotated(_d() * TAU) * lerpf(75.0, 140.0, _d())
-			_vieux(id, ancre + p)
-		return
-	var longueur: float = lerpf(220.0, 320.0, _d()) if taille == MOYEN \
-		else lerpf(300.0, 430.0, _d())
-	var tetes: int = 1 if taille == MOYEN else _entre(1, 2)
-	for _i in tetes:
-		var t := Vector2((_d() - 0.5) * 90.0, (_d() - 0.5) * 70.0)
-		_vieux(ROCHE_TETE, ancre + t)
-	var nombre: int = _entre(4, 6) if taille == MOYEN else _entre(7, 10)
-	for i in nombre:
-		var t := (float(i) + _d()) / float(nombre)
-		var gros: StringName = _dans(ROCHE_GROS)
-		var moyen: StringName = _dans(ROCHE_MOYEN)
-		var petit: StringName = _dans(ROCHE_PETIT)
-		var id: StringName = gros if t < 0.35 else (moyen if t < 0.7 else petit)
-		var travers := (_d() - 0.5) * 2.0 * (45.0 + t * 120.0)
-		var p := Vector2.RIGHT.rotated(pente) * (t * longueur) \
-			+ Vector2.DOWN.rotated(pente) * travers
-		_vieux(id, ancre + p)
-	if taille == GRAND:
-		for _i in _entre(0, 2):
-			var id: StringName = _dans(VEGETATION)
-			var le_long := _d() * longueur
-			var cote: float = (1.0 if _d() < 0.5 else -1.0) * lerpf(140.0, 220.0, _d())
-			var p := Vector2.RIGHT.rotated(pente) * le_long \
-				+ Vector2.DOWN.rotated(pente) * cote
-			_vieux(id, ancre + p)
+		var touffes: Array = HERBES if etage == SURFACE else HERBES_SECHES
+		_semer(a, Vector2(longueur * 0.6, 150.0), touffes, _entre(1, 2), true)
+		if etage == PROFONDEUR:
+			_semer(a, Vector2(longueur * 0.6, 150.0), FISSURES, _entre(0, 1))
 
 
 # --- Les relations : où va une pièce par rapport à une autre -----------------
@@ -785,12 +506,13 @@ func _sur_la_rive(nappe: Dictionary, role: Array, n: int) -> void:
 
 
 ## Sème des pièces dans un rectangle autour d'un point, chacune cherchant sa
-## place (règles 6 à 8). Pour les MARQUES au sol : le reste a un rôle.
-func _semer(a: Vector2, demi: Vector2, role: Array, nombre: int) -> void:
+## place (règles 6 à 8). Pour les marques au sol et le menu décor (herbe,
+## fumerolles) : ce qui compte a un rôle. `grappe` : elles peuvent se toucher.
+func _semer(a: Vector2, demi: Vector2, role: Array, nombre: int, grappe: bool = false) -> void:
 	for _i in nombre:
 		var id: StringName = _dans(role)
 		var p := Vector2((_d() - 0.5) * demi.x * 2.0, (_d() - 0.5) * demi.y * 2.0)
-		_placer(id, a + p, 40.0, 1.0, _quart() if EnferDB.est_plate(id) else 0.0)
+		_placer(id, a + p, 40.0, 1.0, _quart() if EnferDB.est_plate(id) else 0.0, false, grappe)
 
 
 # --- Pose et règles ----------------------------------------------------------
@@ -840,6 +562,7 @@ func _poser_bloc(poses: Array[Dictionary], joint: bool = false, grappe: bool = f
 	var laves: Array[Rect2] = []
 	var pieds: Array[Dictionary] = []
 	var marques: Array[Rect2] = []
+	var reliefs: Array[Rect2] = []
 	var tolerance := TOLERANCE_GRAPPE if grappe else TOLERANCE
 	for pose: Dictionary in poses:
 		var id: StringName = pose["id"]
@@ -858,18 +581,22 @@ func _poser_bloc(poses: Array[Dictionary], joint: bool = false, grappe: bool = f
 			laves.append(rect)
 		elif info.has("sol"):
 			var rect := emprise(pose)
-			if not _zone.encloses(rect) and int(info["sol"]) != EnferDB.SOL_PLAQUE:
+			if not _zone.encloses(rect):
 				return false
-			if not _plat_permis(id, rect, int(info["sol"])):
+			if not _plat_permis(rect):
 				return false
-			if int(info["sol"]) != EnferDB.SOL_PLAQUE and id not in PONTS:
-				marques.append(rect)
+			if int(info["sol"]) == EnferDB.SOL_RELIEF:
+				# Un plateau ne se pose pas sur ce qui est déjà debout.
+				for f: Dictionary in _pieds + pieds:
+					if rect.has_point(f["c"]):
+						return false
+				reliefs.append(rect)
+			marques.append(rect)
 		else:
 			var f := pied_de(pose)
-			if not _pied_permis(f, tolerance, pieds, laves):
+			if not _pied_permis(f, tolerance, pieds, laves, reliefs):
 				return false
-			if not info.get("creux", false):
-				pieds.append(f)
+			pieds.append(f)
 	# Les obstacles du bloc face à la lave du bloc (une pièce ne pose jamais les
 	# deux, mais un bloc le pourrait).
 	for o: Dictionary in obstacles:
@@ -881,15 +608,17 @@ func _poser_bloc(poses: Array[Dictionary], joint: bool = false, grappe: bool = f
 	_laves.append_array(laves)
 	_pieds.append_array(pieds)
 	_marques.append_array(marques)
+	_reliefs.append_array(reliefs)
 	for pose: Dictionary in poses:
 		_poses.append(pose)
 	return true
 
 
 ## Règles 6 à 8 pour une pièce dressée : dans sa parcelle, hors de la lave, sans
-## marcher sur le pied d'une autre.
+## marcher sur le pied d'une autre, ni sur le dessus d'un plateau — une roche
+## posée là-haut semblerait flotter au-dessus de la falaise.
 func _pied_permis(f: Dictionary, tolerance: float, du_bloc: Array[Dictionary],
-		laves_du_bloc: Array[Rect2]) -> bool:
+		laves_du_bloc: Array[Rect2], reliefs_du_bloc: Array[Rect2]) -> bool:
 	var c: Vector2 = f["c"]
 	var rx: float = f["rx"]
 	var ry: float = f["ry"]
@@ -898,25 +627,17 @@ func _pied_permis(f: Dictionary, tolerance: float, du_bloc: Array[Dictionary],
 	for rect: Rect2 in _laves + laves_du_bloc:
 		if rect.grow_individual(rx * 0.8, ry * 0.8, rx * 0.8, ry * 0.8).has_point(c):
 			return false
+	for rect: Rect2 in _reliefs + reliefs_du_bloc:
+		if rect.grow(-8.0).has_point(c):
+			return false
 	for autre: Dictionary in _pieds + du_bloc:
 		if chevauchent(f, autre, tolerance):
 			return false
 	return true
 
 
-## Une marque au sol ne recouvre pas une autre marque, ni la lave. Une plaque
-## (roche refroidie, dallage) peut s'étendre sous tout, sauf le dallage, qui n'a
-## rien à faire sous la lave.
-func _plat_permis(id: StringName, rect: Rect2, couche: int) -> bool:
-	if couche == EnferDB.SOL_PLAQUE:
-		if id == &"plaque_lave":
-			return true
-		for lave: Rect2 in _laves:
-			if lave.intersects(rect):
-				return false
-		return true
-	if id in PONTS:
-		return true
+## Une pièce plate ne recouvre pas une autre pièce plate, ni la lave.
+func _plat_permis(rect: Rect2) -> bool:
 	for lave: Rect2 in _laves:
 		if lave.intersects(rect.grow(-4.0)):
 			return false
@@ -956,7 +677,7 @@ func _obstacle_permis(o: Dictionary, joint: bool, du_bloc: Array[Dictionary]) ->
 
 ## Règles 2 à 4 et 7 pour la lave : dans l'intérieur, loin du départ, à l'écart
 ## des obstacles, et jamais sous une pièce dressée déjà posée. Deux nappes de
-## blocs différents ne se touchent pas non plus (celles d'une même rivière, si).
+## blocs différents ne se touchent pas non plus.
 func _lave_permise(rect: Rect2, pieds_du_bloc: Array[Dictionary]) -> bool:
 	if not _interieur.encloses(rect):
 		return false
@@ -980,21 +701,6 @@ func _lave_permise(rect: Rect2, pieds_du_bloc: Array[Dictionary]) -> bool:
 	return true
 
 
-## Pose une pièce du décor d'origine. Elle ne bloque ni ne brûle ; elle reste
-## seulement dans sa parcelle (règle 8), et son pied est retenu.
-func _vieux(id: StringName, p: Vector2) -> void:
-	var ech: float = DECOR_ECHELLE_PIECE.get(id, DECOR_ECHELLE)
-	var miroir := DECOR_MIROIR.has(id) and _d() < 0.5
-	var pose := {"id": id, "p": p, "e": ech, "r": 0.0, "fh": miroir, "fv": false,
-		"vieux": true}
-	var f := pied_de(pose)
-	var c: Vector2 = f["c"]
-	if not _zone.has_point(c):
-		return
-	_pieds.append(f)
-	_poses.append(pose)
-
-
 # --- Géométrie (partagée avec la carte et le test) ---------------------------
 
 ## Tailles des images (px de planche), par pièce. Remplies depuis les textures
@@ -1010,14 +716,22 @@ static var pieds: Dictionary = {}
 ## décalage de leur milieu par rapport au centre — le manche d'une torche n'est
 ## pas forcément au milieu. C'est l'emprise au sol de la règle 6, et c'est aussi
 ## sur elle que la carte cale l'ombre de contact.
+##
+## Une pièce ANIMÉE se mesure sur sa première image : sa planche entière ferait
+## une emprise quatre fois trop large.
 static func mesurer(id: StringName, texture: Texture2D) -> void:
-	tailles[id] = Vector2(texture.get_width(), texture.get_height())
+	var cadre := EnferDB.anim(id)
+	var colonnes := maxi(1, cadre.x)
+	var rangees_img := maxi(1, cadre.y)
+	tailles[id] = Vector2(texture.get_width() / colonnes, texture.get_height() / rangees_img)
 	var img := texture.get_image()
 	if img == null:
 		return
 	if img.is_compressed():
 		img.decompress()
 	img.convert(Image.FORMAT_RGBA8)
+	if colonnes > 1 or rangees_img > 1:
+		img = img.get_region(Rect2i(Vector2i.ZERO, Vector2i(tailles[id])))
 	var o := img.get_data()
 	var l := img.get_width()
 	var h := img.get_height()
@@ -1078,12 +792,24 @@ static func bloque(pose: Dictionary) -> bool:
 
 
 ## L'obstacle d'une pose : segment [a, b] et rayon, en coordonnées du monde.
-## Centré sur le nœud (voir EnferDB, clé "c").
 static func forme_obstacle(pose: Dictionary) -> Dictionary:
 	var dims: Vector2 = pose["mur"] if pose.has("mur") else EnferDB.obstacle(pose["id"])
-	var p: Vector2 = pose["p"]
+	var p: Vector2 = centre_obstacle(pose)
 	var demi := Vector2(dims.x, 0.0).rotated(float(pose["r"]))
 	return {"a": p - demi, "b": p + demi, "r": dims.y}
+
+
+## Centre d'un obstacle. Une pièce dressée bloque sur son PIED, décalé comme
+## lui : les objets du pack portent leur ombre vers la droite, et leur base
+## n'est pas au milieu de l'image — un obstacle centré sur l'image arrêtait le
+## joueur à côté du rocher, sur son ombre. Une pièce plate (un plateau) bloque
+## sur toute son image, centrée sur son nœud.
+static func centre_obstacle(pose: Dictionary) -> Vector2:
+	var p: Vector2 = pose["p"]
+	if pose.has("mur") or pose.get("vieux", false) or EnferDB.est_plate(pose["id"]):
+		return p
+	var pied: Vector2 = pieds.get(pose["id"], Vector2.ZERO)
+	return p + Vector2(pied.y * float(pose["e"]) * (-1.0 if pose["fh"] else 1.0), 0.0)
 
 
 ## Emprise d'une pièce plate (centrée), rotation d'un quart de tour comprise.

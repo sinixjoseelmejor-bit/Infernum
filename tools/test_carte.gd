@@ -46,12 +46,6 @@ func _charger_tailles() -> bool:
 		GenerateurCarte.mesurer(id, t)
 		if EnferDB.info(id).get("lave", false):
 			_masques[id] = _masque(t)
-	var vieux: Array = GenerateurCarte.RUINE_MUR + GenerateurCarte.RUINE_COEUR 		+ GenerateurCarte.RUINE_SOL + GenerateurCarte.POTERIE + GenerateurCarte.VEGETATION 		+ GenerateurCarte.ROCHE_GROS + GenerateurCarte.ROCHE_MOYEN 		+ GenerateurCarte.ROCHE_PETIT + [GenerateurCarte.RUINE_COIN, GenerateurCarte.ROCHE_TETE]
-	for id: StringName in vieux:
-		var chemin := "res://assets/sprites/decor/%s.png" % id
-		if not ResourceLoader.exists(chemin):
-			return false
-		GenerateurCarte.mesurer(id, load(chemin))
 	return true
 
 
@@ -130,11 +124,13 @@ func _test_regles(etage: int) -> void:
 	var debordent := 0
 	var dressees := 0
 	var obstacles_total := 0
+	var aire_bloquee := 0.0
 	var parcelles := 0
 	var lieux: Dictionary = {}
 	var part_lave: Array[float] = []
-	var rivieres_voulues := 0
-	var rivieres_posees := 0
+	var fosses_voulues := 0
+	var fosses_posees := 0
+	var tournees := 0
 	var obstacles_par_vue: Array[int] = []
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234 + etage
@@ -148,7 +144,7 @@ func _test_regles(etage: int) -> void:
 				var lieu := g.lieu_de(parcelle)
 				lieux[lieu] = int(lieux.get(lieu, 0)) + 1
 				parcelles += 1
-				var riviere_posee := false
+				var fosse_posee := false
 				var interieur := Rect2(Vector2(parcelle) * GenerateurCarte.ZONE_COTE,
 					Vector2.ONE * GenerateurCarte.ZONE_COTE).grow(-GenerateurCarte.BORD + 0.5)
 				var poses_parcelle := g.engendrer(parcelle)
@@ -177,8 +173,13 @@ func _test_regles(etage: int) -> void:
 						if GenerateurCarte._distance_point_segment(Vector2.ZERO, o["a"], o["b"]) \
 								- float(o["r"]) < GenerateurCarte.EXCLUSION - 0.5:
 							pres_du_depart += 1
-					if String(id).begins_with("riviere_"):
-						riviere_posee = true
+					if String(id).begins_with("fosse_"):
+						fosse_posee = true
+					# La falaise d'une nappe ou d'un plateau est dessinée d'un
+					# côté : tournés, ils mentiraient sur leur relief.
+					if EnferDB.est_plate(id) and not id in GenerateurCarte.FISSURES \
+							and id != &"fissure_cadre" and absf(float(pose["r"])) > 0.001:
+						tournees += 1
 					if EnferDB.info(id).get("lave", false):
 						var xf := Transform2D(float(pose["r"]), Vector2(pose["e"], pose["e"]), 0.0,
 							pose["p"])
@@ -191,11 +192,14 @@ func _test_regles(etage: int) -> void:
 						if GenerateurCarte._distance_point_rect(Vector2.ZERO, rect) \
 								< GenerateurCarte.EXCLUSION - 0.5:
 							pres_du_depart += 1
-				if lieu == GenerateurCarte.Lieu.RIVIERE:
-					rivieres_voulues += 1
-					if riviere_posee:
-						rivieres_posees += 1
+				if lieu == GenerateurCarte.Lieu.FOSSE:
+					fosses_voulues += 1
+					if fosse_posee:
+						fosses_posees += 1
 		obstacles_total += obstacles.size()
+		for o: Dictionary in obstacles:
+			var r: float = o["r"]
+			aire_bloquee += PI * r * r + (o["b"] as Vector2).distance_to(o["a"]) * 2.0 * r
 		# Règle 1, toutes paires, y compris entre parcelles voisines.
 		for i in obstacles.size():
 			for j in range(i + 1, obstacles.size()):
@@ -237,8 +241,9 @@ func _test_regles(etage: int) -> void:
 		lave_trop_pres == 0)
 	_check("%s : règle 6, aucun pied n'en recouvre un autre (%d sur %d pièces dressées)" 		% [nom, chevauchements, dressees], chevauchements == 0)
 	_check("%s : règle 6, aucune marque au sol n'en recouvre une autre ni la lave (%d)" 		% [nom, marques_sur_lave], marques_sur_lave == 0)
-	_check("%s : règle 7, rien de dressé dans la lave (%d)" % [nom, sur_lave], sur_lave == 0)
+	_check("%s : règle 7, rien de dressé dans la lave ni sur un plateau (%d)" % [nom, sur_lave], sur_lave == 0)
 	_check("%s : règle 8, rien ne déborde de sa parcelle (%d)" % [nom, debordent], debordent == 0)
+	_check("%s : aucune nappe ni aucun plateau tourné (%d)" % [nom, tournees], tournees == 0)
 	print("  %s : poses — %d tentées, %d %% déplacées pour trouver leur place, %d %% tombées" 		% [nom, GenerateurCarte.poses_tentees,
 			roundi(100.0 * GenerateurCarte.poses_deplacees / maxf(1, GenerateurCarte.poses_tentees)),
 			roundi(100.0 * GenerateurCarte.poses_tombees / maxf(1, GenerateurCarte.poses_tentees))])
@@ -255,8 +260,11 @@ func _test_regles(etage: int) -> void:
 		if n == 0:
 			vides += 1
 	moyenne /= float(obstacles_par_vue.size())
-	print("  %s : %d parcelles, %.2f obstacle(s) par parcelle" \
-		% [nom, parcelles, float(obstacles_total) / float(parcelles)])
+	# La part du sol bloquée compare mieux que le nombre d'obstacles : un arbre
+	# mort ne bloque que son tronc.
+	print("  %s : %d parcelles, %.2f obstacle(s) par parcelle, %.2f %% du sol bloqué" \
+		% [nom, parcelles, float(obstacles_total) / float(parcelles),
+			100.0 * aire_bloquee / (float(parcelles) * GenerateurCarte.ZONE_COTE * GenerateurCarte.ZONE_COTE)])
 	print("  %s : obstacles par écran 1920×1080 — moyenne %.2f, max %d, écrans sans obstacle %d %%" \
 		% [nom, moyenne, maxi, roundi(100.0 * vides / obstacles_par_vue.size())])
 	var noms := {}
@@ -266,8 +274,9 @@ func _test_regles(etage: int) -> void:
 	for lieu: int in lieux.keys():
 		ligne += " %s %d %%" % [noms[lieu], roundi(100.0 * lieux[lieu] / parcelles)]
 	print(ligne)
-	if rivieres_voulues > 0:
-		print("  %s : rivières posées %d sur %d parcelles « rivière » (les petites deviennent des champs)" 			% [nom, rivieres_posees, rivieres_voulues])
+	if fosses_voulues > 0:
+		print("  %s : fosses posées %d sur %d parcelles « fosse » (les petites deviennent des bassins)" \
+			% [nom, fosses_posees, fosses_voulues])
 	if not part_lave.is_empty():
 		part_lave.sort()
 		var m := 0.0
@@ -300,6 +309,7 @@ func _composition(poses: Array[Dictionary], parcelle: Vector2i) -> Vector4i:
 	var vieux: Array[bool] = []
 	var laves: Array[Rect2] = []
 	var marques: Array[Rect2] = []
+	var reliefs: Array[Rect2] = []
 	for pose: Dictionary in poses:
 		if pose.has("mur"):
 			continue
@@ -307,9 +317,13 @@ func _composition(poses: Array[Dictionary], parcelle: Vector2i) -> Vector4i:
 		if info.get("lave", false):
 			laves.append(GenerateurCarte.emprise(pose).grow(-6.0))
 		elif info.has("sol"):
-			if int(info["sol"]) != EnferDB.SOL_PLAQUE and not pose["id"] in GenerateurCarte.PONTS:
-				marques.append(GenerateurCarte.emprise(pose))
-		elif not info.get("creux", false):
+			# Les bulles sont posées SUR la lave : c'est leur place.
+			if int(info["sol"]) == EnferDB.SOL_BULLE:
+				continue
+			marques.append(GenerateurCarte.emprise(pose))
+			if int(info["sol"]) == EnferDB.SOL_RELIEF:
+				reliefs.append(GenerateurCarte.emprise(pose))
+		else:
 			pieds.append(GenerateurCarte.pied_de(pose))
 			vieux.append(pose["vieux"])
 	var bilan := Vector4i.ZERO
@@ -324,6 +338,10 @@ func _composition(poses: Array[Dictionary], parcelle: Vector2i) -> Vector4i:
 			var rx: float = f["rx"] * 0.8 - 0.5
 			var ry: float = f["ry"] * 0.8 - 0.5
 			if lave.grow_individual(rx, ry, rx, ry).has_point(c):
+				bilan.y += 1
+		# Rien ne se dresse sur le dessus d'un plateau (compté avec la lave).
+		for relief: Rect2 in reliefs:
+			if relief.grow(-8.5).has_point(c):
 				bilan.y += 1
 		for j in range(i + 1, pieds.size()):
 			if vieux[i] and vieux[j]:

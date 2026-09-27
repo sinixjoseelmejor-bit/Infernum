@@ -11,13 +11,12 @@ ce script reconstruit tout le reste a l'identique.
 
 INSTALLATION
 ------------
-1. Recuperer les sept packs et les deposer dans assets/packs/ :
+1. Recuperer les six packs et les deposer dans assets/packs/ :
        PixelUIKit/
        Tiny RPG Character Asset Pack v1.03 -Full 20 Characters/
        Tiny RPG Character Asset Pack 02 -Full 20 Characters/
        ItemIconPack/
-       Texture/
-       Hell Underworld Tileset/      (la carte : voir extract_enfer.py)
+       2DML_SET3_v1.0/               (la carte : voir extract_enfer.py)
        Touches/touches_clavier.png   (les touches affichees par l'interface)
 2. python tools/extract_assets.py
 3. Ouvrir le projet dans Godot une fois, pour l'import.
@@ -43,7 +42,6 @@ P13 = os.path.join(PACKS, "Tiny RPG Character Asset Pack v1.03 -Full 20 Characte
                    "Characters(100x100)")
 P02 = os.path.join(PACKS, "Tiny RPG Character Asset Pack 02 -Full 20 Characters",
                    "Characters(100x100 split)")
-DECOR_PACK = os.path.join(PACKS, "Texture", "Extra")
 TOUCHES_PACK = os.path.join(PACKS, "Touches", "touches_clavier.png")
 
 # (categorie, entite, pack, nom d'origine, separateur, nom de la planche de marche)
@@ -56,6 +54,12 @@ ENTITIES = [
     ("enemies",    "cultist", P02, "Warlock",        "_", "Walk"),
     ("enemies",    "brute",   P02, "Minotaur",       "_", "Walk"),
     ("enemies",    "oeil",    P02, "Eyeball Monster","_", "Walk"),
+    # 0.9.2. Les deux volants n'ont pas de planche de repos : ils volent tout
+    # le temps, le vol sert aux deux (septieme champ).
+    ("enemies",    "chauve_souris", P02, "Hellbat",   "_", "Flying", "Flying"),
+    ("enemies",    "feu_follet",    P02, "Ghostfire", "_", "Flying", "Flying"),
+    ("enemies",    "slime_lave",    P02, "Lava Slime","_", "Walk"),
+    ("enemies",    "invocatrice",   P02, "Demoness_B","_", "Walk"),
     ("bosses",     "golgota", P02, "Flame Golem",    "_", "Walk"),
     ("bosses",     "lilith",  P02, "Demoness_A",     "_", "Walk"),
     ("bosses",     "baal",    P02, "Demon_C",        "_", "Walk"),
@@ -67,103 +71,6 @@ ENTITIES = [
 
 ICONS = ["heart", "coin", "lock", "star", "gear", "close"]
 
-# Le decor de l'arene. Les deux planches du pack Texture sont des atlas sans
-# grille : chaque objet est pose ou il tient, et rien dans le pack ne dit ou.
-# Ces rectangles ont ete releves en detectant les ilots de pixels opaques puis
-# identifies sur une planche de contact — comme les icones d'objets, c'est la
-# partie qu'il ne faut PAS perdre.
-#
-# Choix de contenu : uniquement de la PIERRE et de la TERRE CUITE. Le pack offre
-# aussi des caisses, des tonneaux, des portes, un banc et des panneaux indicateurs
-# avec du texte grave — hors sujet dans un enfer, et le texte serait illisible a
-# cette echelle. Les trois buissons sont repris mais passes a la cendre (voir
-# `ASH`), le vert n'ayant rien a faire ici.
-#
-# Les quatre pieces de CIMETIERE du pack (stele, stele haute, croix, tombe gravee
-# « RIP ») ont ete retirees : le decor genere ne compose plus que des ruines et
-# des eboulis, ou elles n'ont pas de place. Leurs rectangles de decoupe, s'il
-# fallait les reprendre : stele (227,183,31,38), stele_haute (288,158,35,57),
-# croix (227,303,34,40), tombe (225,239,35,41).
-#
-# (nom, planche, x, y, largeur, hauteur)
-DECOR = [
-    ("caillou",      "TX Props with Shadow",  68, 487, 25, 19),
-    ("roche_petite", "TX Props with Shadow", 130, 484, 29, 22),
-    ("roche",        "TX Props with Shadow", 162, 482, 29, 27),
-    ("dalles",       "TX Props with Shadow", 289, 486, 31, 19),
-    ("rocaille",     "TX Props with Shadow",   3, 430, 60, 42),
-    ("gravats",      "TX Props with Shadow", 416, 194, 35, 57),
-    ("pierre_levee", "TX Props with Shadow", 387,   2, 32, 61),
-    ("autel",        "TX Props with Shadow", 289, 251, 32, 29),
-    ("urne",         "TX Props with Shadow", 165, 217, 23, 34),
-    ("jarre",        "TX Props with Shadow", 164, 288, 28, 27),
-    ("anneau",       "TX Props with Shadow", 420, 359, 58, 49),
-    ("tour",         "TX Props with Shadow", 352, 174, 44, 77),
-    ("buisson",      "TX Plant with Shadow", 216, 185, 50, 44),
-    ("buisson_petit","TX Plant with Shadow",  98, 195, 29, 27),
-    ("touffe",       "TX Plant with Shadow", 156, 190, 41, 33),
-]
-
-# Passage a la cendre : on garde la LUMINANCE de l'original (donc le modele et
-# les ombres du pixel art, qu'un simple filtre de teinte aplatirait) et on la
-# reteinte en gris chaud. Applique aux seules planches de vegetation.
-ASH = (0.80, 0.72, 0.64)
-
-# Les icones d'objets. Le pack en compte 1244, nommees itemN.png sans aucune
-# indication de contenu : ces correspondances ont ete etablies a l'oeil sur des
-# planches de contact, et n'ont aucune chance d'etre redecouvertes autrement.
-# C'est la partie de ce script qu'il ne faut PAS perdre.
-ITEM_ICONS = {
-    "ember": 723,            # torche allumee
-    "ash_soles": 262,        # bottes
-    "rusty_striker": 933,    # engrenage rouille
-    "tanned_hide": 232,      # veste de cuir
-    "chipped_fang": 1187,    # croc
-    "soul_magnet": 921,      # aimant en fer a cheval
-    "demon_bile": 919,       # flacon vert
-    "infernal_breech": 934,  # engrenage d'acier
-    "basalt_scales": 239,    # armure sombre
-    "hunter_eye": 1169,      # oeil
-    "leech": 1222,           # ver rouge
-    "spectral_drift": 689,   # volute spectrale
-    "trifid_shard": 542,     # eclats de cristal
-    "forge_heart": 688,      # coeur rouge
-    "blood_pact": 1179,      # organe sanglant
-    "predator_crown": 874,   # couronne d or
-    "longinus_lance": 124,   # lance
-    "guardian_seal": 199,    # bouclier
-    "eternal_ember": 721,    # brasier
-    "damned_clock": 765,     # cadran
-    "reaper_claw": 1240,     # griffe
-    "thorn_mantle": 891,     # cape verte
-    "phoenix_down": 1178,    # plume rouge
-    "void_siphon": 1195,     # orbe noire
-    "whetstone":             562,  # pierre grise en barre
-    "bandages":              669,  # linge blanc
-    "executioner_glove":     294,  # gant de cuir
-    "knuckle_rosary":        1164, # os
-    "clotted_blood":         1189, # goutte de sang
-    "giant_bane":            61,   # marteau rouge
-    "brazen_serpent":        679,  # serpent d or enroule
-    "moloch_chain":          597,  # maillons de chaine
-    "penitent_cuirass":      224,  # plastron d acier
-    "moloch_horn":           1182, # corne
-    "solomon_seal":          169,  # medaille d or
-    "reliquary":             718,  # coffret de bois
-    # 0.9.2
-    "sulfur":              1121, # soufre jaune en mottes
-    "tartarus_chains":     779,  # chaine de fer
-    "david_sling":         1113, # laniere enroulee
-    "samson_jaw":          1185, # molaire
-    "greek_fire":          902,  # fiole de feu
-    "sodom_salt":          552,  # cristaux blancs
-    "golgotha_nail":       924,  # pointe de fer
-    "salamander_skin":     1045, # salamandre rouge
-    "thirty_pieces":       1158, # piece d argent
-    "censer":              937,  # encensoir d or
-    "moses_staff":         841,  # baton de bois
-    "jericho_trumpet":     844,  # cor d or
-}
 UI = os.path.join(SPR, "ui")
 MASTER = 1024
 ICON_SIZES = [256, 128, 64, 48, 32, 24, 16]
@@ -190,10 +97,11 @@ def entities():
     """Version « with shadows » : l'ombre pose la creature au sol, indispensable
     en vue de dessus. Les recalages verticaux des scenes sont mesures dessus."""
     done = 0
-    for cat, ent, pack, src, sep, walk in ENTITIES:
+    for cat, ent, pack, src, sep, walk, *repos in ENTITIES:
+        idle = repos[0] if repos else "Idle"
         folder = os.path.join(pack, src, src + " with shadows")
         dst = os.path.join(SPR, cat, ent)
-        ok = copy(os.path.join(folder, src + sep + "Idle.png"),
+        ok = copy(os.path.join(folder, src + sep + idle + ".png"),
                   os.path.join(dst, ent + "_idle.png"))
         ok = copy(os.path.join(folder, src + sep + walk + ".png"),
                   os.path.join(dst, ent + "_walk.png")) and ok
@@ -284,44 +192,6 @@ def item_icons():
         if copy(os.path.join(ICONS_PACK, "item%d.png" % index),
                 os.path.join(SPR, "items", name + ".png")):
             done += 1
-    return done
-
-
-def decor():
-    """Un objet de decor par fichier, nomme par son identifiant.
-
-    Meme convention que les icones d'objets : le jeu les charge depuis
-    assets/sprites/decor/<id>.png sans qu'aucun chemin soit ecrit dans une
-    scene. Ajouter un decor = deposer un fichier et citer son nom dans
-    `scripts/components/decor_scatter.gd`."""
-    done = 0
-    sheets = {}
-    for name, sheet, x, y, w, h in DECOR:
-        path = os.path.join(DECOR_PACK, sheet + ".png")
-        if sheet not in sheets:
-            if not need(path):
-                sheets[sheet] = None
-            else:
-                sheets[sheet] = decode(path)
-        if sheets[sheet] is None:
-            continue
-        sw, sh, px = sheets[sheet]
-        assert x + w <= sw and y + h <= sh, "%s : decoupe hors planche" % name
-        ash = "Plant" in sheet
-        rows = []
-        for yy in range(h):
-            row = []
-            for xx in range(w):
-                p = px[y + yy][x + xx]
-                if ash and p[3] > 0:
-                    lum = min(255.0, (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) * 1.10)
-                    p = (int(lum * ASH[0]), int(lum * ASH[1]), int(lum * ASH[2]), p[3])
-                row.append(p)
-            rows.append(row)
-        out = os.path.join(SPR, "decor", name + ".png")
-        os.makedirs(os.path.dirname(out), exist_ok=True)
-        open(out, "wb").write(encode(w, h, rows))
-        done += 1
     return done
 
 
@@ -418,7 +288,6 @@ if __name__ == "__main__":
     count = entities()
     ui()
     items = item_icons()
-    props = decor()
     clavier = touches()
     enfer, enfer_attendues = extract_enfer.extraire()
     icon()
@@ -428,14 +297,13 @@ if __name__ == "__main__":
             print("   ", m)
         if len(missing) > 10:
             print("    ... et %d autres" % (len(missing) - 10))
-        print("\nDeposez les quatre packs dans assets/packs/ (voir l'entete de"
+        print("\nDeposez les six packs dans assets/packs/ (voir l'entete de"
               " ce fichier), puis relancez.")
         sys.exit(1)
     print("  %d entites : planches repos + marche" % count)
     print("  interface : panneau, 3 boutons, 2 barres, %d icones%s"
           % (len(ICONS), ", touches clavier" if clavier else ""))
     print("  objets : %d icones sur %d attendues" % (items, len(ITEM_ICONS)))
-    print("  decor : %d objets sur %d attendus" % (props, len(DECOR)))
     print("  carte de l'enfer : %d pieces sur %d attendues" % (enfer, enfer_attendues))
     print("  application : icon.png + icon.ico")
     print("\nOuvrez le projet dans Godot une fois pour lancer l'import.")

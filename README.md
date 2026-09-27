@@ -11,7 +11,7 @@ Ouvrir le dossier dans Godot, puis F5. Scène de départ :
 > **Après un clone, il manque les images.** Les sprites des personnages, des
 > ennemis, des boss, de l'interface et du décor viennent de packs tiers dont la
 > licence interdit la redistribution : ils ne sont pas dans le dépôt. Déposer les
-> sept packs dans `assets/packs/` puis lancer
+> six packs dans `assets/packs/` puis lancer
 > ```bash
 > python tools/extract_assets.py
 > ```
@@ -261,7 +261,7 @@ Deux détails qui comptent :
 L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
 instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
-### Ennemis — 5 comportements
+### Ennemis — 9 comportements
 
 | Type | Script | Comportement | Vague |
 |---|---|---|---|
@@ -270,6 +270,10 @@ instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 | **Cultiste** | `ranged_enemy.gd` | distance : garde ~320 px, recule si on l'approche, tire | 3 |
 | **Brute** | `enemy.gd` | tanky : lent, 90 PV, résistant au recul, gros dégâts de contact | 4 |
 | **Œil** | `beam_enemy.gd` | rayon : vise, verrouille, frappe en ligne droite | 11 |
+| **Chauve-souris** | `chauve_souris.gd` | vole en zigzag, par-dessus le décor et la lave | 6 |
+| **Slime de lave** | `slime_lave.gd` | se divise en deux à sa mort ; né de la lave | 8 |
+| **Feu follet** | `feu_follet.gd` | s'arrête à portée et pose une zone annoncée, s'y consume | 13 |
+| **Invocatrice** | `invocatrice.gd` | garde ses distances, annonce puis appelle des imps | 16 |
 
 Âmes par ennemi : imp 3, limier 3, cultiste 5, brute 6, œil 8 — soit environ 0,1 âme par
 point de PV pour tout le monde. La brute était réglée sur une propriété morte
@@ -280,6 +284,94 @@ son poids d'apparition qui croît le plus vite.
 Le limier s'immobilise pendant son armement : la menace vient de la pression au sol,
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
+
+#### Quatre ennemis de plus (0.9.2)
+
+Chaque ennemi du jeu punit une habitude : le limier l'immobilité face à une
+charge, le cultiste l'oubli des tireurs, l'Œil le fait de se poser. Les quatre
+nouveaux en visent quatre autres, et aucun n'est une variante plus costaude
+d'un ancien.
+
+| Ennemi | Ce qu'il punit | Sa faiblesse |
+|---|---|---|
+| *Chauve-souris* (16 PV, 170 de vitesse) | s'abriter derrière le décor : elle vole, ni obstacle, ni lave, ni mêlée ne l'arrêtent | elle tombe au premier tir |
+| *Slime de lave* (40 PV) | la build qui ne frappe qu'un corps : tué, il se divise en deux petits (35 % des PV chacun), une fois | la perforation, le multishot et le feu sont faits pour lui |
+| *Feu follet* (18 PV) | laisser venir : à 95 px il s'embrase, pose une zone bleue de 105 px et détone au bout d'une seconde | l'abattre pendant la mèche annule l'explosion |
+| *Invocatrice* (60 PV) | ignorer l'arrière : tant qu'elle vit, elle appelle trois imps toutes les 7 s (six au plus) | ses imps tombent en cendre avec elle |
+
+**Les règles qui les tiennent, toutes reprises de leçons déjà écrites :**
+
+- **Rien n'arrive sans annonce.** La zone du feu follet est la brique des
+  boss ; les points d'apparition de l'invocatrice sont marqués par des cercles
+  violets sans dégâts, comme Lilith annonce sa téléportation.
+- **Tuer annule.** Le feu follet abattu pendant sa mèche emporte sa zone : la
+  leçon de l'Œil, dont le rayon survivait à sa mort. Embrasé, il ne recule
+  plus — repoussé, il s'éloignerait de sa propre explosion et le dessin
+  mentirait.
+- **Pas de ferme à âmes.** Les imps d'une invocatrice ne rapportent rien : la
+  garder en vie pour farmer serait sinon la bonne stratégie. Abattue, ses imps
+  retournent **en cendre** et non en morts — ni butin, ni Marque, ni feu
+  propagé ne naît d'un corps qu'elle reprend. Une détonation de feu follet
+  n'est pas une élimination non plus : il faut l'abattre pour être payé.
+- **Le budget d'âmes tient.** 0,1 âme par PV comme tout le monde : le slime et
+  ses deux enfants font 68 PV pour 6 âmes.
+- **Ce qu'on engendre suit la courbe.** Les enfants du slime et les imps de
+  l'invocatrice héritent des multiplicateurs de vague de leur parent. Les
+  renforts des boss ne le font pas et n'en ont pas besoin ; sans ça, un slime
+  de la vague 20 lâcherait des enfants de la vague 1.
+- **Le terrain compte.** Chauve-souris et feu follet flottent : leur masque ne
+  voit pas le décor, et la lave ne les brûle pas. Le slime en est fait : elle
+  ne le brûle pas et il y avance 1,6 fois plus vite — mesuré 99 px/s contre 62
+  hors de la lave. La lave n'existe qu'à l'étage profond (vague 11) : la
+  chauve-souris et le slime arrivent avant elle, et la croisent ensuite.
+
+**Écarté : le porte-bouclier.** Un chevalier qui bloque les tirs de face
+aurait appris à contourner. Mais l'auto-visée tire sur l'ennemi le plus proche
+sans regarder s'il est protégé : le joueur aurait vu ses tirs s'écraser sur un
+bouclier sans pouvoir rien y faire d'autre que se déplacer, ce qui punit
+l'arme plutôt que le joueur.
+
+**Sondes**, sur les vraies scènes :
+
+| Sonde | Attendu | Mesuré |
+|---|---|---|
+| Chauve-souris, masque de collision | le joueur seul | **2** (le joueur seul) |
+| Chauve-souris, approche | plus rapide que l'imp | **≈ 143 px/s** d'approche (le zigzag prend sa part des 170) |
+| Lave, 2 s : chauve-souris / slime / imp témoin | intacts / −60 % | **16/16, 40/40 / 10/26** |
+| Slime de vague ×3 (120 PV) tué | 2 enfants à 42 PV, qui ne se divisent plus | **2 × 42**, 0 corps après, **3 morts** comptées |
+| Feu follet laissé faire | s'embrase à 95 px, −14 au joueur, aucune mort comptée | **95 px, 85 → 71, 0** |
+| Feu follet abattu pendant la mèche | 0 dégât, zone effacée, 1 mort | **0, 0 zone, 1** |
+| Invocatrice (vague ×2) | 3 annonces, puis 3 imps à 0 âme et 52 PV | **3, 3, [0, 0, 0], 52** |
+| Invocatrice, troisième appel | plafond de 6 | **6** |
+| Invocatrice abattue | ses imps en cendre, 1 seule mort | **0 corps, 1 mort** |
+| Invocatrice, un imp tué puis l'appel suivant | elle rappelle | **3 → 2 → 5**, puis 0 à sa mort |
+
+**La dernière ligne a été ajoutée après coup, et elle a trouvé un défaut.**
+Au tournage de la bande-annonce, une erreur de script est sortie : dès qu'un
+imp invoqué mourait, le filtre qui compte les imps vivants recevait un objet
+libéré, sa fonction typée plantait, et **l'invocatrice n'appelait plus jamais**
+— c'est-à-dire presque toujours, puisqu'on tue ses imps. Les premières sondes
+ne tuaient aucun imp. La liste n'est plus typée et teste la validité avant
+tout accès.
+
+**Ce qu'ils changent à la difficulté : rien, et c'est voulu.** Un banc a joué
+de vraies vagues — WaveManager, apparitions et durées réelles — avec Caïn et une
+build par palier, qui tourne en rond sans esquiver, PV énormes mais sans
+invincibilité : on compte ce qu'il encaisse, armure et i-frames comprises.
+Ancien roster (5 types) contre nouveau (9), mêmes graines, 8 essais par ligne :
+
+| Vague | Encaissé, ancien → nouveau | Éliminations | Survivants en fin de vague | Âmes |
+|---|---|---|---|---|
+| 8 | 197 → 202 (±25) | 37 → 39 | 35 → 37 | 155 → 151 |
+| 13 | 542 → 501 (±45) | 48 → 56 | 87 → 86 | 246 → 237 |
+| 18 | 1 022 → 1 044 (±90) | 46 → 74 | 135 → 139 | 259 → 262 |
+
+Dégâts, survivants et âmes restent dans le bruit : les vagues ne deviennent
+pas plus dures, elles deviennent **différentes**, et la courbe n'a pas eu à
+bouger. Seules les éliminations montent — les enfants du slime et les
+chauves-souris tombent vite. Le banc ne dit rien du danger réel d'un feu
+follet pour un joueur qui esquive, ni de celui d'une invocatrice qu'on laisse
+vivre : le bot n'esquive rien et ne choisit pas ses cibles. **À juger en jeu.**
 
 ### La fiche de run montre d'OÙ viennent les chiffres
 
@@ -3371,6 +3463,7 @@ scenes/
   main/main.tscn              arène, câble les systèmes entre eux
   player/player.tscn          joueur + Targeting + Weapons + Camera
   enemies/                    imp · hound · cultist · brute · oeil
+                              chauve_souris · slime_lave · feu_follet · invocatrice
   projectiles/                hell_bolt (joueur) · cursed_bolt (ennemi)
   pickups/                    soul · key · heal
   bosses/                     golgota · lilith · baal · asmodee · lucifer
@@ -3394,7 +3487,8 @@ scripts/
   player/     player.gd
   combat/     targeting_system.gd · weapon.gd · projectile.gd · telegraph.gd
               encensoir.gd                les flammes de l'Encensoir (0.9.2)
-  enemies/    enemy.gd · ranged_enemy.gd · dasher_enemy.gd
+  enemies/    enemy.gd · ranged_enemy.gd · dasher_enemy.gd · beam_enemy.gd
+              chauve_souris.gd · slime_lave.gd · feu_follet.gd · invocatrice.gd
   bosses/     boss.gd                     socle : phases + anti-kite
               golgota.gd · lilith.gd · baal.gd · asmodee.gd · lucifer.gd
   systems/    wave_manager.gd · drop_system.gd (autoload) · item_effects.gd
@@ -3424,7 +3518,6 @@ assets/
               bosses/lucifer, projectiles/hell_bolt, pickups/soul...
               chaque entité porte deux planches : <nom>_idle.png, <nom>_walk.png
               items/ une icône 16×16 par objet, nommée par son identifiant
-              decor/ une pièce de décor par fichier, nommée pareil
               enfer/ les pièces de la carte, et sol/ ses trois textures
               arena/floor/ les deux carreaux de sol (art du projet)
   audio/      SoundEffects/ 2 musiques + 5 effets (OGG Vorbis)
@@ -3514,39 +3607,41 @@ pas la lisibilité**, et les ennemis se lisent aussi bien aux deux étages. Le
 décor suit le sol dans les deux cas — sans quoi la pierre beige flotte au-dessus
 d'un sol froid comme un calque d'un autre jeu.
 
-#### Le pavé de l'enfer remplace le dallage peint (0.9.1)
+#### Le sol du pack de la carte (0.9.2)
 
-Quand le pack Hell Underworld est extrait, le sol est son **pavé sombre** aux
-deux étages : l'ancien dallage, peint et lisse, faisait deux jeux superposés
-sous un décor en pixel art. Les deux anciens carreaux restent dans la scène, en
-repli pour un dépôt fraîchement cloné.
+Quand le pack de la carte est extrait, le sol est son **carreau sombre** aux
+deux étages. Il n'a pas été choisi au hasard : c'est **le sol qui borde le
+bassin de lave** dans la planche (71/70/74 contre 72/71/75), donc une nappe
+posée dessus s'y fond sans liseré. Mesuré comme les autres, il se raccorde sur
+192 × 160 : joints de 0,44 et 0,18 pour un bruit interne de 0,5 et 0,8.
 
-Le carreau a été cherché comme celui de `floor.png` : toutes les positions
-essayées, et c'est le recadrage **(424, 2) en 144 px** qui ramène les joints
-(2,4 et 2,2) sous le bruit interne (3,9) ; le carré brut de 192 portait des
-joints de 6,5 et 5,5. À pleine force, son motif fin et serré occupait tout
-l'écran et le joueur s'y détachait moins bien : il est ramené à **50 % de
-contraste** vers sa couleur moyenne.
+Il est teinté **exactement comme toutes les pièces de la carte**
+(`EnferDB.TEINTE_SURFACE` et `TEINTE_PROFONDEUR`) : sol et décor ont été peints
+ensemble, et la bordure de sol d'un bassin doit prendre la même teinte que le
+carreau voisin. Les teintes ont été réglées pour retrouver les étages d'avant,
+quart d'écran sans décor, mesuré en jeu :
 
-Un shader y découpe des **régions** selon un bruit tiré à chaque run, avec un
-liseré sombre à la frontière : le dallage d'un temple enfoui en surface, de la
-**lave refroidie** en profondeur. Celle-ci sort de sa planche orange vif
-(127/56/33) : à la première capture, le joueur debout sur une croûte avait l'air
-d'être dans la lave. Elle est assombrie, ramenée à 55 % de contraste, et couvre
-moins de sol qu'en surface.
+| Étage | cible (0.9.1) | premier réglage | retenu |
+|---|---|---|---|
+| Surface | 48/52/55, luminance 51 à 53 | 55/58/62, luminance 58 | **49/52/54, luminance 51** |
+| Profondeur | 68/50/43, luminance 55 à 56 | 81/59/49, luminance 64 | **68/50/43, luminance 54** |
 
-La lumière n'a pas bougé — quart d'écran sans décor, mesuré en jeu :
-
-| Étage | ancien sol | pavé de l'enfer |
-|---|---|---|
-| Surface | 48/52/55, luminance 51 | 48/53/57, luminance 53 |
-| Profondeur | 68/50/43, luminance 55 | 70/51/43, luminance 56 |
+Les **régions** du shader sont un sol brun en surface, un sol rougeâtre en
+profondeur — jamais orange : rien au sol ne doit passer pour de la lave. Le
+premier choix, un grand carreau olive, portait une des taches en fleur de la
+planche : répété, il semait des nuages festonnés sur toute la région (vu en
+capture). Leur liseré est ramené de 40 à 15 % d'assombrissement : à 40 %, il
+dessinait des côtes sur un sol aussi lisse.
 
 ### Le décor de l'arène
 
-> Depuis la 0.9.1, ce décor est engendré par la carte de l'enfer (section
-> suivante), qui en reprend les deux générateurs tels quels en surface. Tout ce
-> qui suit reste vrai, sauf la règle « aucune collision », remplacée.
+> Depuis la 0.9.2, ce décor a **quitté le jeu**, et son pack (Texture) le
+> projet : sa pierre beige, peinte et lissée, jurait à côté du pixel art net du
+> nouveau pack de la carte (vu en capture), comme elle jurait déjà en profondeur
+> avec l'ancien. L'éboulis en garde l'idée — la pente, le double gradient — avec
+> les roches du nouveau pack ; la ruine, sans équivalent dans le pack, a
+> disparu. Ce qui suit reste l'histoire de ses générateurs, dont la carte a
+> hérité le socle.
 
 Même problème que le sol : rien ne peut être posé une fois, l'arène n'a pas de
 bord. Il a fallu deux versions jetées pour arriver à celle-ci, et les raisons
@@ -3699,199 +3794,203 @@ et d'autres **brûlent**. Trois fichiers : [`generateur_carte.gd`](scripts/world
 décide ce qu'il y a dans une parcelle (des données, sans aucun nœud),
 [`carte.gd`](scripts/world/carte.gd) en fait des sprites, des obstacles et de la
 lave, [`enfer_db.gd`](scripts/world/enfer_db.gd) dit ce que chaque pièce bloque,
-brûle ou éclaire.
+brûle, éclaire ou anime.
 
-#### Le pack n'est pas un tileset
+#### Le pack a changé (0.9.2)
 
-Hell Underworld Tileset, ce sont cinq planches de 768 × 768 **sans aucune tuile
-de transition** : des objets posés où ils tiennent (monuments, supplices, laves,
-damnés) et quelques carrés de sol opaques. Les rectangles ont été relevés en
-détectant les îlots de pixels opaques puis identifiés sur des agrandissements
-quadrillés ([`tools/extract_enfer.py`](tools/extract_enfer.py)) : 210 pièces et
-3 textures. Chaque pièce est **masquée** après découpe — les planches sont
-serrées et un rectangle déborde souvent sur le bord adouci de la voisine.
+La carte de la 0.9.1 reposait sur le pack **Hell Underworld Tileset**. Il a été
+**retiré : son vendeur l'avait produit avec une IA.** Ses 210 pièces et ses 3
+textures ont été supprimées ; rien du jeu n'y renvoie plus. Les builds et la
+bande-annonce de la 0.9.1 le montrent encore.
 
-**Ce n'est pas du pixel art propre, et ça se mesure.** Sur la planche des
-terrains, 157 628 plages de couleur identique sur 160 858 font **un seul pixel**,
-et aucune phase de grille (2, 3 ou 4 px) ne se distingue des autres. Le dessin
-imite un pixel d'environ 2 px de planche sans grille régulière : le réduire de
-moitié l'aurait brouillé. Les pièces sont donc affichées à **1,5**, ce qui met ce
-pseudo-pixel à 3 px d'écran, la taille de celui des personnages. Filtrage net et
-doux comparés en capture : le net garde le trait ; sur un écran de 1440 lignes
-l'échelle réelle tombe à 2 et le rendu est exact.
+Il est remplacé par **2DML SET 3** de Szadi art (voir [`CREDITS.md`](CREDITS.md)),
+un décor volcanique d'une autre nature :
 
-Les damnés de la planche B-02 ne sont repris qu'**enfermés** (cage, pieux,
-bûcher) : un damné libre dressé au milieu du sol se lit comme un ennemi. Les
-fantômes et les démons en sont écartés pour la même raison.
+- **du vrai pixel art**, sur une trame nette de 32 px, là où l'ancien pack
+  n'imitait qu'un pixel d'environ 2 px sans grille. Il s'affiche donc à une
+  échelle **entière, 2** : une cheminée à 104 px, un arbre mort à 140, pour un
+  joueur de 84 ;
+- **un vrai jeu de tuiles** pour les terrains : un bassin de lave et des
+  plateaux rocheux en blocs de 8 × 8 tuiles faits pour être assemblés — là où
+  l'ancien n'offrait que des objets posés ;
+- **les ombres sont dans les planches**, dessinées vers la droite sous chaque
+  objet : la carte ne pose plus d'ombre de contact, qui ferait double emploi.
+
+Ne sont pas employés : les conteneurs métalliques à voyants verts, hors sujet
+dans un enfer ; les taches de sol en fleur, qui faisaient tampon ; le plateau
+aux bords de lave, dont le dessus a la couleur exacte du sol — posé par terre,
+on ne voyait que ses bords et il se lisait comme un trou.
+
+#### Les terrains se composent
+
+[`tools/extract_enfer.py`](tools/extract_enfer.py) ne découpe pas les blocs
+tels quels : il en **compose** des pièces de la taille voulue — les coins, les
+bords répétés, et au milieu la tuile de remplissage (lave pleine, dessus de
+roche). Bassins de 6 × 6 et 7 × 6 tuiles, lacs de 8 × 7 et 10 × 8, fosses de
+12 × 6 et 6 × 12, plateaux de 6 × 6 et 7 × 6.
+
+**L'arrondi d'un coin court sur trois tuiles, pas deux.** La première version
+coupait les coins à deux tuiles : les bassins sortaient en goutte et en
+losange, avec des encoches de falaise sur les bords, et les plateaux en pointe
+(vu sur planche de contrôle). Seules les tuiles 3 et 4 de chaque bord sont
+droites et se répètent ; une pièce fait donc 6 tuiles au moins, 384 px à
+l'écran. **Il n'y a plus de petites flaques** : la lave de ce pack vient en
+nappes.
+
+**Les terrains ont une perspective.** La falaise est dessinée sur le bord HAUT
+d'un bassin et sur le bord BAS d'un plateau : tournés d'un quart de tour, ils
+mentiraient sur leur relief. Les fosses existent donc dans les deux sens, et le
+générateur ne tourne jamais une nappe ni un plateau (vérifié par le test).
+
+**La bordure de sol d'un bassin est fondue** à l'extraction : plein au ras de
+la falaise et de la lave, transparent à une demi-tuile. Sans ça, sa tuile de
+sol se découperait en rectangle sur le carreau du jeu.
 
 #### Trois décisions
 
-1. **Des monuments solides, rares.** Statues, obélisques, autels, trônes,
-   cratères, machines de supplice, cages, murs de geôle : ce qui est gros et
-   dressé bloque, ce qui est petit ou plat se traverse — une règle de FORME que
-   le joueur devine d'un coup d'œil. La règle d'origine du décor (« aucune
-   collision ») disait qu'un obstacle qui arrête le joueur sans arrêter ce qui le
-   frappe serait une trahison : ceux-ci **arrêtent aussi tous les projectiles**,
-   des deux camps, et le rayon de l'œil. Les **boss passent au travers** (leur
-   masque n'a plus la couche du monde) : un boss coincé derrière une statue
-   serait un combat gagné sans le jouer.
-2. **La lave brûle tout le monde, boss exceptés.** Elle se voit en permanence :
-   c'est du placement pur, et y attirer la horde devient une tactique.
+1. **Ce qui est dressé et plus haut que le joueur bloque** : cheminées
+   volcaniques, formations rocheuses, arbres morts, plateaux. Ce qui est bas ou
+   à plat se traverse — cailloux, trous, herbes, buissons, fissures, la petite
+   cheminée qui lui arrive à la taille. Une règle de FORME, qui se devine d'un
+   coup d'œil. Les obstacles **arrêtent aussi tous les projectiles**, des deux
+   camps, et le rayon de l'œil ; les **boss passent au travers**.
+2. **La lave brûle tout le monde, boss exceptés** — et ceux qui volent ou qui
+   en sont faits (chauve-souris, feu follet, slime de lave). Elle se voit en
+   permanence : c'est du placement pur.
 3. **Une graine par run, un paysage par étage.** En surface la pierre froide,
-   les sanctuaires, les supplices, les geôles ; à la vague 11 on descend dans la
-   lave, les cratères et les ossuaires.
+   rien n'y couve ni n'y rougeoie ; à la vague 11 on descend dans la lave, le
+   sol se fend, les arbres virent au mauve et les buissons au rouge.
 
 #### Les lieux
 
-Le socle du décor d'origine ne change pas : une parcelle de 950 px, **un lieu
-par parcelle**, petit six fois sur dix, tout tiré d'un hachage de la parcelle.
-L'étage entre dans le hachage : une même parcelle porte deux lieux sans rapport.
-La règle « l'ordre des tirages fait partie du paysage » ne tient plus : la
-graine change à chaque run, il n'y a plus de paysage à préserver d'une version à
-l'autre.
+Le socle ne change pas : une parcelle de 950 px, **un lieu par parcelle**,
+petit six fois sur dix, tout tiré d'un hachage de la parcelle et de l'étage.
 
 | Surface | poids | Profondeur | poids |
 |---|---|---|---|
-| éboulis (décor d'origine) | 28 | champ de lave | 26 |
-| ruine (décor d'origine) | 18 | éboulis noir | 20 |
-| sanctuaire | 17 | rivière de lave | 18 |
-| supplices | 15 | autel de braise | 15 |
-| geôle | 10 | cratère | 14 |
-| ossuaire | 6 | ossuaire | 7 |
-| cercle de pierres | 6 | | |
+| éboulis | 24 | champ de lave | 24 |
+| forêt morte | 20 | cheminées ardentes | 16 |
+| cheminées | 18 | fosse | 14 |
+| rochers | 16 | rochers fendus | 14 |
+| broussailles | 12 | lac | 12 |
+| butte | 10 | forêt calcinée | 12 |
+| | | butte | 8 |
 
-La **soufrière** a existé et a été retirée : ses plaques de soufre jaune vif se
-lisaient comme des mines d'or et juraient avec tout le reste. Ses cristaux
-runiques dominent désormais le grand éboulis noir.
-
-Le décor d'origine est **retiré de la profondeur** : sa pierre beige, teintée
-chaude, jurait sur le pavé du pack (vu en capture). L'éboulis y garde sa pente,
-en roche noire et en obsidienne.
+- **La forêt morte** : des arbres espacés — assez pour passer entre eux, c'est
+  l'écart des obstacles —, l'herbe et les buissons à leurs pieds.
+- **Les cheminées** : une grappe au centre, d'autres isolées autour, fumerolles
+  et gravier à leurs pieds ; en profondeur, le sol se fend entre elles.
+- **Les rochers** : en grand, un monolithe qui se voit de loin, deux rocs à ses
+  côtés ; en profondeur il se dresse **au milieu de la terre qu'il a fendue**
+  (un cadre de fissures ardentes posé avant lui).
+- **La butte** : un plateau de roche, le plus gros obstacle du jeu, ses éboulis
+  au pied de sa falaise. Rare.
+- **L'éboulis et les broussailles** : rien qui bloque. L'éboulis garde la pente
+  du décor d'origine. **Sa première version bloquait** — un roc dressé en
+  tête —, et les obstacles montaient à 3,04 par écran en surface ; comme celui
+  d'origine, c'est du terrain et non un mur.
+- **Le champ de lave, le lac, la fosse** : une ou deux nappes, leurs bulles
+  animées, des cailloux sur la rive, des fumerolles autour. Une fosse fait
+  700 px de long pour 790 d'intérieur de parcelle : elle se pose d'un bloc, ou
+  la parcelle devient un champ de lave.
 
 #### Les règles de jouabilité
 
 Garanties par construction, et vérifiées par [`tools/test_carte.tscn`](tools/test_carte.tscn)
 sur 40 graines × 81 parcelles × 2 étages, soit 6 480 parcelles :
 
-1. Deux obstacles se touchent (un mur) ou laissent **160 px** — cinq imps de
-   front. Jamais de goulet, jamais de poche.
+1. Deux obstacles se touchent ou laissent **160 px** — cinq imps de front.
+   Jamais de goulet, jamais de poche.
 2. Obstacles et lave restent à **80 px à l'intérieur de LEUR parcelle** : c'est
    ce qui garantit la règle 1 entre deux parcelles qui s'engendrent sans se
    connaître (2 × 80 = 160).
 3. Rien qui bloque ou brûle à moins de **320 px** du départ, ni de l'endroit où
    l'on se tient quand on change d'étage.
 4. La lave laisse **110 px** aux obstacles, ou les touche.
-5. Une rivière est **finie** : elle tient dans sa parcelle, un bassin à chaque
-   bout. Elle se pose d'un bloc ou pas du tout — coupée en deux, elle ne se
-   lirait plus.
+5. Une nappe est **finie** : elle tient dans sa parcelle, d'une seule pièce.
 
 Résultat : zéro violation, et **aucune poche fermée** même pour une brute
 d'élite (sol rastérisé à 16 px, obstacles gonflés de 30 px, remplissage par
-diffusion). Une pose qui enfreindrait une règle n'est pas posée ; un lieu se lit
-encore avec une statue en moins.
+diffusion).
 
 #### Les règles de composition
 
-La première version posait chaque pièce à une position tirée dans un
-rectangle, sans regarder ce qui s'y trouvait déjà : un crâne dans le socle d'une
-statue, une roche au milieu d'une rivière, une braise qui couvait en surface,
-deux bassins soudés en une tache (retour de jeu : « tout est un peu aléatoire et
-certaines choses n'ont aucun sens »). Quatre règles s'ajoutent à celles de
-jouabilité, vérifiées par le même test :
-
 6. **Rien ne se chevauche.** Chaque pièce dressée a une emprise au sol — son
-   PIED, mesuré dans son image : largeur des pixels opaques de ses dernières
-   rangées, et décalage de leur milieu (le manche d'une torche n'est pas
-   forcément au centre). Deux pieds ne se recouvrent pas ; une grappe de roches
-   ou de stalagmites a le droit de se TOUCHER (28 % de recouvrement toléré).
-   Deux marques au sol ne se recouvrent pas non plus.
-7. **Rien ne tombe dans la lave** : ni pièce dressée, ni sceau, ni fissure.
-8. **Rien ne déborde de sa parcelle** : deux lieux voisins ne se mêlent plus.
-9. **Chaque pièce a un rôle et une place par rapport aux autres.** Deux braseros
-   ENCADRENT ce qu'on vénère ; les offrandes gisent À SES PIEDS ; chaque machine
-   de supplice a SA torche du côté du dehors et ses restes au pied ; les torches
-   d'une geôle tiennent les deux bouts du mur et les os s'entassent au pied des
-   portes ; les roches refroidies se posent SUR LA RIVE des bassins ; celles
-   d'une rivière sur les berges des tronçons droits, calculées tronçon par
-   tronçon (la première version les plaçait autour de l'axe de départ, et le
-   coude, qui déporte le cours, les jetait dans le courant) ; l'anneau de roches
-   entoure ses braises au lieu de les repousser. Les rôles ne mélangent plus les
-   étages : en surface, seuls les feux qu'on a allumés brûlent — plus de roche
-   incandescente ni de pic de lave dans l'enfer froid.
+   PIED, mesuré dans son image, l'ombre dessinée exclue (alpha 51, sous le
+   seuil de 128) — et deux pieds ne se recouvrent pas. Deux pièces plates
+   (fissure, nappe, plateau) non plus, et **rien ne se dresse sur le dessus
+   d'un plateau** : une roche posée là-haut semblerait flotter.
+7. **Rien ne tombe dans la lave.** Les bulles y sont posées exprès, dans le
+   milieu de la nappe, jamais sur la falaise ni sur la rive.
+8. **Rien ne déborde de sa parcelle.**
+9. **Chaque pièce a un rôle et une place** : l'herbe au pied des arbres, les
+   fumerolles au pied des cheminées, les cailloux sur la rive et au pied de la
+   falaise d'un plateau.
 
-Une pièce qui gêne **cherche une place à côté** avant de renoncer : jusqu'à huit
-essais autour du point voulu, de plus en plus loin, dans un ordre tiré (angle
-d'or). Mesuré sur 6 480 parcelles :
+Une pièce qui gêne **cherche une place à côté** avant de renoncer. Mesuré :
 
-| | pièces posées | déplacées pour trouver leur place | tombées |
+| | pièces tentées | déplacées pour trouver leur place | tombées |
 |---|---|---|---|
-| surface | 7 991 | 5 % | 1 % |
-| profondeur | 17 315 | 10 % | 4 % |
+| surface | 13 966 | 6 % | 2 % |
+| profondeur | 13 714 | 12 % | 17 % |
 
-Zéro chevauchement sur 14 299 pièces dressées en surface et 8 780 en
-profondeur. Les pièces du décor d'origine ne sont pas comparées entre elles :
-les colonnes d'une ruine se touchent à dessein, comme avant.
+Plus de chutes en profondeur : les nappes prennent de la place, et ce qui se
+serre autour — cailloux de rive, fumerolles, deuxième bassin — en trouve moins.
+Zéro chevauchement.
 
-#### La densité a dû être relevée
+#### La densité
 
-| | 1re version | retenue |
+| | 0.9.1 | **0.9.2** |
 |---|---|---|
-| obstacles par parcelle, surface | 0,21 | 0,40 |
-| écrans 1920 × 1080 sans obstacle, surface | 68 % | 44 % |
-| obstacles par écran, surface (moy. / max) | 0,48 / 4 | 0,83 / 4 |
-| obstacles par écran, profondeur | 0,31 | 0,34 |
-| lave à l'écran, profondeur (moyenne) | 0,3 % | 1,5 % |
-| lave, 95e centile / maximum | 1,1 / 3,9 % | 4,1 / 7,3 % |
-| écrans sans lave | 31 % | 13 % |
+| obstacles par écran 1920 × 1080, surface (moy. / max) | 0,83 / 4 | **2,44 / 11** |
+| écrans sans obstacle, surface | 44 % | **11 %** |
+| obstacles par écran, profondeur | 0,34 | **1,72** |
+| sol bloqué, surface / profondeur | — | **0,45 % / 0,37 %** |
+| lave à l'écran, profondeur (moyenne) | 1,5 % | **4,6 %** |
+| lave, 95e centile / maximum | 4,1 / 7,3 % | **11,4 / 17,7 %** |
+| écrans sans lave | 13 % | **15 %** |
 
-« Rares » ne voulait pas dire invisibles : deux écrans sur trois sans rien, et un
-bassin qui ne couvre que 0,44 % d'un écran à lui seul. Les lieux qui bloquent
-pèsent plus lourd, les petits lieux gardent parfois une vraie statue ou une
-machine, les champs ont plus de bassins, et la rivière existe aussi en petit —
-un ruisseau d'un tronçon (541 rivières posées sur 581 parcelles « rivière »).
+**Plus d'obstacles, et plus petits** : un arbre ne bloque que son tronc (rayon
+14 px). La part du sol bloquée, que le test calcule depuis la 0.9.2, compare
+mieux que leur nombre — elle reste sous le demi-pour-cent, et ce sont les rares
+plateaux qui y pèsent le plus. **La lave vient en nappes**, trois fois plus
+présente en moyenne. Les deux restent sous les bornes du test (8 % de lave en
+moyenne, 25 % au pire). Leur effet sur la survie n'est pas mesuré : voir plus
+bas.
 
 #### La lave
 
-La zone qui brûle est **lue dans l'image** : critère de couleur mesuré sur les
-planches (rouge fort, bleu faible), puis une fermeture qui bouche les îlots de
-roche dans le courant et une **érosion de 2 px** — un pied posé sur le bord
-rougeoyant ne brûle pas. Elle se teste aux **pieds** : 37,5 px sous l'origine du
-joueur, 28 sous celle des ennemis (entre l'imp et le joueur, voir le décor).
+La zone qui brûle est **lue dans l'image**, avec le critère de couleur de
+toujours (rouge fort, bleu faible) : il reconnaît la lave du pack (181/71/40)
+et son liseré (202/80/46), et ignore ses falaises et ses sols. Puis une
+fermeture et une **érosion de 2 px** — un pied posé sur le bord ne brûle pas.
+Elle se teste aux **pieds** : 37,5 px sous l'origine du joueur, 28 sous celle
+des ennemis.
 
-| | réglage | mesuré |
+| | réglage | mesuré (0.9.1) |
 |---|---|---|
 | joueur | un coup ennemi moyen par seconde (`get_hit_damage`) | 42,9 PV en 2 s à la vague 11, attendu 42,9 |
 | ennemis | 30 % de leurs PV max par seconde | un imp immobile meurt en 3,35 s |
 
-Le joueur suit la courbe des vagues, donc le Déchaînement : tout ce qui résiste
-au joueur suit la même courbe. Les ennemis perdent un POURCENTAGE, sans quoi la
-lave cesserait de compter à mesure que leurs PV montent.
+Le joueur suit la courbe des vagues, donc le Déchaînement. **La brûlure ne
+donne ni ne consomme d'i-frames**, ne se pare pas, respecte l'armure et
+déclenche la seconde chance. Un éclair **orange** et non rouge : « je brûle »,
+pas « on m'a touché ».
 
-**La brûlure ne donne ni ne consomme d'i-frames** (vérifié : aucune après une
-brûlure). Sinon, se tenir dans la lave au milieu d'une mêlée rendait intouchable
-au contact pour le prix d'un coup par seconde. Elle ne se pare pas — rien ne
-pare ce qui est annoncé au sol —, respecte l'armure et déclenche la seconde
-chance. Un éclair **orange** et non rouge : « je brûle », pas « on m'a touché ».
-
-**Les rivières se raccordent au pixel.** Mesuré sur les planches : la lave des
-deux tronçons droits va de x 20 à 76, centrée sur 48, en haut comme en bas ; le
-coude entre centré sur 143,5 et sort sur 47,5. Un tronçon sur deux est retourné,
-ce qui rend chaque joint parfait. Deux corrections vues en capture : les
-tronçons étaient des rectangles opaques dont la berge grise se découpait sur le
-sol, d'où une berge **fondue selon la distance à la lave** à l'extraction ; et
-les bassins des bouts passaient parfois sous la rivière, d'où une couche à part.
-
-La roche refroidie autour des bassins rougeoyait autant que la lave : elle est
-**éteinte**. Le langage est un seul : une nappe orange pleine brûle, des fissures
-sur fond sombre ne brûlent pas.
+**Ce qui brûle garde sa couleur, le reste prend la teinte de l'étage.** Le
+shader des nappes teinte la falaise et la bordure comme le carreau voisin, et
+laisse la lave à pleine couleur — le partage suit le critère de la lave. **Sa
+vacillation était tirée par case de 48 px** : invisible sur les petites flaques
+de l'ancien pack, elle dessinait un damier sur les grandes nappes uniformes de
+celui-ci (vu en capture). Elle est désormais continue.
 
 #### Les obstacles et le contournement
 
 Les obstacles sont convexes (cercles et capsules) et espacés : un **évitement
 local** suffit, sans carte de flux. Chaque obstacle proche et devant pousse la
-direction voulue vers sa tangente. Banc : un obstacle, le joueur immobile au
-nord, 12 imps nés juste au sud, 15 s pour arriver ; neuf obstacles de trois
-formes.
+direction voulue vers sa tangente. Banc (0.9.1) : un obstacle, le joueur
+immobile au nord, 12 imps nés juste au sud, 15 s pour arriver ; neuf obstacles
+de trois formes.
 
 | | arrivés | temps médian |
 |---|---|---|
@@ -3901,73 +4000,57 @@ formes.
 
 Coût : 0,3 à 0,7 ms de physique par image avec 160 ennemis.
 
-Trois erreurs en chemin, à ne pas refaire :
+**Depuis la 0.9.2, un obstacle est centré sur le PIED de sa pièce**, décalé
+comme lui : les objets du pack portent leur ombre vers la droite, leur base
+n'est pas au milieu de l'image, et un obstacle centré sur l'image arrêtait le
+joueur à côté du rocher, sur son ombre. Un plateau, lui, bloque sur toute son
+image : il est posé au sol, sous les créatures, puisqu'on ne peut jamais se
+tenir derrière lui.
+
+Trois erreurs en chemin (0.9.1), à ne pas refaire :
 
 - **Un mur en trois capsules** laissait à chaque jonction une encoche entre les
   bouts arrondis, et deux tangentes contraires qui renvoyaient le corps de l'une
-  à l'autre : 0 à 1 imp sur 12 passait. Le mur entier est désormais **une seule
-  capsule** ; ses pans sont de purs dessins.
+  à l'autre : 0 à 1 imp sur 12 passait. Un obstacle allongé est **une seule
+  capsule**.
 - **Le côté tiré au hasard** devant un obstacle allongé faisait se croiser ceux
   de gauche et ceux de droite, qui se bloquaient contre lui (5 à 10 sur 12).
   Devant une capsule, chacun passe du côté du CENTRE où il se trouve ; devant un
   cercle, du côté de son cap.
 - **Le premier banc mesurait autre chose.** Le joueur, armé, tuait les imps en
-  route — comptés « jamais arrivés » — et la version à 90 ennemis saturait
-  l'anneau de contact autour d'un joueur immobile. Un banc de contournement se
-  fait joueur désarmé, par petits groupes.
+  route — comptés « jamais arrivés ». Un banc de contournement se fait joueur
+  désarmé, par petits groupes.
 
-Le reste suit : **le rayon de l'œil s'arrête** au bord de l'obstacle (marche par
-pas de 6 px, puis dichotomie), **la visée ne tire pas à travers** (vérifié : un
-ennemi caché est ignoré, le même à découvert est visé), et **personne ne naît
-dans un mur ni dans la lave** — ni les ennemis de l'anneau, ni les renforts des
-boss.
+Le reste suit : **le rayon de l'œil s'arrête** au bord de l'obstacle, **la
+visée ne tire pas à travers**, et **personne ne naît dans un obstacle ni dans
+la lave** — ni les ennemis de l'anneau, ni les renforts des boss, ni ce
+qu'engendrent un slime ou une invocatrice.
 
-#### La lumière et les ombres
+#### La lumière et les animations
 
-Une pièce posée sur le sol sans ombre ni lumière se lit comme un autocollant.
-Deux choses l'intègrent :
+- **De vraies lumières 2D**, additives, sous la lave et les fissures : le sol
+  et le décor s'y colorent. **Une grande nappe en porte une par case de
+  260 px** : une seule au milieu d'un lac de 640 px laissait ses rives dans le
+  noir. Des braises montent des nappes.
+- **Les créatures ne reçoivent pas la lumière** (calque `Carte.MASQUE_DECOR`) :
+  un joueur orangé près d'une nappe se lirait comme un joueur qui BRÛLE. La
+  lave elle-même n'est pas éclairée.
+- **Les fumerolles et les bulles jouent leur planche** (6 et 9 images, 7 par
+  seconde), chacune avec une phase tirée de sa position : deux fumerolles
+  voisines ne soufflent pas à l'unisson. Un sprite recyclé d'une pièce animée
+  vers une pièce fixe perd son découpage en images.
 
-- **Une ombre de contact glissée sous le pied** de chaque pièce dressée :
-  l'ellipse sombre que portent aussi les personnages dans leurs planches. Elle
-  épouse le pied RÉEL de la pièce — socle, roche, manche de torche —, mesuré
-  dans l'image (largeur des pixels opaques des dernières rangées), et se centre
-  un peu au-dessus de la base : il n'en dépasse qu'un liseré. Deux versions
-  ont été écartées parce que **les objets avaient l'air de voler** (retour de
-  jeu, confirmé en gros plan) : une ellipse large comme toute l'image, centrée
-  sous la base, laissait une tache sombre séparée de la roche par un espace ; et
-  une **ombre portée** vers la droite — la silhouette inclinée depuis la base,
-  dans le sens des ombres du décor d'origine — avait sa partie proche du sol
-  cachée par la pièce elle-même, pour peu qu'elle soit large en bas : il n'en
-  restait qu'une bande sortant à mi-hauteur, détachée du sol.
-- **De vraies lumières 2D**, additives, sous la lave et le feu : le sol et le
-  décor s'y colorent, les flammes vacillent (deux sinus sans rapport simple, une
-  phase par flamme), la lave couve sans bouger. Des braises montent des bassins,
-  des rivières et des grands brasiers. Elles remplacent les disques de lueur
-  additifs de la première version, qui teintaient le sol d'une couleur fixe même
-  là où il était noir.
-
-**Les créatures ne reçoivent pas la lumière** (calque `Carte.MASQUE_DECOR`) : un
-joueur orangé près d'un bassin se lirait comme un joueur qui BRÛLE, l'éclair de
-la brûlure étant orange. Les zones annoncées et les projectiles non plus. La
-lave elle-même n'est pas éclairée : c'est déjà la chose la plus claire de
-l'écran, éclairée elle saturait.
-
-**Le coût, mesuré** vsync coupée en 3440 × 1440, au milieu d'un champ de lave :
-0,84 à 0,87 ms par image sans les lumières, 0,91 à 0,95 avec, pour 19 à 23
-lumières à l'écran. Moins d'un dixième de milliseconde.
+**Le coût, mesuré** vsync coupée, en fenêtre de 1280 × 720 : 0,89 à 0,93 ms par
+image en surface, 0,94 à 0,97 ms dans les trois vues de profondeur les plus
+éclairées (5 lumières de lave). La mesure de la 0.9.1 (0,84 à 0,95 ms, en
+3440 × 1440) n'est pas directement comparable.
 
 **La lumière du joueur et le vignetage** ([`lumiere_joueur.gd`](scripts/vfx/lumiere_joueur.gd),
-[`vignette.gd`](scripts/vfx/vignette.gd)). Un halo blanc chaud sur le sol autour
-des pieds du joueur, et les bords de l'écran qui s'enfoncent dans le noir : à
-eux deux, ils disent où regarder. Le halo n'éclaire, comme les autres lumières,
-que le sol et le décor ; il est blanc chaud et non orange, l'orange étant la
-couleur de la brûlure. Le vignetage suit l'écran et non le joueur — la caméra
-n'anticipe que de 96 px, le joueur ne sort jamais de la zone claire — et se
-pose entre le monde et l'interface (le HUD est passé au calque 2) : HUD,
-boutique et menus restent à pleine lumière. Il suit la forme de l'écran, donc
-un écran très large ne s'assombrit pas plus sur les côtés qu'en haut et en bas.
-
-Mesuré en jeu sur du sol nu, en 3440 × 1440 (luminance perçue, avec puis sans) :
+[`vignette.gd`](scripts/vfx/vignette.gd)) n'ont pas changé. Un halo blanc chaud
+sur le sol autour des pieds du joueur, et les bords de l'écran qui s'enfoncent
+dans le noir : à eux deux, ils disent où regarder. Mesuré sur le sol de la
+0.9.1, en 3440 × 1440 (luminance perçue, avec puis sans) — le sol de la 0.9.2 a
+été réglé sur la même luminance :
 
 | zone | surface | profondeur |
 |---|---|---|
@@ -3978,7 +4061,7 @@ Mesuré en jeu sur du sol nu, en 3440 × 1440 (luminance perçue, avec puis sans
 | centre de l'écran | 0 % | 0 % |
 
 Le vignetage est FORT, et c'est un choix assumé contre la lisibilité des bords :
-il a été monté trois fois à la demande, jusqu'à accepter d'en cacher un peu.
+il a été monté trois fois à la demande.
 
 | réglage | milieu des bords | coins |
 |---|---|---|
@@ -3986,37 +4069,36 @@ il a été monté trois fois à la demande, jusqu'à accepter d'en cacher un peu
 | force 0,62 | −17 à −21 % | −51 % |
 | **force 0,8, début 0,24** (retenu) | **−36 %** | **−72 %** |
 
-Les ennemis entrent par les bords et les zones annoncées s'y dessinent : ce qui
-s'y passe se voit encore, mais s'y remarque moins. Si le jeu devient injuste sur
-les côtés, c'est la première valeur à redescendre (`force`, dans
-`vignette.gd`). Le premier halo (énergie 0,42, +22 % sous le joueur) se devinait
-à peine en capture : il a été porté à 0,65.
+Si le jeu devient injuste sur les côtés, c'est la première valeur à redescendre
+(`force`, dans `vignette.gd`).
 
 **Un piège à connaître** : la lumière 2D de Godot s'applique aux couleurs de
-l'IMAGE, pas à la teinte du sprite. L'ombre portée — la silhouette d'une statue
-teintée en noir — se rallumait aux couleurs de la statue près d'un brasier (vu
-en capture : des croissants orange à côté des braseros). Aucune ombre n'est donc
-sur le calque de lumière.
+l'IMAGE, pas à la teinte du sprite. Une ombre teintée en noir se rallumait aux
+couleurs de la pièce près d'un brasier : aucune ombre n'est sur le calque de
+lumière.
 
 #### Le changement d'étage
 
 À la vague 11, le paysage entier change derrière un **fondu au noir** de 0,25 s :
 changé à vue, pièce par pièce, il se lirait comme un bug d'affichage. Le sol
-attend le plus noir du fondu pour changer de carreau. L'endroit où se tient le
-joueur devient une exclusion : rien ne peut surgir sur lui.
+attend le plus noir du fondu pour changer de carreau, la teinte des pièces
+change au même instant. L'endroit où se tient le joueur devient une exclusion :
+rien ne peut surgir sur lui.
 
-C'est aussi là que se calculent les **masques de lave** : 75 ms en tout
-(mesuré), dont 13 à 26 ms par tronçon de rivière. Calculés à la première
-rencontre, ils faisaient saccader le jeu quand une rivière entrait dans l'écran ;
-derrière le noir, personne ne les voit.
+C'est aussi là que se calculent les **masques de lave**, derrière le noir.
+Calculés à la première rencontre, ils faisaient saccader le jeu quand une nappe
+entrait dans l'écran (75 ms mesurées en 0.9.1 pour les rivières ; les nappes de
+la 0.9.2 n'ont pas été rechronométrées).
 
 #### Ce qui n'est pas mesuré
 
-- Le **danger réel de la lave en partie** : les bancs tiennent le joueur immobile
-  ou invincible, et aucun ne l'évite. Le chiffre de brûlure est vérifié, pas son
-  poids dans une run.
+- Le **danger réel de la lave en partie**, trois fois plus présente qu'en
+  0.9.1 : les bancs tiennent le joueur immobile ou invincible, et aucun ne
+  l'évite.
 - L'effet des obstacles sur **l'équilibrage des vagues** : les goulets sont
-  exclus par construction, la survie n'a pas été remesurée.
+  exclus par construction, la survie n'a pas été remesurée — et il y a
+  maintenant plus d'obstacles, plus petits.
+- Le temps de calcul des masques de lave des nouvelles nappes.
 
 ## Effets visuels
 
@@ -4829,9 +4911,9 @@ développement :
 
 ### Avant une diffusion publique
 
-- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Six des sept packs
+- **Licences.** Récapitulées dans [`CREDITS.md`](CREDITS.md). Cinq des six packs
   autorisent l'usage commercial dans un jeu et interdisent la redistribution des
-  assets ; le septième, la planche des touches clavier (0.9.1), n'a pas encore
+  assets ; le sixième, la planche des touches clavier (0.9.1), n'a pas encore
   sa source ni sa licence consignées. **Distribuer le jeu exporté est conforme** — c'est le cas d'usage
   explicitement prévu.
 - **Dépôt public.** C'est l'autre face de la même clause : « ni redistribution ni
@@ -4931,6 +5013,13 @@ avec le transcodeur intégré à Windows (`Windows.Media.Transcoding`), sans rie
 installer. Cela prend 12 s et donne environ 95 Mo. La musique est une piste
 Pixabay, comme les autres musiques d'arène : sa page d'origine est à
 consigner avec les autres sources avant une diffusion.
+
+**Retournée en 0.9.2**, sans changer le script : la version 0.9.1 montrait la
+carte de l'ancien pack, retiré (voir « La carte de l'enfer »). Le plan de lave
+de la vague 13 trouve de lui-même la nappe la plus proche. Ce tournage a aussi
+révélé le défaut de l'invocatrice (voir « Quatre ennemis de plus »). Rendu
+vérifié image par image aux temps clés ; le profil, réécrit par le tournage
+(nom par défaut, histoire vue), a été comparé puis rendu.
 
 ## Étendre
 
