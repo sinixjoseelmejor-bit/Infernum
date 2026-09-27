@@ -623,8 +623,8 @@ msgid "Trempée dans la même cuve que les armes."
 msgstr "Quenched in the same vat as the weapons."
 
 #: scripts/meta/forge_tree.gd:112
-msgid "Abattre un boss rend deux coups de plus."
-msgstr "Slaying a boss restores two more hits."
+msgid "Abattre un boss soigne deux fois plus : l'équivalent de 4 coups ennemis au lieu de 2."
+msgstr "Slaying a boss heals twice as much: the equivalent of 4 enemy hits instead of 2."
 
 #: scripts/meta/forge_tree.gd:118
 msgid "Une fois par run, le coup fatal vous relève à mi-vie au lieu de vous achever."

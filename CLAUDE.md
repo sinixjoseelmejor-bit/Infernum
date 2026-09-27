@@ -193,6 +193,11 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - Les **deux anciens carreaux de sol** (`assets/sprites/arena/floor/`) ne
   servent plus qu'en repli, quand le pack de l'enfer n'est pas extrait. On peut
   les supprimer si ce repli ne sert à personne.
+- **Le bonus de ramassage** (0.9.4, voir README) : +50 % d'âmes pour une âme
+  accrochée pendant la vague. Le revenu monte de 25 % (mesuré au pire cas) à
+  près de 50 %, **sans rééquilibrage** de la boutique. Les plafonds de dégâts
+  (+230 %) et de critique (75 %) relevés au même moment ne sont pas remesurés
+  en run.
 - Boutons de réglage si l'équilibrage sonne faux en jeu : `leftover_ratio` par
   personnage, `PUISSANCE_DECHAINEE` et `DEGATS_DECHAINES`, les 82 clés d'une
-  Forge complète.
+  Forge complète, `Pickup.bonus_ramassage`.

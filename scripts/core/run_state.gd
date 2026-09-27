@@ -35,6 +35,10 @@ var stats := PlayerStats.new()
 
 var souls: int = 0
 var keys: int = 0
+## Fraction d'âme en attente du bonus de ramassage (voir `bonus_ramassage`) :
+## sur des orbes de 1 à 8 âmes, arrondir 50 % à chaque orbe donnerait bien plus
+## ou bien moins que 50 %.
+var _reste_ramassage: float = 0.0
 
 ## DÉCHAÎNEMENT : plafonds et taxes levés, piles d'objets multipliées.
 ##
@@ -105,6 +109,7 @@ func reset_run() -> void:
 	dernier_rang = 0
 	leftover_souls = 0
 	leftover_count = 0
+	_reste_ramassage = 0.0
 	revives_left = int(Forge.get_special_total(&"revive"))
 	var character := Characters.get_selected()
 	character_mods = character.starting_mods.duplicate() if character != null else {}
@@ -158,6 +163,17 @@ func add_souls(amount: int) -> void:
 		return
 	souls = maxi(0, souls + amount)
 	souls_changed.emit(souls)
+
+
+## LE BONUS DE RAMASSAGE (0.9.4) : une âme que le joueur est allé chercher
+## rapporte `part` de plus que celle que l'aspiration de fin de vague ramène.
+## C'est ce qui donne une valeur au rayon de ramassage. Rend le nombre d'âmes
+## ENTIÈRES à ajouter ; la fraction attend l'orbe suivant.
+func bonus_ramassage(gain: int, part: float) -> int:
+	_reste_ramassage += gain * part
+	var entier := floori(_reste_ramassage)
+	_reste_ramassage -= entier
+	return entier
 
 
 func spend_souls(amount: int) -> bool:

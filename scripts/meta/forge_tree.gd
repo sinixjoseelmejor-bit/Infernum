@@ -109,7 +109,7 @@ const NODES: Array[Dictionary] = [
 	},
 	{
 		"id": &"forge_boss_heal", "branch": "Chair", "name": "Repos du vainqueur",
-		"desc": "Abattre un boss rend deux coups de plus.",
+		"desc": "Abattre un boss soigne deux fois plus : l'équivalent de 4 coups ennemis au lieu de 2.",
 		"cost": 4, "requires": [&"forge_carcass"], "mods": {},
 		"special": &"boss_heal_hits", "value": 2.0,
 	},

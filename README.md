@@ -261,6 +261,47 @@ Deux détails qui comptent :
 L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
 instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
+#### Le bonus de ramassage (0.9.4)
+
+L'aspiration avait un effet de bord : **le rayon de ramassage ne valait plus
+rien**. Tout finissait par arriver, ramasser tôt ne rapportait rien, et la stat
+avait été retirée des deux objets qui la portaient (Aimant d'âmes, Siphon du
+vide) — plus rien dans le jeu ne la donnait.
+
+Depuis la 0.9.4, **une âme accrochée par le rayon du joueur pendant la vague
+rapporte 50 % d'âmes en plus** ; celles que l'aspiration ramène restent au
+tarif normal. Trois précisions :
+
+- une âme accrochée avant la fin de vague garde son bonus même si elle arrive
+  pendant l'aspiration : le joueur l'a gagnée ;
+- les âmes que les survivants rendent en fin de vague naissent pendant
+  l'aspiration : pas de bonus, même tombées dans le rayon ;
+- le bonus est calculé sur le gain de l'orbe (gain d'âmes compris) et sa
+  fraction est **reportée** d'un orbe au suivant (`RunState.bonus_ramassage`) :
+  arrondi orbe par orbe, 50 % d'un orbe de 3 en valaient 67.
+
+Le rayon revient donc sur ses deux objets, aux valeurs d'avant son retrait :
+**Aimant d'âmes** +35 % de rayon et +10 % d'âmes (au lieu de +12 %), **Siphon
+du vide** +50 % de rayon.
+
+**Mesuré**, Caïn, trois vagues, joueur invincible qui décrit un cercle — donc
+qui ne va jamais chercher ses âmes, le pire cas :
+
+| Rayon | Âmes accrochées pendant la vague | Revenu |
+|---|---|---|
+| base (180 px) | 50 % | ×1,25 |
+| +35 % (un Aimant) | 70 % | ×1,35 |
+| +175 % (cinq Aimants) | 98 % | ×1,49 |
+
+Sur quatre vagues sans rayon, 46 % avec Loth et 55 % avec Caïn. Le versement
+est exact : 99 âmes en poche pour 48 ramassées × 1,5 + 27 aspirées. Le « 89 %
+de ramassage » mesuré plus haut datait d'avant l'aspiration et d'avant la
+nouvelle carte ; il ne décrit plus le jeu.
+
+**Ce n'est pas rééquilibré** : le revenu monte de 25 % au minimum, et près de
+50 % pour qui ramasse tout. Si les boutiques deviennent trop généreuses, le
+bouton est `Pickup.bonus_ramassage`, ou le terme de prix de l'économie.
+
 ### Ennemis — 9 comportements
 
 | Type | Script | Comportement | Vague |
@@ -646,17 +687,23 @@ au lieu de ×3.5. [`PlayerStats`](scripts/core/player_stats.gd) additionne des
 
 | Stat | Plafond |
 |---|---|
-| Dégâts | +200 % |
+| Dégâts | +230 % *(+200 % jusqu'à la 0.9.3)* |
 | Cadence | +150 % |
 | Ennemis traversés | +3 |
 | Projectiles | +4 |
-| Chance critique | 60 % |
+| Chance critique | 75 % *(60 % jusqu'à la 0.9.3)* |
 | Dégâts critiques | ×3.5 max (×3.2 réellement atteignable) |
 | Vitesse | +60 % |
 | Vol de vie | 8 %, **et** 1,5 % des PV max soignés par seconde |
 | Armure | `armure / (armure + 100)`, armure plafonnée à 160 → 61,5 % max |
 | Gain d'âmes | +75 % |
 | Chance (raretés) | +3 |
+
+**Relevés en 0.9.4**, à la demande : dégâts de +200 à +230 %, chance de
+critique de 60 à 75 %. Ce sont deux des cinq plafonds qu'on atteint vraiment
+(voir le Déchaînement plus bas) ; le DPS théorique tous plafonds atteints passe
+de ×39 à ×49 (3,3 × 2,5 × 2,08 × 2,875), et le plateau réellement atteignable
+d'environ ×1,26 — calculé sur les pools, pas remesuré en run.
 
 L'armure et la chance étaient les deux seuls axes **sans plafond**. L'armure
 montait à 236 (70 % de réduction) et les trois objets les plus rentables du jeu
@@ -2695,8 +2742,8 @@ treize restent hors d'atteinte** :
 | Vol de vie | +4 % | +8 % | **aucun** |
 | Chance | +1,0 | +3,0 | **aucun** |
 | Dégâts critiques | +1,20 | +1,50 | **aucun** |
-| Chance de critique | +120 % | +60 % | ×2 |
-| Dégâts | +352 % | +200 % | ×1,76 |
+| Chance de critique | +120 % | +75 % *(60 % avant la 0.9.4)* | ×1,6 |
+| Dégâts | +352 % | +230 % *(200 % avant la 0.9.4)* | ×1,53 |
 | Gain d'âmes | +113 % | +75 % | ×1,51 |
 | Vitesse | +86 % | +60 % | ×1,43 |
 | Portée | +100 % | +80 % | ×1,25 |

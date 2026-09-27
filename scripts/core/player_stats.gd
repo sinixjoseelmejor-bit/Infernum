@@ -17,7 +17,9 @@ extends RefCounted
 ##    + multishot = invulnérabilité.
 ##
 ## DPS théorique maximum, tous plafonds atteints (~30 objets parfaits) :
-## 3.0 (dégâts) × 2.5 (cadence) × 2.08 (multishot) × 2.5 (crit) ≈ ×39.
+## 3.3 (dégâts) × 2.5 (cadence) × 2.08 (multishot) × 2.875 (crit) ≈ ×49.
+## (×39 jusqu'à la 0.9.3, avant que les plafonds de dégâts et de chance de
+## critique ne passent à +230 % et 75 %.)
 ## Les PV des ennemis montent linéairement : la run reste jouable, pas triviale.
 ##
 ## LE DÉCHAÎNEMENT lève les quatre règles d'un coup, et uniquement pour les
@@ -35,14 +37,14 @@ extends RefCounted
 ## budget de soin : les lever vaut ×4,1 à lui seul. C'est pourquoi le
 ## déchaînement les emporte aussi — sans quoi la promesse ne serait pas tenue.
 
-const CAP_DAMAGE_PCT := 2.0        ## +200 %
+const CAP_DAMAGE_PCT := 2.3        ## +230 % (+200 % jusqu'à la 0.9.3)
 const CAP_FIRE_RATE_PCT := 1.5     ## +150 %
 const CAP_PROJECTILE_BONUS := 4
 ## Ennemis traversés EN PLUS du premier. Comme le multishot, la perforation est
 ## un multiplicateur de DPS : dans un jeu de horde, les cibles s'alignent tout
 ## le temps. Elle est donc plafonnée ET taxée.
 const CAP_PIERCE := 3
-const CAP_CRIT_CHANCE := 0.60
+const CAP_CRIT_CHANCE := 0.75      ## 75 % (60 % jusqu'à la 0.9.3)
 const CAP_CRIT_DAMAGE_PCT := 1.5   ## multiplicateur crit max = 2.0 + 1.5 = 3.5
 const CAP_MOVE_SPEED_PCT := 0.60
 const CAP_RANGE_PCT := 0.80
