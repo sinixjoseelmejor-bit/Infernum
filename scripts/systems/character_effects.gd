@@ -38,6 +38,12 @@ const PIEDS := 34.0
 
 # Loth — Ne pas se retourner
 var _was_moving: bool = false
+## Job se tient-il sur sa Consécration ? Le buff ne se pose qu'au passage.
+var _sur_consecration: bool = false
+
+## Couleurs des buffs : celles des jauges de pouvoir, comme le coin du portrait.
+const COULEUR_LOTH := Color(0.72, 0.88, 1.0)
+const COULEUR_JOB := Color(1.0, 0.86, 0.45)
 
 
 func _ready() -> void:
@@ -72,6 +78,7 @@ func _on_character_swapped(_character: CharacterData) -> void:
 	_regen_carry = 0.0
 	_dime_carry = 0.0
 	_was_moving = false
+	_sur_consecration = false
 	_eteindre_consecration(0.3)
 
 
@@ -219,7 +226,16 @@ func _process_consecration(delta: float) -> void:
 	var pieds := _player.global_position + Vector2(0.0, PIEDS)
 	var terre_sainte := Forge.get_special_total(&"consecration_boost") > 0.0
 	var inebranlable := Forge.get_special_total(&"ferveur_rapide") > 0.0
-	if is_instance_valid(_zone) and _zone.contient(pieds) and not _player.is_dashing():
+	var dedans := is_instance_valid(_zone) and _zone.contient(pieds) and not _player.is_dashing()
+	if dedans != _sur_consecration:
+		_sur_consecration = dedans
+		if dedans:
+			var soin := Characters.CONSECRATION_SOIN * (2.0 if inebranlable else 1.0)
+			RunState.poser_buff(&"perso_consecration", tr("SOL CONSACRÉ"),
+				tr("+%s PV par seconde") % UIUtils.nombre(soin), COULEUR_JOB)
+		else:
+			RunState.retirer_buff(&"perso_consecration")
+	if dedans:
 		_zone.entretenir()
 		_regen_carry += Characters.CONSECRATION_SOIN * (2.0 if inebranlable else 1.0) * delta
 		if _regen_carry >= 1.0:
@@ -316,3 +332,12 @@ func _process_flight() -> void:
 	var degats := Forge.get_special_total(&"flight_damage")
 	if degats > 0.0:
 		RunState.set_character_bonus(&"damage_pct", degats if moving else 0.0)
+	# Le buff le plus utile à voir du jeu : il s'éteint à l'arrêt, et c'est
+	# précisément ce que Loth doit sentir.
+	if moving:
+		var detail := tr("+%d %% de cadence") % roundi(cadence * 100.0)
+		if degats > 0.0:
+			detail += tr(", +%d %% de dégâts") % roundi(degats * 100.0)
+		RunState.poser_buff(&"perso_fuite", tr("EN FUITE"), detail, COULEUR_LOTH)
+	else:
+		RunState.retirer_buff(&"perso_fuite")

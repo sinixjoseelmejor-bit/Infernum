@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/character_select.tscn" id="2_charsel"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/options.tscn" id="4_options"]
 [ext_resource type="PackedScene" path="res://scenes/ui/forge.tscn" id="5_forge"]
 [ext_resource type="Texture2D" path="res://assets/sprites/menu/menu.jpg" id="6_art"]
+[ext_resource type="PackedScene" path="res://scenes/ui/collection.tscn" id="7_collection"]
+[ext_resource type="PackedScene" path="res://scenes/ui/classement.tscn" id="8_classement"]
 
 [sub_resource type="Gradient" id="Gradient_voile"]
 offsets = PackedFloat32Array(0, 0.42, 1)
@@ -123,6 +125,22 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "PROFILS"
 
+[node name="CollectionButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+theme_type_variation = &"SecondaryButton"
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "COLLECTION"
+
+[node name="ClassementButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
+theme_type_variation = &"SecondaryButton"
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "CLASSEMENT"
+
 [node name="OptionsButton" type="Button" parent="Margin/Layout/ButtonsCenter/Buttons"]
 theme_type_variation = &"SecondaryButton"
 unique_name_in_owner = true
@@ -163,4 +181,10 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 
 [node name="Forge" parent="." instance=ExtResource("5_forge")]
+unique_name_in_owner = true
+
+[node name="Collection" parent="." instance=ExtResource("7_collection")]
+unique_name_in_owner = true
+
+[node name="ClassementEcran" parent="." instance=ExtResource("8_classement")]
 unique_name_in_owner = true

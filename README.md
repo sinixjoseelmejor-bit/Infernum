@@ -1369,12 +1369,14 @@ jour.
 
 ## Menu et options
 
-Le menu principal est un hub à quatre entrées :
+Le menu principal est un hub à six entrées :
 
 | Bouton | Écran |
 |---|---|
 | **JOUER** | choix du personnage → **Forge Éternelle** ou **Commencer** |
 | **PROFILS** | les trois emplacements de sauvegarde |
+| **COLLECTION** | l'album des objets (0.9.3, voir « La collection ») |
+| **CLASSEMENT** | les meilleures runs (0.9.3, voir « Le classement ») |
 | **OPTIONS** | affichage, entrée, confort |
 | **QUITTER** | sauvegarde puis rend la main au bureau |
 
@@ -1706,10 +1708,10 @@ relevées écran par écran après coup.
 | Objets (colonne de gauche) | 330 × 706 | 642 pour 9 objets / 632 — elle défile, et c'est normal |
 | Malédictions | 1240 × ~620 | **mesurée sur son contenu**, grille de 3 × 2 cartes |
 | Choix du personnage | 1320 × ~700 | cartes 400 × **480** (texte coupé à 288) |
-| Forge Éternelle | 1560 × ~1000 | **mesurée sur son contenu** (voir ci-dessous) |
+| Forge Éternelle | 1560 × 937 (1013 avec le Déchaînement) | **mesurée sur son contenu** (voir ci-dessous) |
 | Options | 820 × 493 | 335 / 340 |
 | Profils | 820 × 478 | 266 / 270 |
-| Fin de run | 700 × 451 | 127 / **148** |
+| Fin de run | 700 × 601 | objets sacrés en 2 rangées de vignettes, sans défilement |
 
 **La boutique aussi se mesure sur son contenu depuis la 0.8.6**, et la mesure a
 eu un piège. Les noms d'objets en Jersey ont gagné une ligne : à 880 px de large,
@@ -1739,18 +1741,39 @@ personnage choisi. La grille se mesure sur son contenu, comme la Forge.
 **La Forge se mesure elle-même depuis la 0.8.6.** Réglée à la main, sa zone
 coupait l'arbre dès qu'un nœud gagnait une ligne, et le défaut est revenu à
 chaque retouche d'habillage. Après chaque reconstruction, l'arbre prend
-exactement sa hauteur minimale, et la liste des objets la sienne, bornée à
-180 px. C'est aussi devenu un **vrai arbre** : chaque nœud est rangé à sa
+exactement sa hauteur minimale. C'est aussi devenu un **vrai arbre** : chaque nœud est rangé à sa
 profondeur (un de plus que son prérequis le plus profond), des traits relient
 prérequis et nœuds — dorés quand le chemin est ouvert —, trois états se lisent
 sans lire un mot (acquis, achetable, verrouillé), et une barre de détail donne la
 description entière du nœud survolé ou sélectionné. Les cases tronquent leur
 texte avec des points de suspension au lieu de le couper.
 
-Deux listes se mesurent au **pire cas**, pas à ce qu'on voit à l'écran par
-défaut : les objets à débloquer de la Forge et de la fin de run n'affichent que
-ce qui reste verrouillé. Sur un profil qui a tout ouvert, elles sont vides et ne
-prouvent rien — il faut les remplir des trois objets à clé pour les dimensionner.
+**La Forge débordait de l'écran en 0.9.2** : 1141 px de haut, 1243 avec le
+Déchaînement, pour 1056 disponibles (1080 moins ses marges) — le titre et le
+bouton Retour sortaient du cadre. L'arbre le plus profond compte six rangs
+depuis la branche de Loth, et la liste des objets prenait 214 px pour en montrer
+trois. En 0.9.3, mesuré dans le menu pour les trois damnés :
+
+| Zone | 0.9.2 | 0.9.3 |
+|---|---|---|
+| Titre + ligne des clés | 55 + 34, deux rangées | 55, une rangée (clés à gauche, progression à droite) |
+| Arbre | 658 (cases de 92, écart 12) | 622 (cases de 88, écart 10) |
+| Déchaînement | 94, bouton sur le texte | 68, bouton à côté du texte |
+| Objets | 34 + 180, liste à défiler | 96, une rangée de vignettes |
+| **Panneau** | **1141 / 1243** | **937 / 1013** |
+
+**Les objets sacrés sont des vignettes depuis la 0.9.3** (`SacresGrille`, la
+Forge et la fin de run). Ce sont les treize objets qui s'achètent avec des
+clés ; on les appelle ainsi partout, comme dans la collection. La liste
+défilait et ne montrait que ce qui restait verrouillé : on ne voyait ni l'objet
+ni ce qu'on avait déjà. Maintenant, les **treize sont toujours affichés**, du
+moins cher au plus cher, avec le code visuel de l'arbre : acquis sur fond doré
+plein, abordable avec son prix en or, trop cher éteint et grisé. Le nom et
+l'effet passent dans la barre de détail au survol ou au focus. Comme les
+treize sont toujours là, la zone ne change plus de taille avec la progression :
+plus de pire cas à mesurer. À la Forge, ils tiennent sur une ligne ; en fin
+de run, sur deux rangées de sept.
+
 La boutique, elle, varie avec la longueur des descriptions tirées : la place est
 réglée sur le plus long des tirages observés, pas sur un tirage moyen.
 
@@ -1780,6 +1803,63 @@ profils se renomment directement dans la liste.
 
 Fichiers : `user://infernum_profile_N.cfg` par profil, plus
 `user://infernum_profiles.cfg` qui retient l'emplacement actif.
+
+## La collection (0.9.3)
+
+Un album des objets, depuis le menu principal : les 48 en grille, rangés par
+rareté puis dans l'ordre du catalogue. Un objet est **découvert** dès qu'on l'a
+eu en main une fois, dans n'importe quelle run ; il montre alors son icône, son
+nom, ce qu'il fait et combien de fois on l'a obtenu. Sinon, ce n'est qu'une
+**silhouette** — elle garde sa forme, c'est ce qui donne envie de la remplir. Un
+liseré de sa rareté s'allume sous chaque objet découvert : l'album se colore à
+mesure qu'il se remplit.
+
+Un Sacré encore verrouillé le dit, avec son prix en clés : l'album sert aussi
+de vitrine à la Forge.
+
+**Tenu par profil**, comme le reste de la progression (`SaveGame.decouvrir`).
+Une première découverte s'écrit tout de suite — on ne la perd pas si le jeu se
+ferme en pleine vague ; les compteurs suivants attendent la fin de la run, qui
+sauvegarde de toute façon. **Les profils existants partent d'un album vide** :
+les runs d'avant la 0.9.3 n'ont rien retenu de ce qu'elles ont acheté.
+
+Les vignettes font 72 px et l'icône 48, le détail 96 : des multiples entiers
+des 16 px de l'icône (voir « Les icônes d'objets »).
+
+## Le classement (0.9.3)
+
+Les meilleures runs, depuis le menu principal, et le rang obtenu annoncé à la
+fin de chaque run (« Nouveau record : 1er du classement », « Classement :
+4e »).
+
+- **Deux tableaux**, le classique et le **Déchaînement** — le défi de
+  classement du jeu, où plus rien n'est plafonné. Mélangés, une run déchaînée
+  écraserait tout le reste.
+- **L'ordre** : la vague atteinte, puis les éliminations, puis le temps le
+  plus court. Une run morte avant la première vague n'entre pas.
+- **Le damné qui entre au classement est celui qui a commencé la run**, même si
+  le combat contre Hélel en a fait jouer d'autres.
+- Cinquante entrées gardées par tableau, dix affichées ; les lignes du profil
+  actif sont en or. Un nom de profil par défaut (« Profil 2 ») suit la langue
+  du jeu, pas celle du jour de la run.
+
+**Local pour l'instant, Steam ensuite.** Le classement est l'autoload
+[`Classement`](scripts/core/classement.gd), et tout ce que le reste du jeu en
+connaît tient en trois fonctions : `soumettre` (fin de run), `entrees`
+(l'écran) et `nom_joueur`. Aujourd'hui, un fichier commun à tous les profils du
+poste (`user://infernum_classement.cfg`), et le nom est celui du profil. Pour
+passer sur Steam, ce sont ces trois fonctions qui changent de corps, et rien
+d'autre :
+
+- `nom_joueur` rend le nom du compte Steam ;
+- `soumettre` envoie la run au leaderboard du tableau (un leaderboard Steam par
+  tableau, « classique » et « dechaine »). Un leaderboard Steam ne tient qu'**un
+  entier** par joueur, plus quelques entiers de détail : l'ordre se code donc
+  dans le score — la vague en tête, les éliminations ensuite —, et le damné et
+  le temps passent en détail. Steam ne garde que le meilleur score de chaque
+  compte, là où le tableau local garde plusieurs runs par profil ;
+- `entrees` télécharge les entrées. Steam répond en différé : l'écran devra
+  attendre la réponse (le signal `change` sert déjà à se redessiner).
 
 ## Personnages jouables
 
@@ -3431,6 +3511,35 @@ Quelques règles qui ont décidé de la forme :
   à l'écran d'ouverture, après la mise en place de l'affichage.
 - Le HUD est passé au **calque 2**, au-dessus du vignetage : les coins sont
   sombres, l'interface y reste lisible. Aucun texte n'y est posé sans contour.
+
+#### Les buffs actifs (0.9.3)
+
+Sous la seconde chance, une ligne par **effet qui s'allume et s'éteint selon
+la façon de jouer** : une pastille de sa couleur, son nom, ce qu'il donne. Ce
+qui manquait le plus : Loth ne savait pas, à l'écran, que s'arrêter lui coûtait
+sa cadence.
+
+| Buff | Quand | Ce qu'il affiche |
+|---|---|---|
+| **En fuite** (Loth) | tant qu'il bouge | la cadence, et les dégâts avec « Fuite en avant » |
+| **Sol consacré** (Job) | tant qu'il se tient sur sa Consécration | le soin par seconde |
+| **Mâchoire de Samson** | sous la moitié des PV | les dégâts et la cadence gagnés |
+| **Griffe du moissonneur** | dès qu'elle rapporte | le bonus de dégâts accumulé |
+
+La Marque de Caïn n'y est pas : la ligne du pouvoir la montre déjà. Le pacte de
+vague, les malédictions et le Déchaînement non plus : ils vivent en haut au
+centre, avec la vague qu'ils touchent.
+
+**Rien n'est sondé à chaque image.** Chaque source pose et retire son buff dans
+un registre (`RunState.poser_buff`) au moment où il change — la fuite de Loth
+au passage arrêt / mouvement, comme son bonus de cadence —, et l'affichage se
+reconstruit sur le signal. Poser un buff identique ne signale rien : une source
+peut le reposer à chaque recalcul sans tenir de compte à part. Ceux d'un
+personnage s'effacent quand il change en cours de run (combat contre Hélel).
+
+Vérifié en jeu : « En fuite » s'allume quand Loth court et s'éteint à l'arrêt ;
+Job immobile gagne « Sol consacré » ; la Griffe à 250 éliminations affiche
++20 %, la valeur réelle.
 
 ## Auto-aim (`scripts/combat/targeting_system.gd`)
 

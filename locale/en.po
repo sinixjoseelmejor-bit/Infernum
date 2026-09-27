@@ -1554,10 +1554,6 @@ msgstr "%s  ·  Forge %d / %d nodes  ·  %d keys to open everything"
 msgid "Survolez un nœud pour le détail."
 msgstr "Hover over a node for details."
 
-#: scripts/ui/forge_screen.gd:106
-msgid "Tous les objets sont débloqués."
-msgstr "Every item is unlocked."
-
 #: scripts/ui/forge_screen.gd:156
 msgid "DÉCHAÎNEMENT  ·  ARMÉ POUR %s"
 msgstr "UNLEASHED  ·  ARMED FOR %s"
@@ -1609,10 +1605,6 @@ msgstr ""
 #: scripts/ui/game_over.gd:84
 msgid "Clés disponibles : %d   ·   Meilleure vague : %d"
 msgstr "Keys available: %d   ·   Best wave: %d"
-
-#: scripts/ui/game_over.gd:92
-msgid "Tout le contenu est débloqué."
-msgstr "All content is unlocked."
 
 #: scripts/ui/hud.gd:163 scripts/ui/hud.gd:696
 msgid "ÉLIMINATIONS  %d"
@@ -2203,17 +2195,14 @@ msgstr "Keys: 0"
 msgid "Forge 0 / 15"
 msgstr "Forge 0 / 15"
 
-#: scenes/ui/forge.tscn:113
-msgid "Objets à débloquer"
-msgstr "Items to unlock"
+#: scenes/ui/forge.tscn:121
+#: scenes/ui/game_over.tscn:62
+msgid "Objets sacrés"
+msgstr "Sacred items"
 
 #: scenes/ui/game_over.tscn:51 scenes/ui/pause.tscn:54 scenes/ui/stats.tscn:53
 msgid "Vague 1"
 msgstr "Wave 1"
-
-#: scenes/ui/game_over.tscn:62
-msgid "Débloquer du contenu"
-msgstr "Unlock content"
 
 #: scenes/ui/game_over.tscn:69
 msgid "Clés disponibles : 0"
@@ -2434,3 +2423,135 @@ msgstr "Your power parts the crowd: everything nearby is pushed back and takes 1
 #: scripts/items/item_database.gd
 msgid "Toutes les 6 s, une onde repousse et frappe tout ce qui vous entoure (200 % des dégâts d'un tir)."
 msgstr "Every 6 s, a shockwave pushes back and strikes everything around you (200% of a shot's damage)."
+
+#: 0.9.3
+msgid "GRIFFE DU MOISSONNEUR"
+msgstr "REAPER'S CLAW"
+
+#: 0.9.3
+msgid "+%d %% de dégâts"
+msgstr "+%d%% damage"
+
+#: 0.9.3
+msgid "SOL CONSACRÉ"
+msgstr "CONSECRATED GROUND"
+
+#: 0.9.3
+msgid "+%s PV par seconde"
+msgstr "+%s HP per second"
+
+#: 0.9.3
+msgid "+%d %% de cadence"
+msgstr "+%d%% fire rate"
+
+#: 0.9.3
+msgid ", +%d %% de dégâts"
+msgstr ", +%d%% damage"
+
+#: 0.9.3
+msgid "EN FUITE"
+msgstr "ON THE RUN"
+
+#: 0.9.3
+msgid "MÂCHOIRE DE SAMSON"
+msgstr "SAMSON'S JAWBONE"
+
+#: 0.9.3
+msgid "+%d %% de dégâts, +%d %% de cadence"
+msgstr "+%d%% damage, +%d%% fire rate"
+
+#: 0.9.3
+msgid "RANG"
+msgstr "RANK"
+
+#: 0.9.3
+msgid "JOUEUR"
+msgstr "PLAYER"
+
+#: 0.9.3
+msgid "DAMNÉ"
+msgstr "DAMNED"
+
+#: 0.9.3
+msgid "VAGUE"
+msgstr "WAVE"
+
+#: 0.9.3
+msgid "ÉLIMINATIONS"
+msgstr "KILLS"
+
+#: 0.9.3
+msgid "TEMPS"
+msgstr "TIME"
+
+#: 0.9.3
+msgid "Aucune run enregistrée pour l'instant."
+msgstr "No runs recorded yet."
+
+#: 0.9.3
+msgid "Aucune run déchaînée pour l'instant. Le Déchaînement s'arme à la Forge, après Lucifer."
+msgstr "No Unleashed runs yet. Unleashed is armed at the Forge, after Lucifer."
+
+#: 0.9.3
+msgid "1er"
+msgstr "1st"
+
+#: 0.9.3
+msgid "%de"
+msgstr "#%d"
+
+#: 0.9.3
+msgid "%d / %d objets découverts"
+msgstr "%d / %d items discovered"
+
+#: 0.9.3
+msgid "Obtenu une fois"
+msgstr "Obtained once"
+
+#: 0.9.3
+msgid "Obtenu %d fois"
+msgstr "Obtained %d times"
+
+#: 0.9.3
+msgid "???"
+msgstr "???"
+
+#: 0.9.3
+msgid "Pas encore trouvé."
+msgstr "Not found yet."
+
+#: 0.9.3
+msgid "Sacré : à débloquer à la Forge pour %d clé"
+msgstr "Sacred: unlock it at the Forge for %d key"
+
+#: 0.9.3
+msgid "Sacré : à débloquer à la Forge pour %d clés"
+msgstr "Sacred: unlock it at the Forge for %d keys"
+
+#: 0.9.3
+msgid "Il vous attend en boutique."
+msgstr "It awaits you in the shop."
+
+#: 0.9.3
+msgid "Nouveau record : 1er du classement"
+msgstr "New record: 1st on the leaderboard"
+
+#: 0.9.3
+msgid "Classement : %s"
+msgstr "Leaderboard: %s"
+
+#: 0.9.3
+msgid "CLASSEMENT"
+msgstr "LEADERBOARD"
+
+#: 0.9.3
+msgid "Les meilleures runs de ce poste, tous profils confondus : la vague atteinte, puis les éliminations, puis le temps."
+msgstr "The best runs on this computer, all profiles combined: wave reached, then kills, then time."
+
+#: 0.9.3
+msgid "CLASSIQUE"
+msgstr "CLASSIC"
+
+#: 0.9.3
+msgid "COLLECTION"
+msgstr "COLLECTION"

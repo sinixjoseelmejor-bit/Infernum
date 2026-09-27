@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Fin de run : bilan, versement des clés, et panneau de déblocage permanent.
+## Fin de run : bilan, versement des clés, et objets sacrés à débloquer.
 ##
 ## Les âmes non dépensées sont perdues (elles ne doivent pas devenir une épargne
 ## inter-runs qui trivialise les premières vagues suivantes) ; les clés, elles,
@@ -8,7 +8,8 @@ extends CanvasLayer
 @onready var title_label: Label = %GameOverTitle
 @onready var summary_label: Label = %SummaryLabel
 @onready var keys_label: Label = %BankedKeysLabel
-@onready var unlock_list: VBoxContainer = %UnlockList
+@onready var sacres: SacresGrille = %UnlockGrid
+@onready var sacres_detail: Label = %UnlockDetail
 @onready var restart_button: Button = %RestartButton
 @onready var forge_button: Button = %ForgeButton
 @onready var menu_button: Button = %MenuButton
@@ -28,6 +29,7 @@ func _ready() -> void:
 	menu_button.pressed.connect(_on_menu_pressed)
 	GameEvents.player_died.connect(_on_player_died)
 	SaveGame.keys_changed.connect(func(_total: int) -> void: _queue_unlocks())
+	sacres.survole.connect(func(item: ItemData) -> void: sacres_detail.text = SacresGrille.detail(item))
 
 
 func _on_player_died(_player: Node2D) -> void:
@@ -63,6 +65,13 @@ func _show(summary: Dictionary, title: String = "") -> void:
 		summary["items"],
 		summary["keys"],
 	]
+	# Le rang au classement, s'il y en a un : `RunState.end_run` l'a calculé
+	# avant l'ouverture de l'écran. Une première place se dit à part.
+	var rang := RunState.dernier_rang
+	if rang == 1:
+		summary_label.text += "\n" + tr("Nouveau record : 1er du classement")
+	elif rang > 1:
+		summary_label.text += "\n" + tr("Classement : %s") % (tr("%de") % rang)
 	_refresh_unlocks()
 	UIUtils.chain_focus(self)
 	restart_button.grab_focus()
@@ -84,42 +93,9 @@ func _refresh_unlocks() -> void:
 	keys_label.text = tr("Clés disponibles : %d   ·   Meilleure vague : %d") % [
 		SaveGame.banked_keys, SaveGame.best_wave
 	]
-	UIUtils.clear_children(unlock_list)
-
-	var locked := ItemDB.get_locked()
-	if locked.is_empty():
-		var done := Label.new()
-		done.text = "Tout le contenu est débloqué."
-		unlock_list.add_child(done)
-		return
-
-	for item in locked:
-		unlock_list.add_child(_build_unlock_row(item))
-
+	sacres.construire()
+	sacres_detail.text = ""
 	UIUtils.restore_focus(self, keep, restart_button)
-
-
-func _build_unlock_row(item: ItemData) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 12)
-
-	var label := Label.new()
-	label.text = "%s — %s" % [item.display_name, item.description]
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_color_override(&"font_color", item.get_rarity_color())
-	label.add_theme_font_size_override(&"font_size", 14)
-	row.add_child(label)
-
-	var button := Button.new()
-	button.name = "objet_%s" % item.id
-	button.text = (tr("%d clé") if item.key_cost == 1 else tr("%d clés")) % item.key_cost
-	button.disabled = SaveGame.banked_keys < item.key_cost
-	if button.disabled:
-		button.focus_mode = Control.FOCUS_NONE
-	button.pressed.connect(func() -> void: SaveGame.unlock_item(item))
-	row.add_child(button)
-	return row
 
 
 func _on_forge_pressed() -> void:

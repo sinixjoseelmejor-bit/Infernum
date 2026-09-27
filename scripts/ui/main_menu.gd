@@ -15,6 +15,8 @@ const EMBER_LIFETIME := 7.0
 
 @onready var play_button: Button = %PlayButton
 @onready var profiles_button: Button = %ProfilesButton
+@onready var collection_button: Button = %CollectionButton
+@onready var classement_button: Button = %ClassementButton
 @onready var options_button: Button = %OptionsButton
 @onready var quit_button: Button = %QuitButton
 @onready var meta_label: Label = %MetaLabel
@@ -23,11 +25,15 @@ const EMBER_LIFETIME := 7.0
 @onready var profiles_screen: CanvasLayer = %Profiles
 @onready var options_screen: CanvasLayer = %Options
 @onready var forge_screen: CanvasLayer = %Forge
+@onready var collection_screen: CanvasLayer = %Collection
+@onready var classement_screen: CanvasLayer = %ClassementEcran
 
 
 func _ready() -> void:
 	play_button.pressed.connect(func() -> void: character_select.call(&"open"))
 	profiles_button.pressed.connect(func() -> void: profiles_screen.call(&"open"))
+	collection_button.pressed.connect(func() -> void: collection_screen.call(&"open"))
+	classement_button.pressed.connect(func() -> void: classement_screen.call(&"open"))
 	options_button.pressed.connect(func() -> void: options_screen.call(&"open"))
 	quit_button.pressed.connect(_on_quit_pressed)
 
@@ -45,7 +51,7 @@ func _ready() -> void:
 	Audio.play_music(&"menu")
 	Audio.stop_ambiance()
 	_add_embers()
-	for screen in [character_select, profiles_screen, options_screen, forge_screen]:
+	for screen in _ecrans():
 		screen.visibility_changed.connect(_update_hub)
 	_refresh_meta()
 	play_button.grab_focus()
@@ -57,11 +63,16 @@ func _ready() -> void:
 ## L'illustration et les braises, elles, restent.
 func _update_hub() -> void:
 	var covered := false
-	for screen in [character_select, profiles_screen, options_screen, forge_screen]:
+	for screen in _ecrans():
 		covered = covered or screen.visible
 	$Margin.visible = not covered
 	if not covered:
 		play_button.grab_focus()
+
+
+func _ecrans() -> Array[CanvasLayer]:
+	return [character_select, profiles_screen, options_screen, forge_screen,
+		collection_screen, classement_screen]
 
 
 func _add_embers() -> void:

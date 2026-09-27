@@ -20,6 +20,9 @@ signal run_reset()
 signal item_lost(item: ItemData, stack_count: int)
 signal stats_recomputed(stats: PlayerStats)
 signal run_ended(summary: Dictionary)
+## Les BUFFS ACTIFS ont changé : un effet temporaire s'est allumé, éteint, ou a
+## changé de valeur. Lu par l'affichage en jeu (voir `poser_buff`).
+signal buffs_changed()
 
 ## Bonus plafonné de la Griffe du moissonneur.
 ## En POURCENTAGE et non en plat : un bonus plat ne se dilue jamais dans le pool
@@ -63,6 +66,18 @@ var character_mods: Dictionary = {}
 var character_bonus: Dictionary = {}
 ## Bonus dynamiques des objets, tenus par `ItemEffects` (Mâchoire de Samson).
 var item_bonus: Dictionary = {}
+## LES BUFFS ACTIFS, affichés sous le portrait (0.9.3) : les effets qui
+## s'allument et s'éteignent selon la façon de jouer — la fuite de Loth, la
+## Consécration de Job, la Mâchoire de Samson, la Griffe du moissonneur. Chaque
+## source pose et retire le sien ; rien n'est sondé à chaque image.
+## Identifiant -> {"nom", "detail", "couleur"}. Préfixe « perso_ » pour ceux
+## d'un personnage : ils s'effacent quand il change en cours de run.
+var buffs: Dictionary = {}
+## Le damné qui a COMMENCÉ la run : c'est lui qui entre au classement, même si
+## le combat contre Hélel en a fait jouer d'autres.
+var personnage_depart: StringName = &""
+## Rang obtenu au classement par la dernière run terminée (0 : hors classement).
+var dernier_rang: int = 0
 
 
 func _ready() -> void:
@@ -84,6 +99,10 @@ func reset_run() -> void:
 	owned_items.clear()
 	character_bonus.clear()
 	item_bonus.clear()
+	buffs.clear()
+	buffs_changed.emit()
+	personnage_depart = Characters.selected_id
+	dernier_rang = 0
 	leftover_souls = 0
 	leftover_count = 0
 	revives_left = int(Forge.get_special_total(&"revive"))
@@ -103,6 +122,10 @@ func swap_character() -> void:
 	var character := Characters.get_selected()
 	character_mods = character.starting_mods.duplicate() if character != null else {}
 	character_bonus.clear()
+	for id: StringName in buffs.keys():
+		if String(id).begins_with("perso_"):
+			buffs.erase(id)
+	buffs_changed.emit()
 	recompute_stats()
 
 
@@ -113,6 +136,8 @@ func end_run() -> void:
 	# Seules les clés sont capitalisées entre les runs.
 	SaveGame.add_keys(keys)
 	SaveGame.register_run_result(wave)
+	dernier_rang = Classement.soumettre({"personnage": personnage_depart, "vague": wave,
+		"eliminations": kills, "temps": run_time, "dechaine": unleashed})
 	run_ended.emit(get_summary())
 
 
@@ -189,6 +214,7 @@ func add_item(item: ItemData) -> void:
 		return
 	owned_counts[item.id] = int(owned_counts.get(item.id, 0)) + 1
 	owned_items.append(item)
+	SaveGame.decouvrir(item.id)
 	recompute_stats()
 	item_gained.emit(item, int(owned_counts[item.id]))
 
@@ -260,7 +286,18 @@ func recompute_stats() -> void:
 	if has_special(&"reaper_stacks"):
 		stats.damage_pct += get_reaper_bonus()
 	stats.damage_pct += get_conversion_armure()
+	_maj_buff_griffe()
 	stats_recomputed.emit(stats)
+
+
+## La Griffe du moissonneur, affichée dès qu'elle rapporte quelque chose.
+func _maj_buff_griffe() -> void:
+	var bonus := get_reaper_bonus() if has_special(&"reaper_stacks") else 0.0
+	if bonus <= 0.0:
+		retirer_buff(&"objet_griffe")
+		return
+	poser_buff(&"objet_griffe", tr("GRIFFE DU MOISSONNEUR"),
+		tr("+%d %% de dégâts") % roundi(bonus * 100.0), Color(1.0, 0.82, 0.4))
 
 
 ## « Vieilles blessures » (branche de Job) : l'armure se convertit en dégâts.
@@ -356,6 +393,21 @@ func set_item_bonus(key: StringName, value: float) -> void:
 	else:
 		item_bonus[key] = value
 	recompute_stats()
+
+
+## Pose ou met à jour un buff actif. Ne signale rien si rien ne change : les
+## sources l'appellent à chaque recalcul, sans tenir de compte à part.
+func poser_buff(id: StringName, nom: String, detail: String, couleur: Color) -> void:
+	var neuf := {"nom": nom, "detail": detail, "couleur": couleur}
+	if buffs.get(id, {}) == neuf:
+		return
+	buffs[id] = neuf
+	buffs_changed.emit()
+
+
+func retirer_buff(id: StringName) -> void:
+	if buffs.erase(id):
+		buffs_changed.emit()
 
 
 func get_reaper_bonus() -> float:
