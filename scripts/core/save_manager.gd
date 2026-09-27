@@ -64,6 +64,11 @@ var _story_seen: Dictionary = {}
 ## le pari ne se rompt qu'à trois, parce qu'il portait sur les trois.
 var _seals: Dictionary = {}
 
+## L'ALBUM (0.9.3) : chaque objet obtenu au moins une fois, et combien de fois.
+## { &"sulfur": 3 }. Tenu par profil, comme le reste de la progression : c'est
+## une collection qu'on remplit en jouant, pas un réglage.
+var _decouverts: Dictionary = {}
+
 
 func _ready() -> void:
 	var index := ConfigFile.new()
@@ -149,6 +154,9 @@ func load_profile(slot: int, notify: bool = true) -> void:
 			_story_seen[StringName(id)] = true
 		for perso in config.get_value("meta", "seals", []):
 			_seals[String(perso)] = true
+		var album: Dictionary = config.get_value("meta", "decouverts", {})
+		for id in album:
+			_decouverts[StringName(id)] = int(album[id])
 		var dechaine_lu: Dictionary = config.get_value("meta", "dechaine", {})
 		for perso in dechaine_lu:
 			_dechaine[String(perso)] = bool(dechaine_lu[perso])
@@ -194,6 +202,7 @@ func _reset_memory() -> void:
 	_dechaine.clear()
 	_story_seen.clear()
 	_seals.clear()
+	_decouverts.clear()
 
 
 # --- Déblocages et monnaie ---------------------------------------------------
@@ -360,6 +369,31 @@ func seal_count() -> int:
 	return _seals.size()
 
 
+# --- L'album ---------------------------------------------------------------
+
+## Un objet vient d'être obtenu. Une PREMIÈRE découverte s'écrit tout de suite :
+## c'est un moment qu'on ne doit pas perdre si le jeu se ferme en pleine vague.
+## Les compteurs suivants attendent la fin de la run, qui sauvegarde de toute
+## façon — inutile d'écrire le fichier à chaque achat.
+func decouvrir(id: StringName) -> void:
+	var nouveau := not _decouverts.has(id)
+	_decouverts[id] = int(_decouverts.get(id, 0)) + 1
+	if nouveau:
+		save_game()
+
+
+func est_decouvert(id: StringName) -> bool:
+	return _decouverts.has(id)
+
+
+func fois_obtenu(id: StringName) -> int:
+	return int(_decouverts.get(id, 0))
+
+
+func nombre_decouverts() -> int:
+	return _decouverts.size()
+
+
 func has_seen_story(id: StringName) -> bool:
 	return _story_seen.has(id)
 
@@ -401,6 +435,10 @@ func save_game() -> void:
 	for perso in _seals:
 		sceaux.append(String(perso))
 	config.set_value("meta", "seals", sceaux)
+	var album := {}
+	for id in _decouverts:
+		album[String(id)] = int(_decouverts[id])
+	config.set_value("meta", "decouverts", album)
 	# Les clés du dictionnaire écrit sont des String : un ConfigFile relit les
 	# StringName comme des String, autant l'écrire tel qu'il sera relu.
 	var forge_ecrit := {}

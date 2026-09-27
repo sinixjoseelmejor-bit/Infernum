@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Écran de la Forge Éternelle : arbre de méta-progression + déblocage d'objets.
+## Écran de la Forge Éternelle : arbre de méta-progression + objets sacrés.
 ##
 ## Ouvert depuis l'écran de fin de run. Les lignes sont construites par code à
 ## partir de `Forge.NODES` : ajouter un nœud ne demande aucune retouche d'UI.
@@ -7,21 +7,18 @@ extends CanvasLayer
 @onready var keys_label: Label = %ForgeKeysLabel
 @onready var progress_label: Label = %ForgeProgressLabel
 @onready var branches_row: HBoxContainer = %BranchesRow
-@onready var items_list: VBoxContainer = %ForgeItemsList
+@onready var sacres: SacresGrille = %ForgeSacres
 @onready var close_button: Button = %ForgeCloseButton
 @onready var abyss_panel: PanelContainer = %AbyssPanel
 @onready var abyss_button: Button = %AbyssButton
 @onready var abyss_label: Label = %AbyssLabel
 @onready var detail_label: Label = %ForgeDetailLabel
 @onready var tree_scroll: ScrollContainer = %TreeScroll
-@onready var items_scroll: ScrollContainer = %ItemsScroll
 
 ## Une case de nœud. La largeur loge deux cases côte à côte par branche.
 const TILE_SIZE := Vector2(176, 84)
 const TILE_GAP := 12
-const ROW_GAP := 12
-## Au-delà, la liste des objets à débloquer défile plutôt que de pousser l'écran.
-const ITEMS_MAX_HEIGHT := 180.0
+const ROW_GAP := 10
 
 var _refresh_queued: bool = false
 ## Cases de l'arbre par identifiant de nœud, pour tracer les liens.
@@ -34,6 +31,7 @@ func _ready() -> void:
 	close_button.pressed.connect(close)
 	abyss_button.toggled.connect(_on_dechainement)
 	branches_row.draw.connect(_draw_links)
+	sacres.survole.connect(func(item: ItemData) -> void: detail_label.text = SacresGrille.detail(item))
 	SaveGame.keys_changed.connect(func(_t: int) -> void: refresh())
 	Forge.node_unlocked.connect(func(_id: StringName) -> void: refresh())
 
@@ -99,15 +97,7 @@ func _rebuild() -> void:
 
 	_rebuild_abysses()
 
-	UIUtils.clear_children(items_list)
-	var locked := ItemDB.get_locked()
-	if locked.is_empty():
-		var done := Label.new()
-		done.text = "Tous les objets sont débloqués."
-		items_list.add_child(done)
-	else:
-		for item in locked:
-			items_list.add_child(_build_item_row(item))
+	sacres.construire()
 
 	UIUtils.chain_focus(self)
 	UIUtils.restore_focus(self, keep, close_button)
@@ -117,11 +107,9 @@ func _rebuild() -> void:
 ## LES ZONES SE MESURENT SUR LEUR CONTENU. Un `ScrollContainer` a une taille
 ## minimale nulle : réglé à la main, il coupait l'arbre dès qu'un nœud gagnait une
 ## ligne — le défaut est revenu à chaque retouche d'habillage (voir README, « Mise
-## en page des écrans »). L'arbre prend donc exactement sa hauteur, et la liste
-## des objets la sienne, bornée pour ne pas pousser l'écran hors du cadre.
+## en page des écrans »). L'arbre prend donc exactement sa hauteur.
 func _fit_scrolls() -> void:
 	tree_scroll.custom_minimum_size.y = branches_row.get_combined_minimum_size().y
-	items_scroll.custom_minimum_size.y = minf(items_list.get_combined_minimum_size().y, ITEMS_MAX_HEIGHT)
 	branches_row.queue_redraw.call_deferred()
 
 
@@ -231,6 +219,11 @@ func _build_node_tile(node: Dictionary) -> Control:
 	var style := StyleBoxFlat.new()
 	style.set_border_width_all(2)
 	style.set_content_margin_all(6)
+	# Deux pixels de moins en haut et en bas : sur les six rangs de l'arbre le
+	# plus profond, c'est ce qui manquait pour tenir dans 1080 (README, « Mise en
+	# page des écrans »).
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
 	if unlocked:
 		style.bg_color = Color(0.29, 0.21, 0.1, 0.98)
 		style.border_color = Color(0.91, 0.722, 0.282)
@@ -346,26 +339,3 @@ func _requirement_names(node: Dictionary) -> String:
 	for req in node.get("requires", []):
 		names.append(tr(String(Forge.get_node_data(req).get("name", req))))
 	return ", ".join(names)
-
-
-func _build_item_row(item: ItemData) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 12)
-
-	var label := Label.new()
-	label.text = "%s — %s" % [item.display_name, item.description]
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_color_override(&"font_color", item.get_rarity_color())
-	label.add_theme_font_size_override(&"font_size", 14)
-	row.add_child(label)
-
-	var button := Button.new()
-	button.name = "objet_%s" % item.id
-	button.text = (tr("%d clé") if item.key_cost == 1 else tr("%d clés")) % item.key_cost
-	button.disabled = SaveGame.banked_keys < item.key_cost
-	if button.disabled:
-		button.focus_mode = Control.FOCUS_NONE
-	button.pressed.connect(func() -> void: SaveGame.unlock_item(item))
-	row.add_child(button)
-	return row

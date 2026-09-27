@@ -349,6 +349,14 @@ func _evaluer_samson() -> void:
 		and _player.health.current < _player.health.max_health * SAMSON_SEUIL
 	for key: StringName in SAMSON_MODS:
 		RunState.set_item_bonus(key, float(SAMSON_MODS[key]) if actif else 0.0)
+	if actif:
+		RunState.poser_buff(&"objet_samson", tr("MÂCHOIRE DE SAMSON"),
+			tr("+%d %% de dégâts, +%d %% de cadence") % [
+				roundi(SAMSON_MODS[&"damage_pct"] * 100.0),
+				roundi(SAMSON_MODS[&"fire_rate_pct"] * 100.0)],
+			Color(1.0, 0.42, 0.34))
+	else:
+		RunState.retirer_buff(&"objet_samson")
 
 
 func _on_player_health_changed(_current: float, _maximum: float) -> void:

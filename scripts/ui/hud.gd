@@ -6,7 +6,8 @@ extends CanvasLayer
 ## Quatre coins, quatre questions :
 ##   haut gauche   QUI suis-je, et dans quel état : portrait et nom du damné
 ##                 (ils changent pendant le combat contre Hélel), la vie, le
-##                 pouvoir et sa touche, la seconde chance si elle reste ;
+##                 pouvoir et sa touche, la seconde chance si elle reste, et
+##                 les buffs actifs (0.9.3) ;
 ##   haut centre   OÙ en est la run : la vague, son temps, le prochain boss, le
 ##                 pacte et les malédictions en jeu, le Déchaînement — et la
 ##                 barre du boss quand il est là ;
@@ -74,6 +75,11 @@ var _touche_fiche: Touche
 var _etat_pouvoir: Label
 var _ligne_revive: HBoxContainer
 var _texte_revive: Label
+## Sous la seconde chance : les BUFFS ACTIFS, un par ligne (voir
+## `RunState.poser_buff`). La colonne se referme d'elle-même quand la seconde
+## chance est consommée : les buffs remontent à sa place.
+var _etats: VBoxContainer
+var _buffs: VBoxContainer
 
 var _vague: Label
 var _chrono: Label
@@ -128,6 +134,7 @@ func _ready() -> void:
 	RunState.item_gained.connect(func(_i: ItemData, _n: int) -> void: _maj_objets())
 	RunState.item_lost.connect(func(_i: ItemData, _n: int) -> void: _maj_objets())
 	RunState.run_reset.connect(_tout_rafraichir)
+	RunState.buffs_changed.connect(_maj_buffs)
 	Characters.run_character_swapped.connect(func(_c: CharacterData) -> void: _maj_personnage())
 	WaveMods.modifier_changed.connect(func(_m: Dictionary) -> void: _maj_pacte())
 
@@ -156,6 +163,7 @@ func _tout_rafraichir() -> void:
 		_barre_trainee.value = _barre_vie.value
 	_maj_personnage()
 	_maj_revive()
+	_maj_buffs()
 	_maj_pacte()
 	_maj_objets()
 	_on_souls_changed(RunState.souls)
@@ -279,11 +287,19 @@ func _construire_joueur() -> void:
 	_etat_pouvoir = _etiquette("", 18, GRIS, true, 5)
 	textes.add_child(_etat_pouvoir)
 
+	_etats = VBoxContainer.new()
+	_etats.position = Vector2(MARGE + 8.0, 152.0)
+	_etats.add_theme_constant_override(&"separation", 4)
+	_etats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_racine.add_child(_etats)
 	_ligne_revive = HBoxContainer.new()
-	_ligne_revive.position = Vector2(MARGE + 8.0, 152.0)
 	_ligne_revive.add_theme_constant_override(&"separation", 8)
 	_ligne_revive.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_racine.add_child(_ligne_revive)
+	_etats.add_child(_ligne_revive)
+	_buffs = VBoxContainer.new()
+	_buffs.add_theme_constant_override(&"separation", 2)
+	_buffs.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_etats.add_child(_buffs)
 	_ligne_revive.add_child(_icone(ETOILE, 26.0))
 	_texte_revive = _etiquette(tr("SECONDE CHANCE"), 20, OR, true, 5)
 	_ligne_revive.add_child(_texte_revive)
@@ -627,6 +643,27 @@ func _maj_revive() -> void:
 	_ligne_revive.visible = RunState.revives_left > 0
 	_texte_revive.text = tr("SECONDE CHANCE") if RunState.revives_left == 1 \
 		else tr("SECONDE CHANCE  ×%d") % RunState.revives_left
+
+
+## Une ligne par buff : une pastille de sa couleur, son NOM, et ce qu'il donne.
+## Dans l'ordre où ils se sont allumés : ce qui vient d'apparaître est en bas,
+## là où l'œil qui a vu la liste bouger le cherche.
+func _maj_buffs() -> void:
+	UIUtils.clear_children(_buffs)
+	for id: StringName in RunState.buffs:
+		var b: Dictionary = RunState.buffs[id]
+		var ligne := HBoxContainer.new()
+		ligne.add_theme_constant_override(&"separation", 8)
+		ligne.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var pastille := ColorRect.new()
+		pastille.color = b["couleur"]
+		pastille.custom_minimum_size = Vector2(10.0, 10.0)
+		pastille.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		pastille.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ligne.add_child(pastille)
+		ligne.add_child(_etiquette(b["nom"], 18, b["couleur"], true, 5))
+		ligne.add_child(_etiquette(b["detail"], 16, GRIS, true, 4))
+		_buffs.add_child(ligne)
 
 
 func _maj_pacte() -> void:
