@@ -1574,6 +1574,42 @@ profil (ce sont des préférences, pas de la progression).
 Vérifié par mesure : à 0 %, une secousse de force 20 laisse le traumatisme de la
 caméra à 0.00 ; à 100 %, il monte à 1.00.
 
+### Les commandes se réassignent (0.10.2)
+
+Une section **Commandes** en bas des options : se déplacer (quatre
+directions), le pouvoir, la fiche des statistiques, abandonner et relancer.
+Chaque ligne montre sa touche et son bouton de manette, dessinés comme partout
+ailleurs ; on la choisit, puis on appuie sur la nouvelle touche — ou sur un
+bouton de manette, c'est l'appareil qui décide de ce qu'on réassigne. Échap,
+B et START annulent, un clic aussi.
+
+Décisions :
+
+- **On réassigne la touche PRINCIPALE**, la première de la liste de l'action
+  — celle que l'interface affiche. Les secondaires restent : les flèches à
+  côté de ZQSD, les sticks à côté de la croix.
+- **Deux commandes ne partagent jamais une touche.** Prendre celle d'une autre
+  commande les ÉCHANGE (Monter sur S rend Z à Descendre) ; si l'autre ne l'avait
+  qu'en secondaire, elle la perd simplement.
+- **Les menus ne se réassignent pas** (`ui_*`, Échap) : un joueur qui les
+  perdrait ne pourrait plus revenir en arrière pour réparer.
+- **La touche est PHYSIQUE** : sa position sur le clavier, affichée sur la
+  disposition du joueur (une touche réassignée sur un AZERTY s'affiche avec sa
+  lettre AZERTY).
+- **Seules les touches réassignées sont écrites** dans
+  `infernum_settings.cfg` (section `touches`) ; le reste suit le projet, donc
+  une touche par défaut changée dans une version future arrive chez tout le
+  monde. « Valeurs par défaut » remet aussi les commandes.
+- Les touches affichées à l'écran (HUD, aide, cinématiques) écoutent
+  `Settings.touches_changees` : réassignée depuis la pause, la touche du
+  pouvoir change aussi dans le HUD de la partie en cours.
+- La croix de la manette s'affichait « 11 » à « 14 » : elle est dessinée en
+  flèches.
+
+Vérifié au banc (21 contrôles) : réassignation, échange, secondaire retirée,
+bouton de manette, relecture depuis le fichier, capture par l'écran avec
+Échap qui annule sans fermer, retour aux valeurs par défaut.
+
 ## Langues — le français source, l'anglais en face (0.9.1)
 
 Le jeu existe en **français et en anglais**. L'anglais a été fait en vue d'une
@@ -2375,6 +2411,7 @@ coup et un seul**, et se mérite.
 | Fenêtre | **0,25 s** | assez pour couvrir l'arrivée d'un coup lu à l'avance, trop peu pour couvrir une hésitation |
 | Sanction | **0,5 s cloué** | ratée, il reste planté dans la mêlée. À 2,5 coups/s au maximum, ça coûte environ un coup : de quoi hésiter, pas de quoi condamner |
 | Recharge | **4 s** | le bouton d'équilibrage, comme les 2,2 s de la ruée |
+| Recharge après une parade **réussie** | **1,2 s** (−70 %, 0.10.2) | c'est la lecture qui est récompensée : qui pare juste enchaîne, et charge son Jugement d'autant plus vite. Ratée, elle garde ses 4 s et la sanction |
 | Contre | **2,5 × l'arme**, 150 px, recul 420 | il repousse tout ce qui est au contact : c'est la réponse à ce que Job ne sait pas faire, se dégager |
 
 #### Ce qu'elle ne pare pas, et pourquoi c'est la règle la plus importante
@@ -2427,6 +2464,8 @@ problème, les deux appartiennent à des personnages différents et ne peuvent p
 | Coup suivant immédiat | il passe | **140 → 111,4 PV** |
 | Parade ratée | cloué, puis libre | **0 px** pendant 0,5 s, **79 px** ensuite |
 | Nouvelle parade après réussite | refusée | **fenêtre fermée** |
+| Recharge après réussite (0.10.2) | 1,2 s | **1,20 s**, jauge repartie à **0,70** ; prête **1,25 s** plus tard |
+| Recharge après échec (0.10.2) | 4 s | **3,97 s** à la fin de la fenêtre |
 | Cible à 149 px | touchée | **42,3** |
 | Cible à 151 px | épargnée | **0** |
 | Caïn et Loth | aucune parade | **coup encaissé, 85 → 65 et 80 → 60** |

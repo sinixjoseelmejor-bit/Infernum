@@ -67,7 +67,18 @@ const BOUTONS := {
 	JOY_BUTTON_START: ["START", Color(0.8, 0.8, 0.85)],
 	JOY_BUTTON_LEFT_SHOULDER: ["LB", Color(0.8, 0.8, 0.85)],
 	JOY_BUTTON_RIGHT_SHOULDER: ["RB", Color(0.8, 0.8, 0.85)],
+	JOY_BUTTON_LEFT_STICK: ["L3", Color(0.8, 0.8, 0.85)],
+	JOY_BUTTON_RIGHT_STICK: ["R3", Color(0.8, 0.8, 0.85)],
+	# La croix : une flèche DESSINÉE dans la pastille (voir `_fleche`), la
+	# police n'ayant pas les flèches. Elles s'affichaient « 11 » à « 14 ».
+	JOY_BUTTON_DPAD_UP: ["↑", Color(0.8, 0.8, 0.85)],
+	JOY_BUTTON_DPAD_DOWN: ["↓", Color(0.8, 0.8, 0.85)],
+	JOY_BUTTON_DPAD_LEFT: ["←", Color(0.8, 0.8, 0.85)],
+	JOY_BUTTON_DPAD_RIGHT: ["→", Color(0.8, 0.8, 0.85)],
 }
+const FLECHES := {"↑": Vector2.UP, "↓": Vector2.DOWN, "←": Vector2.LEFT, "→": Vector2.RIGHT}
+## Aucun bouton de manette lié : un tiret dans une pastille éteinte.
+const SANS_BOUTON := "–"
 
 ## L'action dont on affiche la touche. Vide : `texte` fait foi.
 @export var action: StringName = &""
@@ -75,6 +86,10 @@ const BOUTONS := {
 @export var texte: String = ""
 ## Échelle entière : c'est du pixel art.
 @export var echelle: int = 2
+## Ne montrer QUE la manette : sans bouton lié, une pastille vide plutôt que
+## la touche clavier en repli (écran des commandes, qui montre les deux côte à
+## côte).
+var manette_seule := false
 ## Afficher le bouton de manette plutôt que la touche.
 var manette := false:
 	set(v):
@@ -98,6 +113,9 @@ func _ready() -> void:
 		if ResourceLoader.exists(PLANCHE) and ResourceLoader.exists(VIERGE):
 			_planche = load(PLANCHE)
 			_vierge = load(VIERGE)
+	# Une touche réassignée dans les options se redessine partout, y compris
+	# dans le HUD d'une partie en pause derrière l'écran d'options.
+	Settings.touches_changees.connect(_actualiser)
 	_actualiser()
 
 
@@ -152,6 +170,9 @@ func _actualiser() -> void:
 	var b := bouton_de(action) if action != &"" else []
 	_bouton = b[0] if not b.is_empty() else ""
 	_couleur_bouton = b[1] if not b.is_empty() else Color.WHITE
+	if manette_seule and _bouton == "":
+		_bouton = SANS_BOUTON
+		_couleur_bouton = Color(0.45, 0.42, 0.42)
 	custom_minimum_size = _taille()
 	update_minimum_size()
 	queue_redraw()
@@ -241,8 +262,17 @@ func _dessiner_bouton(cote: float) -> void:
 	else:
 		draw_circle(c, r + e, _couleur_bouton.darkened(0.35))
 		draw_circle(c, r, fond)
+	var encre := _couleur_bouton.darkened(0.3) if _enfoncee else _couleur_bouton
+	if FLECHES.has(_bouton):
+		_fleche(c, r * 0.55, FLECHES[_bouton], encre)
+		return
 	var taille := _taille_police()
 	var police := _police()
 	draw_string(police, Vector2(0.0, c.y + police.get_ascent(taille) * 0.35), _bouton,
-		HORIZONTAL_ALIGNMENT_CENTER, size.x, taille,
-		_couleur_bouton.darkened(0.3) if _enfoncee else _couleur_bouton)
+		HORIZONTAL_ALIGNMENT_CENTER, size.x, taille, encre)
+
+
+func _fleche(c: Vector2, r: float, vers: Vector2, couleur: Color) -> void:
+	var cote := vers.orthogonal()
+	draw_colored_polygon(PackedVector2Array([c + vers * r, c - vers * r * 0.6 + cote * r * 0.8,
+		c - vers * r * 0.6 - cote * r * 0.8]), couleur)

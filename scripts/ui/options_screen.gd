@@ -8,6 +8,11 @@ extends CanvasLayer
 
 const JERSEY := preload("res://assets/fonts/Jersey10-Regular.ttf")
 
+## La commande en attente de sa nouvelle touche, vide sinon.
+var _capture: StringName = &""
+var _bouton_capture: Button
+var _capture_depuis: int = 0
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -26,6 +31,8 @@ func open() -> void:
 
 
 func close() -> void:
+	if _capture != &"":
+		_fin_capture()
 	visible = false
 
 
@@ -112,7 +119,140 @@ func refresh() -> void:
 		tr("Rejoue le Pari, le prologue de %s et les scènes déjà vues.") % Characters.get_selected().display_name,
 		replay))
 
+	rows.add_child(_entete_section(tr("Commandes"),
+		tr("Choisissez une commande, puis appuyez sur la touche ou le bouton de manette voulu. Échap ou B annule.")))
+	for action in Settings.TOUCHES_REGLABLES:
+		var textes := _textes_commande(action)
+		rows.add_child(_row(textes[0], textes[1], _bouton_commande(action)))
+
 	UIUtils.chain_focus(self)
+
+
+# --- Les commandes -----------------------------------------------------------
+
+func _textes_commande(action: StringName) -> Array:
+	match action:
+		&"move_up":
+			return [tr("Monter"), tr("Se déplacer vers le haut.")]
+		&"move_down":
+			return [tr("Descendre"), tr("Se déplacer vers le bas.")]
+		&"move_left":
+			return [tr("Aller à gauche"), tr("Se déplacer vers la gauche.")]
+		&"move_right":
+			return [tr("Aller à droite"), tr("Se déplacer vers la droite.")]
+		&"dash":
+			return [tr("Pouvoir"),
+				tr("Le pouvoir du damné : la ruée de Loth, le Prix du sang de Caïn, le Refus de plier de Job.")]
+		&"show_stats":
+			return [tr("Fiche des statistiques"), tr("Ouvre la fiche de run pendant une partie.")]
+		&"restart":
+			return [tr("Abandonner et relancer"), tr("Termine la run en cours et en commence une autre.")]
+	return [String(action), ""]
+
+
+func _entete_section(titre: String, aide: String) -> Control:
+	var boite := VBoxContainer.new()
+	boite.add_theme_constant_override(&"separation", 2)
+	var espace := Control.new()
+	espace.custom_minimum_size = Vector2(0, 14)
+	boite.add_child(espace)
+	var t := Label.new()
+	t.text = titre.to_upper()
+	t.add_theme_font_override(&"font", JERSEY)
+	t.add_theme_font_size_override(&"font_size", 40)
+	t.add_theme_color_override(&"font_color", Color(1.0, 0.55, 0.22))
+	boite.add_child(t)
+	var a := Label.new()
+	a.text = aide
+	a.add_theme_font_size_override(&"font_size", 18)
+	a.add_theme_color_override(&"font_color", Color(0.74, 0.68, 0.64))
+	a.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	boite.add_child(a)
+	return boite
+
+
+## Le bouton d'une commande : sa touche clavier et son bouton de manette,
+## dessinés comme partout ailleurs dans le jeu. Le pressé attend la suivante.
+func _bouton_commande(action: StringName) -> Button:
+	var b := Button.new()
+	b.name = "Commande_%s" % action
+	b.theme_type_variation = &"SecondaryButton"
+	b.custom_minimum_size = Vector2(340, 64)
+	var dessins := HBoxContainer.new()
+	dessins.name = "Dessins"
+	dessins.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dessins.alignment = BoxContainer.ALIGNMENT_CENTER
+	dessins.add_theme_constant_override(&"separation", 22)
+	dessins.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(dessins)
+	for manette in [false, true]:
+		var t := Touche.new()
+		t.action = action
+		t.echelle = 3
+		t.manette_seule = manette
+		t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		dessins.add_child(t)
+		t.manette = manette
+	b.pressed.connect(_capturer.bind(action, b))
+	return b
+
+
+func _capturer(action: StringName, bouton: Button) -> void:
+	if _capture != &"":
+		return
+	_capture = action
+	_bouton_capture = bouton
+	_capture_depuis = Time.get_ticks_msec()
+	(bouton.get_node(^"Dessins") as Control).visible = false
+	bouton.text = tr("Appuyez sur une touche…")
+	# La navigation des menus ne doit pas lire la touche qu'on est en train de
+	# choisir — une flèche ferait changer de ligne.
+	MenuNav.suspend()
+
+
+## LA CAPTURE passe avant tout le reste (`_input`, pas `_unhandled_input`) : la
+## touche choisie ne doit ni naviguer, ni valider, ni fermer l'écran. Le
+## clavier assigne une touche, la manette un bouton ; Échap et B annulent,
+## START aussi (c'est la pause). Un clic de souris annule.
+func _input(event: InputEvent) -> void:
+	if _capture == &"" or not visible:
+		return
+	if event is InputEventKey or event is InputEventJoypadButton or event is InputEventJoypadMotion:
+		get_viewport().set_input_as_handled()
+	# L'appui qui a ouvert la capture (Entrée, A) ne doit pas s'y assigner.
+	if Time.get_ticks_msec() - _capture_depuis < 150:
+		return
+	var touche := event as InputEventKey
+	if touche != null:
+		if not touche.pressed or touche.echo:
+			return
+		var code := touche.physical_keycode if touche.physical_keycode != KEY_NONE else touche.keycode
+		if code != KEY_ESCAPE:
+			Settings.lier_clavier(_capture, code)
+		_fin_capture()
+		return
+	var bouton := event as InputEventJoypadButton
+	if bouton != null:
+		if not bouton.pressed:
+			return
+		if not bouton.button_index in [JOY_BUTTON_B, JOY_BUTTON_START]:
+			Settings.lier_manette(_capture, bouton.button_index)
+		_fin_capture()
+		return
+	if event is InputEventMouseButton and event.pressed:
+		get_viewport().set_input_as_handled()
+		_fin_capture()
+
+
+func _fin_capture() -> void:
+	var b := _bouton_capture
+	_capture = &""
+	_bouton_capture = null
+	MenuNav.resume()
+	if is_instance_valid(b):
+		b.text = ""
+		(b.get_node(^"Dessins") as Control).visible = true
+		b.grab_focus()
 
 
 func _relangue() -> void:

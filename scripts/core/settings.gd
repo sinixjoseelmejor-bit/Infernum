@@ -8,6 +8,9 @@ extends Node
 ## Fichier : `user://infernum_settings.cfg`.
 
 signal changed()
+## Une touche a été réassignée (ou toutes remises par défaut) : les touches
+## dessinées à l'écran (`Touche`) se relisent.
+signal touches_changees()
 
 enum JoystickMode { AUTO, ALWAYS, NEVER }
 
@@ -20,6 +23,18 @@ const LANGUES := {
 	"fr": "Français",
 	"en": "English",
 }
+
+## LES TOUCHES RÉASSIGNABLES (0.10.2), dans l'ordre de l'écran d'options.
+##
+## Chaque action a UNE touche principale au clavier — la première de sa liste
+## dans la table d'entrées, celle que l'interface affiche — et UN bouton
+## principal à la manette. Ce sont eux qu'on réassigne ; les secondaires
+## restent (les flèches à côté de ZQSD, les sticks à côté de la croix). Les
+## actions des menus (`ui_*`) et Échap ne se réassignent pas : un joueur qui
+## les perdrait ne pourrait plus revenir en arrière.
+const TOUCHES_REGLABLES: Array[StringName] = [
+	&"move_up", &"move_down", &"move_left", &"move_right", &"dash", &"show_stats", &"restart",
+]
 
 const JOYSTICK_LABELS := {
 	JoystickMode.AUTO: "Automatique (tactile)",
@@ -45,6 +60,9 @@ const JOYSTICK_LABELS := {
 ## défaut une piste déjà calibrée reviendrait à corriger deux fois.
 @export_range(0.0, 1.0, 0.05) var music_volume: float = 1.0
 @export_range(0.0, 1.0, 0.05) var sfx_volume: float = 0.9
+## Les touches réassignées, et elles seules : action -> {"clavier": code
+## physique, "manette": bouton}. Une action absente garde celle du projet.
+var touches := {}
 
 
 func _ready() -> void:
@@ -123,6 +141,7 @@ func set_sfx_volume(value: float) -> void:
 
 
 func reset() -> void:
+	reset_touches()
 	fullscreen = false
 	joystick_mode = JoystickMode.AUTO
 	shake_scale = 1.0
@@ -191,6 +210,133 @@ func _commit() -> void:
 	changed.emit()
 
 
+# --- Touches -----------------------------------------------------------------
+
+## Le code physique de la touche principale d'une action, KEY_NONE sans touche.
+## Les touches du projet sont tantôt physiques (ZQSD, Espace), tantôt logiques
+## (Tab) : on lit celui des deux qui est renseigné.
+func touche_de(action: StringName) -> Key:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			return _code(ev as InputEventKey)
+	return KEY_NONE
+
+
+func bouton_de(action: StringName) -> int:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventJoypadButton:
+			return (ev as InputEventJoypadButton).button_index
+	return -1
+
+
+static func _code(ev: InputEventKey) -> Key:
+	return ev.physical_keycode if ev.physical_keycode != KEY_NONE else ev.keycode
+
+
+## Assigne une touche clavier. Si une autre action réglable l'avait déjà comme
+## touche principale, les deux ÉCHANGENT leurs touches — sinon l'autre action
+## se retrouverait sans touche, ou deux actions sur la même. Si elle ne l'avait
+## qu'en secondaire, elle la perd simplement.
+func lier_clavier(action: StringName, code: Key) -> void:
+	var ancienne := touche_de(action)
+	for autre in TOUCHES_REGLABLES:
+		if autre == action:
+			continue
+		if touche_de(autre) == code:
+			_poser_clavier(autre, ancienne)
+		else:
+			_retirer_clavier(autre, code)
+	_poser_clavier(action, code)
+	_commit_touches()
+
+
+## Même règle à la manette.
+func lier_manette(action: StringName, bouton: int) -> void:
+	var ancien := bouton_de(action)
+	for autre in TOUCHES_REGLABLES:
+		if autre != action and bouton_de(autre) == bouton:
+			_poser_manette(autre, ancien)
+	_poser_manette(action, bouton)
+	_commit_touches()
+
+
+func reset_touches() -> void:
+	InputMap.load_from_project_settings()
+	touches.clear()
+	touches_changees.emit()
+
+
+## Remplace la touche principale (la première de la liste) et garde le reste
+## dans le même ordre : c'est la première que l'interface affiche.
+func _poser_clavier(action: StringName, code: Key) -> void:
+	if code == KEY_NONE:
+		return
+	var nouvelle := InputEventKey.new()
+	nouvelle.physical_keycode = code
+	_remplacer(action, nouvelle, func(ev: InputEvent) -> bool: return ev is InputEventKey)
+	# Assignée à sa propre touche secondaire (Haut sur la flèche du haut), elle
+	# l'aurait en double.
+	var vue := false
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey and _code(ev as InputEventKey) == code:
+			if vue:
+				InputMap.action_erase_event(action, ev)
+			vue = true
+	_retenir(action, "clavier", int(code))
+
+
+func _poser_manette(action: StringName, bouton: int) -> void:
+	if bouton < 0:
+		return
+	var nouveau := InputEventJoypadButton.new()
+	nouveau.button_index = bouton as JoyButton
+	nouveau.device = -1
+	_remplacer(action, nouveau, func(ev: InputEvent) -> bool: return ev is InputEventJoypadButton)
+	_retenir(action, "manette", bouton)
+
+
+func _remplacer(action: StringName, nouvel: InputEvent, du_type: Callable) -> void:
+	var events := InputMap.action_get_events(action)
+	InputMap.action_erase_events(action)
+	var pose := false
+	for ev in events:
+		if not pose and du_type.call(ev):
+			InputMap.action_add_event(action, nouvel)
+			pose = true
+		else:
+			InputMap.action_add_event(action, ev)
+	if not pose:
+		InputMap.action_add_event(action, nouvel)
+
+
+func _retirer_clavier(action: StringName, code: Key) -> void:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey and _code(ev as InputEventKey) == code:
+			InputMap.action_erase_event(action, ev)
+
+
+func _retenir(action: StringName, cle: String, valeur: int) -> void:
+	var entree: Dictionary = touches.get(String(action), {})
+	entree[cle] = valeur
+	touches[String(action)] = entree
+
+
+func _commit_touches() -> void:
+	save_settings()
+	touches_changees.emit()
+
+
+func _appliquer_touches() -> void:
+	for action: String in touches:
+		if not StringName(action) in TOUCHES_REGLABLES:
+			continue
+		var entree: Dictionary = touches[action]
+		if entree.has("clavier"):
+			_poser_clavier(StringName(action), int(entree["clavier"]) as Key)
+		if entree.has("manette"):
+			_poser_manette(StringName(action), int(entree["manette"]))
+
+
 # --- Persistance -------------------------------------------------------------
 
 func save_settings() -> void:
@@ -202,6 +348,7 @@ func save_settings() -> void:
 	config.set_value("accessibility", "shake_scale", shake_scale)
 	config.set_value("audio", "music", music_volume)
 	config.set_value("audio", "sfx", sfx_volume)
+	config.set_value("touches", "assignees", touches)
 	config.save(PATH)
 
 
@@ -216,3 +363,6 @@ func load_settings() -> void:
 	shake_scale = clampf(config.get_value("accessibility", "shake_scale", 1.0), 0.0, 1.5)
 	music_volume = clampf(config.get_value("audio", "music", 0.7), 0.0, 1.0)
 	sfx_volume = clampf(config.get_value("audio", "sfx", 0.9), 0.0, 1.0)
+	var lues: Variant = config.get_value("touches", "assignees", {})
+	touches = lues if lues is Dictionary else {}
+	_appliquer_touches()
