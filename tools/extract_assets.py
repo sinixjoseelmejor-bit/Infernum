@@ -71,6 +71,73 @@ ENTITIES = [
 
 ICONS = ["heart", "coin", "lock", "star", "gear", "close"]
 
+# Les icones d'objets. Le pack en compte 1244, nommees itemN.png sans aucune
+# indication de contenu : ces correspondances ont ete etablies a l'oeil sur des
+# planches de contact, et n'ont aucune chance d'etre redecouvertes autrement.
+# C'est la partie de ce script qu'il ne faut PAS perdre.
+ITEM_ICONS = {
+    "ember": 723,            # torche allumee
+    "ash_soles": 262,        # bottes
+    "rusty_striker": 933,    # engrenage rouille
+    "tanned_hide": 232,      # veste de cuir
+    "chipped_fang": 1187,    # croc
+    "soul_magnet": 921,      # aimant en fer a cheval
+    "demon_bile": 919,       # flacon vert
+    "infernal_breech": 934,  # engrenage d'acier
+    "basalt_scales": 239,    # armure sombre
+    "hunter_eye": 1169,      # oeil
+    "leech": 1222,           # ver rouge
+    "spectral_drift": 689,   # volute spectrale
+    "trifid_shard": 542,     # eclats de cristal
+    "forge_heart": 688,      # coeur rouge
+    "blood_pact": 1179,      # organe sanglant
+    "predator_crown": 874,   # couronne d or
+    "longinus_lance": 124,   # lance
+    "guardian_seal": 199,    # bouclier
+    "eternal_ember": 721,    # brasier
+    "damned_clock": 765,     # cadran
+    "reaper_claw": 1240,     # griffe
+    "thorn_mantle": 891,     # cape verte
+    "phoenix_down": 1178,    # plume rouge
+    "void_siphon": 1195,     # orbe noire
+    "whetstone":             562,  # pierre grise en barre
+    "bandages":              669,  # linge blanc
+    "executioner_glove":     294,  # gant de cuir
+    "knuckle_rosary":        1164, # os
+    "clotted_blood":         1189, # goutte de sang
+    "giant_bane":            61,   # marteau rouge
+    "brazen_serpent":        679,  # serpent d or enroule
+    "moloch_chain":          597,  # maillons de chaine
+    "penitent_cuirass":      224,  # plastron d acier
+    "moloch_horn":           1182, # corne
+    "solomon_seal":          169,  # medaille d or
+    "reliquary":             718,  # coffret de bois
+    # 0.9.2
+    "sulfur":              1121, # soufre jaune en mottes
+    "tartarus_chains":     779,  # chaine de fer
+    "david_sling":         1113, # laniere enroulee
+    "samson_jaw":          1185, # molaire
+    "greek_fire":          902,  # fiole de feu
+    "sodom_salt":          552,  # cristaux blancs
+    "golgotha_nail":       924,  # pointe de fer
+    "salamander_skin":     1045, # salamandre rouge
+    "thirty_pieces":       1158, # piece d argent
+    "censer":              937,  # encensoir d or
+    "moses_staff":         841,  # baton de bois
+    "jericho_trumpet":     844,  # cor d or
+}
+
+# Le butin (0.10.1) : ame, cle, soin, et la Cle des Abysses, tires du meme pack
+# a la place des SVG plats d'origine. Aucune de ces icones ne sert a un objet :
+# un butin ne doit pas ressembler a ce qu'on achete (le coeur 688 est celui du
+# Coeur de forge, d'ou la fiole pour le soin). Sortie : pickups/<nom>.png.
+PICKUP_ICONS = {
+    "soul": 598,         # orbe pale lumineux (teinte cyan en jeu)
+    "key": 691,          # cle doree
+    "abyss_key": 693,    # cle d'argent (teinte violette en jeu)
+    "heal": 903,         # fiole rouge
+}
+
 UI = os.path.join(SPR, "ui")
 MASTER = 1024
 ICON_SIZES = [256, 128, 64, 48, 32, 24, 16]
@@ -107,6 +174,28 @@ def entities():
                   os.path.join(dst, ent + "_walk.png")) and ok
         done += 1 if ok else 0
     return done
+
+
+# Les gestes des boss (0.10.1) : chaque planche du pack a ses attaques, son
+# coup encaisse et sa mort, qui ne servaient pas. Le boss joue la planche
+# d'attaque pendant l'annonce de son coup : on voit QUI frappe, et le geste
+# arrive en meme temps que la zone. Sortie : <boss>_<geste>.png.
+GESTES_BOSS = [("Attack01", "attaque1"), ("Attack02", "attaque2"),
+               ("Attack03", "attaque3"), ("Hurt", "touche"), ("Death", "mort")]
+
+
+def gestes_boss():
+    faits = 0
+    for cat, ent, pack, src, sep, *_ in ENTITIES:
+        if cat != "bosses":
+            continue
+        folder = os.path.join(pack, src, src + " with shadows")
+        for nom_pack, nom in GESTES_BOSS:
+            chemin = os.path.join(folder, src + sep + nom_pack + ".png")
+            # Baal n'a que deux attaques : le geste manquant n'est pas une erreur.
+            if os.path.exists(chemin):
+                faits += 1 if copy(chemin, os.path.join(SPR, cat, ent, ent + "_" + nom + ".png")) else 0
+    return faits
 
 
 def ui():
@@ -151,6 +240,83 @@ def ui():
         open(os.path.join(UI, "bar_fill.png"), "wb").write(encode(8, h, fill))
 
 
+def _teinte_braise(p, danger=False, neutre=False):
+    """Repeint un pixel du kit (violet et or) dans la palette de l'enfer.
+
+    Le kit est un kit de fantasy generique : panneaux violet sombre, liseres
+    dores. Tel quel, il donnait des menus qu'on a deja vus partout. Les gris
+    violaces deviennent un charbon rouge, l'or devient braise, le vert du
+    curseur devient feu. La VALEUR de chaque pixel est gardee : le relief du
+    pixel art (biseaux, reflets) survit au changement de teinte.
+    """
+    import colorsys
+    r, g, b, a = p
+    if a == 0:
+        return p
+    h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+    deg = h * 360.0
+    if 180.0 <= deg <= 320.0:            # violets et gris violaces
+        h2, s2 = (356.0 if danger else 6.0) / 360.0, min(1.0, s * (1.9 if danger else 1.35))
+        v2 = v * (0.95 if danger else 0.88)
+    elif 25.0 <= deg <= 65.0 and neutre:  # ors en gris, pour etre teints par le code
+        h2, s2, v2 = 0.0, 0.0, v
+    elif 25.0 <= deg <= 65.0:            # ors
+        h2, s2, v2 = ((4.0 if danger else 20.0) / 360.0, min(1.0, s * 1.08), v)
+    elif 70.0 <= deg <= 160.0:           # verts (curseurs, interrupteurs)
+        h2, s2, v2 = 14.0 / 360.0, min(1.0, s * 1.25), min(1.0, v * 1.35)
+    else:
+        return p
+    r2, g2, b2 = colorsys.hsv_to_rgb(h2, s2, v2)
+    return (round(r2 * 255), round(g2 * 255), round(b2 * 255), a)
+
+
+def _agrandir(w, h, px, n):
+    """Agrandissement entier, au plus proche : le pixel art reste net."""
+    return w * n, h * n, [[px[y // n][x // n] for x in range(w * n)] for y in range(h * n)]
+
+
+def ui_enfer():
+    """Les pieces d'interface de la refonte des menus (0.10.1), dans
+    assets/sprites/ui/enfer/ : repeintes en braise, agrandies x2 (cadres,
+    cases, boutons) ou x3 (fleches). A x1, le biseau d'un cadre ne faisait
+    que 2 px sur un ecran de 1080 : les panneaux semblaient dessines au trait.
+    """
+    sortie = os.path.join(UI, "enfer")
+    os.makedirs(sortie, exist_ok=True)
+
+    def piece(src, dst, n, danger=False, colonnes=None, neutre=False):
+        path = os.path.join(KIT, "pieces", src + ".png")
+        if not need(path):
+            return
+        w, h, px = decode(path)
+        if colonnes is not None:
+            px = [[row[c] for c in colonnes(w)] for row in px]
+            w = len(px[0])
+        px = [[_teinte_braise(p, danger, neutre) for p in row] for row in px]
+        w, h, px = _agrandir(w, h, px, n)
+        open(os.path.join(sortie, dst + ".png"), "wb").write(encode(w, h, px))
+
+    piece("panel_plain", "cadre", 2)
+    # Liseré gris : la carte d'objet le teint de la couleur de sa rareté.
+    piece("panel_plain", "cadre_neutre", 2, neutre=True)
+    piece("slot", "case", 2)
+    piece("slot_selected", "case_active", 2)
+    piece("slot", "case_danger", 2, danger=True)
+    piece("slot_selected", "case_danger_active", 2, danger=True)
+    # Meme reconstruction que les boutons d'origine (voir ui()) : le « OK »
+    # grave du kit ne doit pas s'etirer.
+    huit = lambda w: [0, 1, 10, 10, 10, 10, w - 2, w - 1]
+    for src, dst in [("button_normal", "bouton"), ("button_hover", "bouton_survol"),
+                     ("button_pressed", "bouton_appui")]:
+        piece(src, dst, 2, colonnes=huit)
+    piece("arrow_right", "fleche", 3)
+    piece("arrow_left", "fleche_gauche", 3)
+    piece("toggle_on", "interrupteur_oui", 2)
+    piece("toggle_off", "interrupteur_non", 2)
+    piece("checkbox_on", "coche_oui", 2)
+    piece("checkbox_off", "coche_non", 2)
+
+
 def touches():
     """La planche des touches clavier, et une touche VIERGE qu'on etire.
 
@@ -191,6 +357,16 @@ def item_icons():
     for name, index in sorted(ITEM_ICONS.items()):
         if copy(os.path.join(ICONS_PACK, "item%d.png" % index),
                 os.path.join(SPR, "items", name + ".png")):
+            done += 1
+    return done
+
+
+def pickup_icons():
+    """Le butin : une icone 16x16 par sorte, dans pickups/<nom>.png."""
+    done = 0
+    for name, index in sorted(PICKUP_ICONS.items()):
+        if copy(os.path.join(ICONS_PACK, "item%d.png" % index),
+                os.path.join(SPR, "pickups", name + ".png")):
             done += 1
     return done
 
@@ -286,8 +462,11 @@ def icon():
 if __name__ == "__main__":
     print("Extraction vers", os.path.relpath(SPR, ROOT))
     count = entities()
+    gestes = gestes_boss()
     ui()
+    ui_enfer()
     items = item_icons()
+    butin = pickup_icons()
     clavier = touches()
     enfer, enfer_attendues = extract_enfer.extraire()
     icon()
@@ -301,9 +480,11 @@ if __name__ == "__main__":
               " ce fichier), puis relancez.")
         sys.exit(1)
     print("  %d entites : planches repos + marche" % count)
+    print("  boss : %d planches de gestes (attaques, coup, mort)" % gestes)
     print("  interface : panneau, 3 boutons, 2 barres, %d icones%s"
           % (len(ICONS), ", touches clavier" if clavier else ""))
     print("  objets : %d icones sur %d attendues" % (items, len(ITEM_ICONS)))
+    print("  butin : %d icones sur %d attendues" % (butin, len(PICKUP_ICONS)))
     print("  carte de l'enfer : %d pieces sur %d attendues" % (enfer, enfer_attendues))
     print("  application : icon.png + icon.ico")
     print("\nOuvrez le projet dans Godot une fois pour lancer l'import.")

@@ -65,12 +65,13 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"crit_chance": 0.09},
 	},
 	{
-		# Le rayon de ramassage n'est plus vendu : la fin de vague aspire tout le
-		# butin et les âmes ne servent qu'à la boutique d'après, donc ramasser
-		# plus tôt ne rapportait rien. L'objet ne porte que l'effet réel.
+		# Le rayon de ramassage est revenu en 0.10.1 : une âme accrochée pendant la
+		# vague rapporte 50 % de plus que celle que l'aspiration ramène (voir
+		# `Pickup.bonus_ramassage`). Retiré en 0.8, quand ramasser tôt ne
+		# rapportait rien, il a retrouvé sa valeur d'avant.
 		"id": &"soul_magnet", "name": "Aimant d'âmes", "rarity": 0,
 		"desc": "Les âmes viennent à vous, et plus nombreuses.",
-		"mods": {"soul_gain_pct": 0.12},
+		"mods": {"pickup_radius_pct": 0.35, "soul_gain_pct": 0.10},
 	},
 	{
 		"id": &"whetstone", "name": "Pierre à aiguiser", "rarity": 0,
@@ -296,7 +297,7 @@ const ITEMS: Array[Dictionary] = [
 	{
 		"id": &"void_siphon", "name": "Siphon du vide", "rarity": 3,
 		"desc": "Beaucoup plus d'âmes récoltées, au prix de la puissance.",
-		"mods": {"soul_gain_pct": 0.45, "damage_pct": -0.05},
+		"mods": {"soul_gain_pct": 0.45, "damage_pct": -0.05, "pickup_radius_pct": 0.50},
 		"max_stacks": 1, "key_cost": 5,
 	},
 	{
@@ -440,8 +441,13 @@ func get_rarity_weights(wave: int, luck: float = 0.0) -> Array[float]:
 
 
 ## Tirage d'une offre de boutique, sans doublon dans la même offre.
-func roll_offer(count: int, wave: int, owned_counts: Dictionary, luck: float = 0.0) -> Array[ItemData]:
+## `exclus` : objets déjà à l'étal (les verrouillés), à ne pas tirer une
+## seconde fois.
+func roll_offer(count: int, wave: int, owned_counts: Dictionary, luck: float = 0.0,
+		exclus: Array[ItemData] = []) -> Array[ItemData]:
 	var pool := get_available(owned_counts)
+	for item in exclus:
+		pool.erase(item)
 	var weights := get_rarity_weights(wave, luck)
 	var offer: Array[ItemData] = []
 	for _i in count:

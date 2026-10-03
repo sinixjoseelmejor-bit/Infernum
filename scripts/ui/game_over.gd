@@ -75,6 +75,7 @@ func _show(summary: Dictionary, title: String = "") -> void:
 	_refresh_unlocks()
 	UIUtils.chain_focus(self)
 	restart_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 ## Même piège que dans la Forge : débloquer un objet reconstruit la liste, donc

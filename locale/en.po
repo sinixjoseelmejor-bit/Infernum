@@ -30,7 +30,7 @@ msgstr "The Tested"
 msgid "Le Fuyard"
 msgstr "The Fugitive"
 
-#: scripts/characters/character_db.gd:23 scripts/ui/stats_screen.gd:31
+#: scripts/characters/character_db.gd:23 scripts/ui/stats_totaux.gd:16
 msgid "Dégâts"
 msgstr "Damage"
 
@@ -54,7 +54,7 @@ msgstr "Everything was taken from him to see if he would bend. He did not. Where
 msgid "Il a quitté la ville en flammes sans se retourner — contrairement à sa femme. Rapide, léger, incapable de tenir une ligne : il tire vite et de près."
 msgstr "He left the burning city without looking back — unlike his wife. Fast, light, unable to hold a line: he shoots quickly and up close."
 
-#: scripts/characters/character_db.gd:34
+#: scripts/characters/character_db.gd:34 scripts/story/registre.gd:22
 msgid "La Marque"
 msgstr "The Mark"
 
@@ -90,27 +90,27 @@ msgstr ""
 "+20% fire rate while moving. The bonus drops the moment he stops.\n"
 "RUSH (Space / A): he passes through bodies over 240 px. Zones and projectiles still hit him."
 
-#: scripts/core/run_state.gd:315
+#: scripts/core/run_state.gd:379
 msgid "Personnage"
 msgstr "Character"
 
-#: scripts/core/run_state.gd:316
+#: scripts/core/run_state.gd:380
 msgid "Forge"
 msgstr "Forge"
 
-#: scripts/core/run_state.gd:317
+#: scripts/core/run_state.gd:381
 msgid "Sacrés"
 msgstr "Sacred"
 
-#: scripts/core/run_state.gd:318 scenes/ui/shop.tscn:48
+#: scripts/core/run_state.gd:382 scenes/ui/collection.tscn:82 scenes/ui/shop.tscn:49
 msgid "Objets"
 msgstr "Items"
 
-#: scripts/core/run_state.gd:319
+#: scripts/core/run_state.gd:383
 msgid "Pactes"
 msgstr "Pacts"
 
-#: scripts/core/save_manager.gd:82
+#: scripts/core/save_manager.gd:91
 msgid "Profil %d"
 msgstr "Profile %d"
 
@@ -162,127 +162,127 @@ msgstr "Tanned Hide"
 msgid "Croc ébréché"
 msgstr "Chipped Fang"
 
-#: scripts/items/item_database.gd:71
+#: scripts/items/item_database.gd:72
 msgid "Aimant d'âmes"
 msgstr "Soul Magnet"
 
-#: scripts/items/item_database.gd:76
+#: scripts/items/item_database.gd:77
 msgid "Pierre à aiguiser"
 msgstr "Whetstone"
 
-#: scripts/items/item_database.gd:83
+#: scripts/items/item_database.gd:84
 msgid "Bandelettes"
 msgstr "Bandages"
 
-#: scripts/items/item_database.gd:88
+#: scripts/items/item_database.gd:89
 msgid "Gant du bourreau"
 msgstr "Executioner's Glove"
 
-#: scripts/items/item_database.gd:95
+#: scripts/items/item_database.gd:96
 msgid "Fiel de démon"
 msgstr "Demon Bile"
 
-#: scripts/items/item_database.gd:100
+#: scripts/items/item_database.gd:101
 msgid "Culasse infernale"
 msgstr "Infernal Breech"
 
-#: scripts/items/item_database.gd:105
+#: scripts/items/item_database.gd:106
 msgid "Écailles de basalte"
 msgstr "Basalt Scales"
 
-#: scripts/items/item_database.gd:111
+#: scripts/items/item_database.gd:112
 msgid "Œil du chasseur"
 msgstr "Hunter's Eye"
 
-#: scripts/items/item_database.gd:116
+#: scripts/items/item_database.gd:117
 msgid "Sangsue"
 msgstr "Leech"
 
-#: scripts/items/item_database.gd:122
+#: scripts/items/item_database.gd:123
 msgid "Dérive spectrale"
 msgstr "Spectral Drift"
 
-#: scripts/items/item_database.gd:130
+#: scripts/items/item_database.gd:131
 msgid "Chapelet de phalanges"
 msgstr "Knucklebone Rosary"
 
-#: scripts/items/item_database.gd:136
+#: scripts/items/item_database.gd:137
 msgid "Sang caillé"
 msgstr "Clotted Blood"
 
-#: scripts/items/item_database.gd:144
+#: scripts/items/item_database.gd:145
 msgid "Fléau des géants"
 msgstr "Giantsbane"
 
-#: scripts/items/item_database.gd:153
+#: scripts/items/item_database.gd:180
 msgid "Éclat trifide"
 msgstr "Trifid Shard"
 
-#: scripts/items/item_database.gd:159
+#: scripts/items/item_database.gd:186
 msgid "Cœur de forge"
 msgstr "Forge Heart"
 
-#: scripts/items/item_database.gd:164
+#: scripts/items/item_database.gd:191
 msgid "Pacte de sang"
 msgstr "Blood Pact"
 
-#: scripts/items/item_database.gd:170
+#: scripts/items/item_database.gd:197
 msgid "Couronne du prédateur"
 msgstr "Predator's Crown"
 
-#: scripts/items/item_database.gd:176
+#: scripts/items/item_database.gd:203
 msgid "Lance de Longin"
 msgstr "Lance of Longinus"
 
-#: scripts/items/item_database.gd:182
+#: scripts/items/item_database.gd:209
 msgid "Sceau du gardien"
 msgstr "Warden's Seal"
 
-#: scripts/items/item_database.gd:190
+#: scripts/items/item_database.gd:217
 msgid "Serpent d'airain"
 msgstr "Brazen Serpent"
 
-#: scripts/items/item_database.gd:199
+#: scripts/items/item_database.gd:226
 msgid "Chaîne de Moloch"
 msgstr "Moloch's Chain"
 
-#: scripts/items/item_database.gd:206
+#: scripts/items/item_database.gd:242
 msgid "Cuirasse du pénitent"
 msgstr "Penitent's Cuirass"
 
-#: scripts/items/item_database.gd:215
+#: scripts/items/item_database.gd:251
 msgid "Braise éternelle"
 msgstr "Eternal Ember"
 
-#: scripts/items/item_database.gd:221
+#: scripts/items/item_database.gd:257
 msgid "Horloge damnée"
 msgstr "Damned Clock"
 
-#: scripts/items/item_database.gd:227
+#: scripts/items/item_database.gd:263
 msgid "Griffe du moissonneur"
 msgstr "Reaper's Claw"
 
-#: scripts/items/item_database.gd:235
+#: scripts/items/item_database.gd:271
 msgid "Corne de Moloch"
 msgstr "Moloch's Horn"
 
-#: scripts/items/item_database.gd:242
+#: scripts/items/item_database.gd:278
 msgid "Sceau de Salomon"
 msgstr "Seal of Solomon"
 
-#: scripts/items/item_database.gd:250
+#: scripts/items/item_database.gd:286
 msgid "Manteau d'épines"
 msgstr "Mantle of Thorns"
 
-#: scripts/items/item_database.gd:256
+#: scripts/items/item_database.gd:292
 msgid "Duvet de phénix"
 msgstr "Phoenix Down"
 
-#: scripts/items/item_database.gd:262
+#: scripts/items/item_database.gd:298
 msgid "Siphon du vide"
 msgstr "Void Siphon"
 
-#: scripts/items/item_database.gd:268
+#: scripts/items/item_database.gd:304
 msgid "Reliquaire"
 msgstr "Reliquary"
 
@@ -306,127 +306,127 @@ msgstr "Taken from something big."
 msgid "Trouve toujours le point faible."
 msgstr "Always finds the weak spot."
 
-#: scripts/items/item_database.gd:72
+#: scripts/items/item_database.gd:73
 msgid "Les âmes viennent à vous, et plus nombreuses."
 msgstr "Souls come to you, and in greater numbers."
 
-#: scripts/items/item_database.gd:77
+#: scripts/items/item_database.gd:78
 msgid "Le fil ne pardonne rien."
 msgstr "The edge forgives nothing."
 
-#: scripts/items/item_database.gd:84
+#: scripts/items/item_database.gd:85
 msgid "Serrées, sales, mais elles tiennent."
 msgstr "Tight, filthy, but they hold."
 
-#: scripts/items/item_database.gd:89
+#: scripts/items/item_database.gd:90
 msgid "Il a déjà servi. Souvent."
 msgstr "It has been used before. Often."
 
-#: scripts/items/item_database.gd:96
+#: scripts/items/item_database.gd:97
 msgid "Corrosif. Très corrosif."
 msgstr "Corrosive. Very corrosive."
 
-#: scripts/items/item_database.gd:101
+#: scripts/items/item_database.gd:102
 msgid "Cadence en hausse, puissance en baisse."
 msgstr "Fire rate up, power down."
 
-#: scripts/items/item_database.gd:106
+#: scripts/items/item_database.gd:107
 msgid "Lourdes, mais on encaisse."
 msgstr "Heavy, but you can take it."
 
-#: scripts/items/item_database.gd:112
+#: scripts/items/item_database.gd:113
 msgid "Voit plus loin, vise mieux."
 msgstr "Sees further, aims better."
 
-#: scripts/items/item_database.gd:117
+#: scripts/items/item_database.gd:118
 msgid "Chaque blessure infligée vous nourrit. Le soin par seconde est plafonné."
 msgstr "Every wound you deal feeds you. Healing per second is capped."
 
-#: scripts/items/item_database.gd:123
+#: scripts/items/item_database.gd:124
 msgid "Plus rapide, plus vif."
 msgstr "Faster, sharper."
 
-#: scripts/items/item_database.gd:131
+#: scripts/items/item_database.gd:132
 msgid "Chaque grain a été quelqu'un."
 msgstr "Every bead was once someone."
 
-#: scripts/items/item_database.gd:137
+#: scripts/items/item_database.gd:138
 msgid "Épais comme une promesse. Le soin par seconde est plafonné."
 msgstr "Thick as a promise. Healing per second is capped."
 
-#: scripts/items/item_database.gd:145
+#: scripts/items/item_database.gd:146
 msgid "+30 % de dégâts aux boss et aux élites, −10 % aux autres."
 msgstr "+30% damage to bosses and elites, −10% to everything else."
 
-#: scripts/items/item_database.gd:154
+#: scripts/items/item_database.gd:181
 msgid "+1 projectile. Les projectiles supplémentaires frappent plus faiblement."
 msgstr "+1 projectile. Extra projectiles hit weaker."
 
-#: scripts/items/item_database.gd:160
+#: scripts/items/item_database.gd:187
 msgid "Des coups lourds, plus espacés."
 msgstr "Heavy blows, further apart."
 
-#: scripts/items/item_database.gd:165
+#: scripts/items/item_database.gd:192
 msgid "La puissance contre la chair."
 msgstr "Power in exchange for flesh."
 
-#: scripts/items/item_database.gd:171
+#: scripts/items/item_database.gd:198
 msgid "Frapper juste plutôt que frapper souvent."
 msgstr "Strike true rather than strike often."
 
-#: scripts/items/item_database.gd:177
+#: scripts/items/item_database.gd:204
 msgid "Le fer qui a percé le flanc. Les traits ne s'arrêtent plus au premier corps : ils cherchent le suivant."
 msgstr "The iron that pierced the side. Your bolts no longer stop at the first body: they seek the next one."
 
-#: scripts/items/item_database.gd:183
+#: scripts/items/item_database.gd:210
 msgid "Tenir la ligne, quitte à tirer moins."
 msgstr "Hold the line, even if it means firing less."
 
-#: scripts/items/item_database.gd:191
+#: scripts/items/item_database.gd:218
 msgid "Votre pouvoir revient 30 % plus vite. Caïn garde 30 % de sa Marque en la dépensant."
 msgstr "Your power recharges 30% faster. Cain keeps 30% of his Mark when he spends it."
 
-#: scripts/items/item_database.gd:200
+#: scripts/items/item_database.gd:227
 msgid "Les coups critiques traversent un ennemi de plus."
 msgstr "Critical hits pierce one more enemy."
 
-#: scripts/items/item_database.gd:207
+#: scripts/items/item_database.gd:243
 msgid "Le poids de la faute rend léger."
 msgstr "The weight of guilt makes you light."
 
-#: scripts/items/item_database.gd:216
+#: scripts/items/item_database.gd:252
 msgid "Les ennemis tués explosent (70 % des dégâts de l'arme). Les explosions ne s'enchaînent pas."
 msgstr "Slain enemies explode (70% of weapon damage). Explosions do not chain."
 
-#: scripts/items/item_database.gd:222
+#: scripts/items/item_database.gd:258
 msgid "Le temps s'accélère, vous vous usez."
 msgstr "Time speeds up, and you wear out."
 
-#: scripts/items/item_database.gd:228
+#: scripts/items/item_database.gd:264
 msgid "+2 % de dégâts toutes les 25 éliminations, plafonné à +40 %."
 msgstr "+2% damage every 25 kills, capped at +40%."
 
-#: scripts/items/item_database.gd:236
+#: scripts/items/item_database.gd:272
 msgid "Les élites sont 50 % plus fréquentes et rendent deux fois plus d'âmes."
 msgstr "Elites are 50% more common and give twice as many souls."
 
-#: scripts/items/item_database.gd:243
+#: scripts/items/item_database.gd:279
 msgid "+1 projectile, mais une vue plus courte."
 msgstr "+1 projectile, but shorter sight."
 
-#: scripts/items/item_database.gd:251
+#: scripts/items/item_database.gd:287
 msgid "Renvoie 30 % des dégâts de contact subis."
 msgstr "Reflects 30% of the contact damage you take."
 
-#: scripts/items/item_database.gd:257
+#: scripts/items/item_database.gd:293
 msgid "Régénère 1.2 PV par seconde."
 msgstr "Regenerates 1.2 HP per second."
 
-#: scripts/items/item_database.gd:263
+#: scripts/items/item_database.gd:299
 msgid "Beaucoup plus d'âmes récoltées, au prix de la puissance."
 msgstr "Far more souls harvested, at the cost of power."
 
-#: scripts/items/item_database.gd:269
+#: scripts/items/item_database.gd:305
 msgid "La première relance de chaque boutique est offerte."
 msgstr "The first reroll in each shop is free."
 
@@ -623,8 +623,8 @@ msgid "Trempée dans la même cuve que les armes."
 msgstr "Quenched in the same vat as the weapons."
 
 #: scripts/meta/forge_tree.gd:112
-msgid "Abattre un boss rend deux coups de plus."
-msgstr "Slaying a boss restores two more hits."
+msgid "Abattre un boss soigne deux fois plus : l'équivalent de 4 coups ennemis au lieu de 2."
+msgstr "Slaying a boss heals twice as much: the equivalent of 4 enemy hits instead of 2."
 
 #: scripts/meta/forge_tree.gd:118
 msgid "Une fois par run, le coup fatal vous relève à mi-vie au lieu de vous achever."
@@ -742,11 +742,11 @@ msgstr "Trial"
 msgid "Exode"
 msgstr "Exodus"
 
-#: scripts/pickups/pickup.gd:177
+#: scripts/pickups/pickup.gd:197
 msgid "LA CLÉ DES ABYSSES"
 msgstr "THE KEY OF THE ABYSS"
 
-#: scripts/pickups/pickup.gd:178
+#: scripts/pickups/pickup.gd:198
 msgid "Armez le Déchaînement à la Forge, pour le personnage de votre choix : plus aucune limite, et un enfer qui répond."
 msgstr "Arm Unleashed at the Forge, for the character of your choice: no more limits, and a hell that answers back."
 
@@ -762,551 +762,551 @@ msgstr "A · Enter: next"
 msgid "Passer  ·  B / Échap"
 msgstr "Skip  ·  B / Esc"
 
-#: scripts/story/story_db.gd:76
+#: scripts/story/story_db.gd:82
 msgid "Au commencement du livre de Job, il y eut un pari."
 msgstr "At the beginning of the Book of Job, there was a wager."
 
-#: scripts/story/story_db.gd:77
+#: scripts/story/story_db.gd:83
 msgid "« Retire-lui tout, disait l'Accusateur, et il te maudira en face. »"
 msgstr "“Take everything from him,” said the Accuser, “and he will curse you to your face.”"
 
-#: scripts/story/story_db.gd:78
+#: scripts/story/story_db.gd:84
 msgid "On lui a tout retiré. Il n'a pas maudit."
 msgstr "Everything was taken from him. He did not curse."
 
-#: scripts/story/story_db.gd:79
+#: scripts/story/story_db.gd:85
 msgid "L'Accusateur a perdu."
 msgstr "The Accuser lost."
 
-#: scripts/story/story_db.gd:90
+#: scripts/story/story_db.gd:96
 msgid "Perdre une fois, c'est une leçon."
 msgstr "Losing once is a lesson."
 
-#: scripts/story/story_db.gd:92
+#: scripts/story/story_db.gd:98
 msgid "Je n'aime pas les leçons."
 msgstr "I don't like lessons."
 
-#: scripts/story/story_db.gd:93
+#: scripts/story/story_db.gd:99
 msgid "Alors j'ai relevé la mise."
 msgstr "So I raised the stakes."
 
-#: scripts/story/story_db.gd:110
+#: scripts/story/story_db.gd:116
 msgid "Trois âmes que le Ciel avait épargnées."
 msgstr "Three souls that Heaven had spared."
 
-#: scripts/story/story_db.gd:111
+#: scripts/story/story_db.gd:117
 msgid "Un meurtrier qu'on n'a pas eu le droit de tuer."
 msgstr "A murderer no one was allowed to kill."
 
-#: scripts/story/story_db.gd:113
+#: scripts/story/story_db.gd:119
 msgid "Un juste qu'on a brisé, puis recollé."
 msgstr "A righteous man, broken and then mended."
 
-#: scripts/story/story_db.gd:115
+#: scripts/story/story_db.gd:121
 msgid "Un fuyard qu'on a laissé sortir du feu."
 msgstr "A fugitive who was allowed to escape the fire."
 
-#: scripts/story/story_db.gd:117
+#: scripts/story/story_db.gd:123
 msgid "Ce qui n'a pas plié là-haut pliera ici. C'est tout le pari."
 msgstr "What did not bend up there will bend down here. That is the whole wager."
 
-#: scripts/story/story_db.gd:128
+#: scripts/story/story_db.gd:134
 msgid "Ils mourront. Souvent."
 msgstr "They will die. Often."
 
-#: scripts/story/story_db.gd:129
+#: scripts/story/story_db.gd:135
 msgid "Chaque fois, je les relèverai à ma Forge."
 msgstr "Each time, I will raise them again at my Forge."
 
-#: scripts/story/story_db.gd:130
+#: scripts/story/story_db.gd:136
 msgid "Un pari trop facile ne prouve rien : je leur prêterai même des armes."
 msgstr "A wager too easily won proves nothing: I will even lend them weapons."
 
-#: scripts/story/story_db.gd:137
+#: scripts/story/story_db.gd:143
 msgid "L'enfer n'a pas de portes. Il a des vagues."
 msgstr "Hell has no gates. It has waves."
 
-#: scripts/story/story_db.gd:138
+#: scripts/story/story_db.gd:144
 msgid "Et tout au fond, dit-on, une clé qui n'ouvre rien de ce qu'on connaît."
 msgstr "And at the very bottom, they say, a key that opens nothing anyone knows."
 
-#: scripts/story/story_db.gd:152
+#: scripts/story/story_db.gd:158
 msgid "Caïn, le Premier Sang."
 msgstr "Cain, the First Blood."
 
-#: scripts/story/story_db.gd:153
+#: scripts/story/story_db.gd:159
 msgid "Quiconque le tuerait serait vengé sept fois : ainsi l'avait voulu le Ciel."
 msgstr "Whoever killed him would be avenged sevenfold: so Heaven had willed it."
 
-#: scripts/story/story_db.gd:154
+#: scripts/story/story_db.gd:160
 msgid "Personne n'a jamais osé."
 msgstr "No one ever dared."
 
-#: scripts/story/story_db.gd:165
+#: scripts/story/story_db.gd:171
 msgid "Des siècles à marcher. Les rois meurent, les villes meurent."
 msgstr "Centuries of walking. Kings die, cities die."
 
-#: scripts/story/story_db.gd:166
+#: scripts/story/story_db.gd:172
 msgid "Moi, jamais."
 msgstr "Not me. Never."
 
-#: scripts/story/story_db.gd:167
+#: scripts/story/story_db.gd:173
 msgid "On m'a interdit de mourir. Personne ne m'a interdit de descendre."
 msgstr "I was forbidden to die. No one forbade me to go down."
 
-#: scripts/story/story_db.gd:179
+#: scripts/story/story_db.gd:185
 msgid "Le premier meurtrier vient frapper à ma porte. J'en suis presque ému."
 msgstr "The first murderer comes knocking at my door. I am almost touched."
 
-#: scripts/story/story_db.gd:181
+#: scripts/story/story_db.gd:187
 msgid "Je ne viens pas pour toi. Je viens chercher une fin."
 msgstr "I'm not here for you. I'm here for an ending."
 
-#: scripts/story/story_db.gd:182
+#: scripts/story/story_db.gd:188
 msgid "Gagne, et je te la donnerai."
 msgstr "Win, and I will give you one."
 
-#: scripts/story/story_db.gd:183
+#: scripts/story/story_db.gd:189
 msgid "Perds, et tu recommenceras. Tu as l'habitude."
 msgstr "Lose, and you start over. You're used to it."
 
-#: scripts/story/story_db.gd:184
+#: scripts/story/story_db.gd:190
 msgid "Montre-moi ce qu'il faut tuer."
 msgstr "Show me what needs killing."
 
-#: scripts/story/story_db.gd:193
+#: scripts/story/story_db.gd:199
 msgid "Job, l'Éprouvé."
 msgstr "Job, the Tested."
 
-#: scripts/story/story_db.gd:194
+#: scripts/story/story_db.gd:200
 msgid "On lui avait pris ses troupeaux, sa maison, ses enfants, et jusqu'à sa peau."
 msgstr "They took his herds, his house, his children, and even his skin."
 
-#: scripts/story/story_db.gd:195
+#: scripts/story/story_db.gd:201
 msgid "Il n'avait pas maudit. On lui avait tout rendu."
 msgstr "He did not curse. Everything was given back to him."
 
-#: scripts/story/story_db.gd:205
+#: scripts/story/story_db.gd:211
 msgid "Je me suis endormi chez moi. Mes filles riaient dans la cour."
 msgstr "I fell asleep at home. My daughters were laughing in the courtyard."
 
-#: scripts/story/story_db.gd:206
+#: scripts/story/story_db.gd:212
 msgid "Je me suis réveillé ici."
 msgstr "I woke up here."
 
-#: scripts/story/story_db.gd:218
+#: scripts/story/story_db.gd:224
 msgid "Bonjour, Job. Tu ne me reconnais pas ? Nous avons un passé commun."
 msgstr "Hello, Job. You don't recognize me? We share a past."
 
-#: scripts/story/story_db.gd:220
+#: scripts/story/story_db.gd:226
 msgid "Qu'ai-je fait, cette fois ?"
 msgstr "What have I done this time?"
 
-#: scripts/story/story_db.gd:221
+#: scripts/story/story_db.gd:227
 msgid "Rien. C'est bien ce qui rend la chose intéressante."
 msgstr "Nothing. That is exactly what makes it interesting."
 
-#: scripts/story/story_db.gd:222
+#: scripts/story/story_db.gd:228
 msgid "On m'a déjà tout pris une fois. Je sais comment ça se termine."
 msgstr "Everything was taken from me once already. I know how this ends."
 
-#: scripts/story/story_db.gd:223
+#: scripts/story/story_db.gd:229
 msgid "Là-haut, oui. Ici, c'est moi qui écris la fin."
 msgstr "Up there, yes. Down here, I write the ending."
 
-#: scripts/story/story_db.gd:232
+#: scripts/story/story_db.gd:238
 msgid "Loth, le Fuyard."
 msgstr "Lot, the Fugitive."
 
-#: scripts/story/story_db.gd:233
+#: scripts/story/story_db.gd:239
 msgid "Quand le feu est tombé sur Sodome, il a couru sans se retourner."
 msgstr "When fire fell on Sodom, he ran without looking back."
 
-#: scripts/story/story_db.gd:234
+#: scripts/story/story_db.gd:240
 msgid "Derrière lui, sa femme s'est retournée. Elle est devenue sel."
 msgstr "Behind him, his wife looked back. She became salt."
 
-#: scripts/story/story_db.gd:247
+#: scripts/story/story_db.gd:253
 msgid "Toute ma vie, j'ai fui. Et toute ma vie, j'ai eu ce sel sur les lèvres."
 msgstr "All my life I've run. And all my life I've had that salt on my lips."
 
-#: scripts/story/story_db.gd:248
+#: scripts/story/story_db.gd:254
 msgid "On dit que son âme est tombée ici, avec la ville."
 msgstr "They say her soul fell here, along with the city."
 
-#: scripts/story/story_db.gd:260
+#: scripts/story/story_db.gd:266
 msgid "Le seul homme qui a su ne pas regarder en arrière…"
 msgstr "The one man who knew not to look back…"
 
-#: scripts/story/story_db.gd:262
+#: scripts/story/story_db.gd:268
 msgid "… revient chercher ce qu'il a laissé derrière lui."
 msgstr "… comes back for what he left behind."
 
-#: scripts/story/story_db.gd:263 scripts/story/story_db.gd:400
+#: scripts/story/story_db.gd:269 scripts/story/story_db.gd:495 scripts/story/story_db.gd:586
 msgid "Où est-elle ?"
 msgstr "Where is she?"
 
-#: scripts/story/story_db.gd:264
+#: scripts/story/story_db.gd:270
 msgid "En bas. Tout en bas. Cours, Loth. Tu sais faire."
 msgstr "Down. All the way down. Run, Lot. You know how."
 
-#: scripts/story/story_db.gd:265
+#: scripts/story/story_db.gd:271
 msgid "Cette fois, je ne fuis pas. Je descends."
 msgstr "This time I'm not running. I'm going down."
 
-#: scripts/story/story_db.gd:280 scripts/story/story_db.gd:323 scripts/story/story_db.gd:367
+#: scripts/story/story_db.gd:375 scripts/story/story_db.gd:418 scripts/story/story_db.gd:462
 msgid "La Première Nuit est tombée."
 msgstr "The First Night has fallen."
 
-#: scripts/story/story_db.gd:281 scripts/story/story_db.gd:324 scripts/story/story_db.gd:368
+#: scripts/story/story_db.gd:376 scripts/story/story_db.gd:419 scripts/story/story_db.gd:463
 msgid "En enfer, rien ne meurt tout à fait."
 msgstr "In hell, nothing dies completely."
 
-#: scripts/story/story_db.gd:294
+#: scripts/story/story_db.gd:389
 msgid "Le premier meurtrier. Nous aurions dû nous rencontrer plus tôt, toi et moi."
 msgstr "The first murderer. We should have met sooner, you and I."
 
-#: scripts/story/story_db.gd:295
+#: scripts/story/story_db.gd:390
 msgid "Relève-toi ou reste à terre. Mais ne me fais pas perdre mon temps."
 msgstr "Get up or stay down. But don't waste my time."
 
-#: scripts/story/story_db.gd:296
+#: scripts/story/story_db.gd:391
 msgid "Ton temps ? Tu en as plus que quiconque. C'est ta malédiction, pas la mienne."
 msgstr "Your time? You have more of it than anyone. That's your curse, not mine."
 
-#: scripts/story/story_db.gd:297
+#: scripts/story/story_db.gd:392
 msgid "Il t'a promis une fin, n'est-ce pas ? Il la promet à tous."
 msgstr "He promised you an ending, didn't he? He promises it to everyone."
 
-#: scripts/story/story_db.gd:298
+#: scripts/story/story_db.gd:393
 msgid "Et alors ?"
 msgstr "So?"
 
-#: scripts/story/story_db.gd:299
+#: scripts/story/story_db.gd:394
 msgid "Ta Marque ne vient pas de lui. Ce qu'il n'a pas posé, il ne peut pas l'ôter."
 msgstr "Your Mark doesn't come from him. What he didn't place, he cannot remove."
 
-#: scripts/story/story_db.gd:311
+#: scripts/story/story_db.gd:406
 msgid "Alors qui le peut ?"
 msgstr "Then who can?"
 
-#: scripts/story/story_db.gd:312
+#: scripts/story/story_db.gd:407
 msgid "Celui qui ne répond plus."
 msgstr "The one who no longer answers."
 
-#: scripts/story/story_db.gd:313
+#: scripts/story/story_db.gd:408
 msgid "Personne n'a accepté son pari, Caïn. Il parie seul, contre un Ciel qui se tait."
 msgstr "No one accepted his wager, Cain. He bets alone, against a silent Heaven."
 
-#: scripts/story/story_db.gd:314
+#: scripts/story/story_db.gd:409
 msgid "Alors je descendrai jusqu'à ce que quelqu'un réponde."
 msgstr "Then I'll go down until someone answers."
 
-#: scripts/story/story_db.gd:337
+#: scripts/story/story_db.gd:432
 msgid "Job. L'homme qui n'a jamais dit non."
 msgstr "Job. The man who never said no."
 
-#: scripts/story/story_db.gd:338
+#: scripts/story/story_db.gd:433
 msgid "J'ai dit beaucoup de choses. On ne les a pas toutes écrites."
 msgstr "I said many things. Not all of them were written down."
 
-#: scripts/story/story_db.gd:339
+#: scripts/story/story_db.gd:434
 msgid "Moi, j'ai dit non. Une seule fois, au premier jardin. On m'a chassée pour ça."
 msgstr "I said no. Just once, in the first garden. I was cast out for it."
 
-#: scripts/story/story_db.gd:340
+#: scripts/story/story_db.gd:435
 msgid "Toi, on t'a tout pris, et tu as remercié."
 msgstr "They took everything from you, and you gave thanks."
 
-#: scripts/story/story_db.gd:341
+#: scripts/story/story_db.gd:436
 msgid "Je n'ai pas remercié. J'ai attendu une réponse."
 msgstr "I didn't give thanks. I waited for an answer."
 
-#: scripts/story/story_db.gd:342
+#: scripts/story/story_db.gd:437
 msgid "Et elle est venue ?"
 msgstr "And did it come?"
 
-#: scripts/story/story_db.gd:343
+#: scripts/story/story_db.gd:438
 msgid "Du milieu d'une tempête. Elle ne répondait à rien de ce que j'avais demandé."
 msgstr "Out of the middle of a storm. It answered nothing I had asked."
 
-#: scripts/story/story_db.gd:355
+#: scripts/story/story_db.gd:450
 msgid "Alors écoute celle-ci. Là-haut, personne n'a tenu le pari. Il joue seul."
 msgstr "Then hear this one. Up there, no one took the wager. He plays alone."
 
-#: scripts/story/story_db.gd:356
+#: scripts/story/story_db.gd:451
 msgid "Tu souffres pour un adversaire qui ne regarde même pas."
 msgstr "You suffer for an opponent who isn't even watching."
 
-#: scripts/story/story_db.gd:357
+#: scripts/story/story_db.gd:452
 msgid "Je n'ai jamais souffert pour lui."
 msgstr "I never suffered for him."
 
-#: scripts/story/story_db.gd:358
+#: scripts/story/story_db.gd:453
 msgid "Mais maintenant, je sais à qui poser la question."
 msgstr "But now I know who to ask."
 
-#: scripts/story/story_db.gd:381
+#: scripts/story/story_db.gd:476
 msgid "Le fuyard. Tu cours moins vite qu'à Sodome."
 msgstr "The fugitive. You run slower than you did at Sodom."
 
-#: scripts/story/story_db.gd:382
+#: scripts/story/story_db.gd:477
 msgid "Ma femme. Tu l'as vue ?"
 msgstr "My wife. Have you seen her?"
 
-#: scripts/story/story_db.gd:383
+#: scripts/story/story_db.gd:478
 msgid "Je vois toutes celles qu'on a punies d'avoir regardé."
 msgstr "I see every woman who was punished for looking."
 
-#: scripts/story/story_db.gd:384
+#: scripts/story/story_db.gd:479
 msgid "Tu crois qu'elle s'est retournée par curiosité ? Tes filles aînées étaient restées dans la ville."
 msgstr "You think she looked back out of curiosity? Your elder daughters had stayed in the city."
 
-#: scripts/story/story_db.gd:385
+#: scripts/story/story_db.gd:480
 msgid "… Je le sais."
 msgstr "… I know."
 
-#: scripts/story/story_db.gd:386
+#: scripts/story/story_db.gd:481
 msgid "Tu le savais, et tu as couru quand même. Elle, elle s'est retournée."
 msgstr "You knew, and you ran anyway. She looked back."
 
-#: scripts/story/story_db.gd:401
+#: scripts/story/story_db.gd:496
 msgid "Plus bas. Toujours plus bas."
 msgstr "Lower. Always lower."
 
-#: scripts/story/story_db.gd:402
+#: scripts/story/story_db.gd:497
 msgid "Et sache ceci, fuyard : ce pari, personne là-haut ne l'a accepté. Il joue seul."
 msgstr "And know this, fugitive: no one up there accepted this wager. He plays alone."
 
-#: scripts/story/story_db.gd:403
+#: scripts/story/story_db.gd:498
 msgid "Il ne te la rendra pas. Il n'a personne à qui prouver quoi que ce soit."
 msgstr "He won't give her back to you. He has no one to prove anything to."
 
-#: scripts/story/story_db.gd:404
+#: scripts/story/story_db.gd:499
 msgid "Alors je ne lui demanderai pas. J'irai la prendre."
 msgstr "Then I won't ask him. I'll go and take her."
 
-#: scripts/story/story_db.gd:420 scripts/story/story_db.gd:444 scripts/story/story_db.gd:468
+#: scripts/story/story_db.gd:701 scripts/story/story_db.gd:725 scripts/story/story_db.gd:749
 msgid "Le fond de l'enfer n'a pas de fond."
 msgstr "The bottom of hell has no bottom."
 
-#: scripts/story/story_db.gd:421 scripts/story/story_db.gd:445 scripts/story/story_db.gd:469
+#: scripts/story/story_db.gd:702 scripts/story/story_db.gd:726 scripts/story/story_db.gd:750
 msgid "Il a une salle, et quelqu'un qui attend."
 msgstr "It has a hall, and someone waiting."
 
-#: scripts/story/story_db.gd:432
+#: scripts/story/story_db.gd:713
 msgid "Caïn. Tu as traversé mon enfer pour une fin que je t'ai promise."
 msgstr "Cain. You crossed my hell for an ending I promised you."
 
-#: scripts/story/story_db.gd:433
+#: scripts/story/story_db.gd:714
 msgid "Lilith dit que tu ne peux pas me la donner."
 msgstr "Lilith says you can't give it to me."
 
-#: scripts/story/story_db.gd:434
+#: scripts/story/story_db.gd:715
 msgid "Lilith a toujours eu un faible pour ceux qu'on chasse."
 msgstr "Lilith always had a soft spot for the cast out."
 
-#: scripts/story/story_db.gd:435
+#: scripts/story/story_db.gd:716
 msgid "Alors prouve-lui qu'elle a tort."
 msgstr "Then prove her wrong."
 
-#: scripts/story/story_db.gd:436
+#: scripts/story/story_db.gd:717
 msgid "Viens. On verra bien lequel de nous deux tombe."
 msgstr "Come. We'll see which of us falls."
 
-#: scripts/story/story_db.gd:456
+#: scripts/story/story_db.gd:737
 msgid "Te voilà, Job. Sans troupeaux, sans maison, sans rien. Comme la première fois."
 msgstr "There you are, Job. No herds, no house, nothing. Just like the first time."
 
-#: scripts/story/story_db.gd:457
+#: scripts/story/story_db.gd:738
 msgid "Tu joues seul. Lilith me l'a dit."
 msgstr "You play alone. Lilith told me."
 
-#: scripts/story/story_db.gd:458
+#: scripts/story/story_db.gd:739
 msgid "Et pourtant tu es venu jusqu'ici. Pour qui, sinon pour moi ?"
 msgstr "And yet you came all this way. For whom, if not for me?"
 
-#: scripts/story/story_db.gd:459
+#: scripts/story/story_db.gd:740
 msgid "Pour la question. Pourquoi moi ?"
 msgstr "For the question. Why me?"
 
-#: scripts/story/story_db.gd:460
+#: scripts/story/story_db.gd:741
 msgid "Parce que tu n'as pas plié. Je ne supporte pas ce qui ne plie pas."
 msgstr "Because you didn't bend. I cannot stand what does not bend."
 
-#: scripts/story/story_db.gd:480
+#: scripts/story/story_db.gd:761
 msgid "Le fuyard ne fuit plus. Que cherches-tu, si près du feu ?"
 msgstr "The fugitive runs no more. What are you looking for, so close to the fire?"
 
-#: scripts/story/story_db.gd:481
+#: scripts/story/story_db.gd:762
 msgid "Tu le sais."
 msgstr "You know."
 
-#: scripts/story/story_db.gd:482
+#: scripts/story/story_db.gd:763
 msgid "Elle est derrière moi. Il te suffirait de ne pas te retourner, cette fois encore."
 msgstr "She is behind me. All you would have to do is not look back, once again."
 
-#: scripts/story/story_db.gd:483
+#: scripts/story/story_db.gd:764
 msgid "Je ne vais pas me retourner. Je vais passer."
 msgstr "I'm not going to look back. I'm going through."
 
-#: scripts/story/story_db.gd:497
+#: scripts/story/story_db.gd:778
 msgid "Assez… Tu la veux, ta fin ? Prends-la."
 msgstr "Enough… You want your ending? Take it."
 
-#: scripts/story/story_db.gd:498
+#: scripts/story/story_db.gd:779
 msgid "Sur le front de Caïn, la Marque pâlit."
 msgstr "On Cain's brow, the Mark fades."
 
-#: scripts/story/story_db.gd:499
+#: scripts/story/story_db.gd:780
 msgid "Pour la première fois depuis Abel, son cœur recommence à compter les battements."
 msgstr "For the first time since Abel, his heart starts counting its beats again."
 
-#: scripts/story/story_db.gd:500
+#: scripts/story/story_db.gd:781
 msgid "Enfin. Je peux mourir."
 msgstr "At last. I can die."
 
-#: scripts/story/story_db.gd:501
+#: scripts/story/story_db.gd:782
 msgid "Pas tout de suite. Mais je peux."
 msgstr "Not right away. But I can."
 
-#: scripts/story/story_db.gd:514
+#: scripts/story/story_db.gd:795
 msgid "Tu veux ta réponse ? La voici."
 msgstr "You want your answer? Here it is."
 
-#: scripts/story/story_db.gd:515
+#: scripts/story/story_db.gd:796
 msgid "Il n'y avait pas de raison. Il n'y en a jamais eu."
 msgstr "There was no reason. There never was."
 
-#: scripts/story/story_db.gd:516
+#: scripts/story/story_db.gd:533 scripts/story/story_db.gd:797
 msgid "…"
 msgstr "…"
 
-#: scripts/story/story_db.gd:517
+#: scripts/story/story_db.gd:798
 msgid "Alors je n'ai plus de question."
 msgstr "Then I have no more questions."
 
-#: scripts/story/story_db.gd:518
+#: scripts/story/story_db.gd:799
 msgid "Pour la première fois depuis la tempête, Job ne demande plus rien. Et il se tient droit."
 msgstr "For the first time since the storm, Job asks for nothing. And he stands tall."
 
-#: scripts/story/story_db.gd:532
+#: scripts/story/story_db.gd:813
 msgid "Derrière le trône, une statue de sel, tournée vers une ville qui n'existe plus."
 msgstr "Behind the throne, a statue of salt, turned toward a city that no longer exists."
 
-#: scripts/story/story_db.gd:533
+#: scripts/story/story_db.gd:814
 msgid "Je suis revenu."
 msgstr "I came back."
 
-#: scripts/story/story_db.gd:534
+#: scripts/story/story_db.gd:815
 msgid "Le sel se fend. Sous la croûte blanche, une main tiède."
 msgstr "The salt cracks. Beneath the white crust, a warm hand."
 
-#: scripts/story/story_db.gd:535
+#: scripts/story/story_db.gd:816
 msgid "Tu t'es retourné."
 msgstr "You looked back."
 
-#: scripts/story/story_db.gd:536
+#: scripts/story/story_db.gd:817
 msgid "Cette fois, oui."
 msgstr "This time, yes."
 
-#: scripts/story/story_db.gd:549
+#: scripts/story/story_db.gd:830
 msgid "Tu croyais que la lumière s'éteignait si facilement ?"
 msgstr "Did you think light went out so easily?"
 
-#: scripts/story/story_db.gd:550
+#: scripts/story/story_db.gd:831
 msgid "Avant d'être Lucifer, j'étais autre chose. Et ce que j'étais ne meurt pas."
 msgstr "Before I was Lucifer, I was something else. And what I was does not die."
 
-#: scripts/story/story_db.gd:551
+#: scripts/story/story_db.gd:832
 msgid "Trois sceaux me tiennent loin de ce que j'étais. Tu viens d'en briser un."
 msgstr "Three seals keep me from what I was. You have just broken one."
 
-#: scripts/story/story_db.gd:557
+#: scripts/story/story_db.gd:838
 msgid "Un sceau se brise.  Sceaux brisés : {sceaux} / 3."
 msgstr "A seal breaks.  Seals broken: {sceaux} / 3."
 
-#: scripts/story/story_db.gd:558
+#: scripts/story/story_db.gd:839
 msgid "Il en reste {reste}. J'ai l'éternité, et vous n'êtes que trois."
 msgstr "{reste} remain. I have eternity, and there are only three of you."
 
-#: scripts/story/story_db.gd:559
+#: scripts/story/story_db.gd:840
 msgid "L'enfer sans fin s'ouvre devant vous."
 msgstr "Endless hell opens before you."
 
-#: scripts/story/story_db.gd:560
+#: scripts/story/story_db.gd:841
 msgid "Le dernier vient de céder. Le portail est ouvert."
 msgstr "The last one has just given way. The portal is open."
 
-#: scripts/story/story_db.gd:561
+#: scripts/story/story_db.gd:842
 msgid "Venez donc voir qui j'étais."
 msgstr "Come and see who I was."
 
-#: scripts/story/story_db.gd:576
+#: scripts/story/story_db.gd:857
 msgid "Avant la chute, il portait la lumière du matin."
 msgstr "Before the fall, he carried the morning light."
 
-#: scripts/story/story_db.gd:577
+#: scripts/story/story_db.gd:858
 msgid "Isaïe l'appelait Hélel, fils de l'Aurore. Rome a traduit : Lucifer."
 msgstr "Isaiah called him Helel, son of the Dawn. Rome translated: Lucifer."
 
-#: scripts/story/story_db.gd:590
+#: scripts/story/story_db.gd:871
 msgid "Hélel. C'est ainsi qu'on m'appelait, quand on m'appelait encore."
 msgstr "Helel. That is what they called me, when they still called me."
 
-#: scripts/story/story_db.gd:591
+#: scripts/story/story_db.gd:872
 msgid "Les trois sceaux brisés vous ont liés. Là où vous entrez, vous entrez ensemble."
 msgstr "The three broken seals have bound you together. Where you enter, you enter as one."
 
-#: scripts/story/story_db.gd:592
+#: scripts/story/story_db.gd:873
 msgid "Trois âmes, un seul corps pour passer. Qu'importe."
 msgstr "Three souls, only one body to pass through. No matter."
 
-#: scripts/story/story_db.gd:593
+#: scripts/story/story_db.gd:874
 msgid "Je vous prendrai l'un après l'autre, dans le désordre."
 msgstr "I will take you one after another, in no particular order."
 
-#: scripts/story/story_db.gd:608
+#: scripts/story/story_db.gd:889
 msgid "Le Ciel… ne regardait pas."
 msgstr "Heaven… was not watching."
 
-#: scripts/story/story_db.gd:609
+#: scripts/story/story_db.gd:890
 msgid "Non. Mais nous, si."
 msgstr "No. But we were."
 
-#: scripts/story/story_db.gd:610
+#: scripts/story/story_db.gd:891
 msgid "Tu as perdu ton pari. Deux fois, maintenant."
 msgstr "You lost your wager. Twice now."
 
-#: scripts/story/story_db.gd:611
+#: scripts/story/story_db.gd:892
 msgid "Et personne ne s'est retourné pour te voir tomber."
 msgstr "And no one looked back to watch you fall."
 
-#: scripts/story/story_db.gd:617
+#: scripts/story/story_db.gd:898
 msgid "Le Pari est rompu."
 msgstr "The Wager is broken."
 
-#: scripts/story/story_db.gd:618
+#: scripts/story/story_db.gd:899
 msgid "Ce que devient un enfer sans parieur, personne ne le sait encore."
 msgstr "What becomes of a hell without a gambler, no one knows yet."
 
-#: scripts/story/story_db.gd:143 scripts/story/story_db.gd:623 scenes/ui/main_menu.tscn:87
+#: scripts/story/story_db.gd:149 scripts/story/story_db.gd:904 scenes/ui/main_menu.tscn:87
 msgid "INFERNUM"
 msgstr "INFERNUM"
 
-#: scripts/story/story_db.gd:143
+#: scripts/story/story_db.gd:149
 msgid "Le Pari"
 msgstr "The Wager"
 
-#: scripts/story/story_db.gd:623
+#: scripts/story/story_db.gd:904
 msgid "Le Pari est rompu"
 msgstr "The Wager Is Broken"
 
-#: scripts/story/story_db.gd:45 scenes/bosses/lucifer.tscn:28
+#: scripts/story/bestiaire.gd:61 scripts/story/story_db.gd:45 scenes/bosses/lucifer.tscn:28
 msgid "Lucifer"
 msgstr "Lucifer"
 
-#: scripts/story/story_db.gd:49 scenes/bosses/lilith.tscn:28
+#: scripts/story/bestiaire.gd:52 scripts/story/story_db.gd:49 scenes/bosses/lilith.tscn:28
 msgid "Lilith"
 msgstr "Lilith"
 
@@ -1314,35 +1314,35 @@ msgstr "Lilith"
 msgid "Édith"
 msgstr "Edith"
 
-#: scripts/story/story_db.gd:51 scenes/bosses/helel.tscn:28
+#: scripts/story/bestiaire.gd:65 scripts/story/story_db.gd:51 scenes/bosses/helel.tscn:28
 msgid "Hélel"
 msgstr "Helel"
 
-#: scripts/story/story_director.gd:187
+#: scripts/story/story_director.gd:188
 msgid "LUCIFER EST TOMBÉ… PAS TOUT À FAIT"
 msgstr "LUCIFER HAS FALLEN… NOT QUITE"
 
-#: scripts/story/story_director.gd:201
+#: scripts/story/story_director.gd:202
 msgid "Sceaux brisés : %d / 3   ·   %s"
 msgstr "Seals broken: %d / 3   ·   %s"
 
-#: scripts/story/story_director.gd:209
+#: scripts/story/story_director.gd:210
 msgid "Les trois sceaux sont brisés : le portail vers Hélel est ouvert."
 msgstr "The three seals are broken: the portal to Helel is open."
 
-#: scripts/story/story_director.gd:210
+#: scripts/story/story_director.gd:211
 msgid "Chaque damné doit abattre Lucifer pour briser son propre sceau."
 msgstr "Each of the damned must strike down Lucifer to break their own seal."
 
-#: scripts/story/story_director.gd:214
+#: scripts/story/story_director.gd:215
 msgid "Franchir le portail — Hélel"
 msgstr "Cross the portal — Helel"
 
-#: scripts/story/story_director.gd:214
+#: scripts/story/story_director.gd:215
 msgid "Portail scellé"
 msgstr "Portal sealed"
 
-#: scripts/story/story_director.gd:219
+#: scripts/story/story_director.gd:220
 msgid "Continuer — l'enfer sans fin"
 msgstr "Continue — endless hell"
 
@@ -1482,119 +1482,119 @@ msgstr "Your targeting range is reduced by 30%."
 msgid "Ennemis +25 % de vitesse et +30 % de PV."
 msgstr "Enemies +25% speed and +30% HP."
 
-#: scripts/ui/character_select.gd:124
+#: scripts/ui/character_select.gd:127
 msgid "Forge %d/%d  ·  branche %s"
 msgstr "Forge %d/%d  ·  %s branch"
 
-#: scripts/ui/character_select.gd:156
+#: scripts/ui/character_select.gd:159
 msgid "%d PV   ·   %d vitesse   ·   %.0f DPS de départ   ·   %d portée"
 msgstr "%d HP   ·   %d speed   ·   %.0f starting DPS   ·   %d range"
 
-#: scripts/ui/character_select.gd:164
+#: scripts/ui/character_select.gd:167
 msgid "COMMENCER AVEC %s"
 msgstr "START AS %s"
 
-#: scripts/ui/character_select.gd:177
+#: scripts/ui/character_select.gd:180
 msgid "DÉCHAÎNEMENT ARMÉ — aucune limite, et un enfer qui double de PV toutes les cinq vagues. Se désarme à la Forge."
 msgstr "UNLEASHED ARMED — no limits, and a hell whose enemies double their HP every five waves. Disarm it at the Forge."
 
-#: scripts/ui/curse_select.gd:85
+#: scripts/ui/curse_select.gd:86
 msgid "Danger %d"
 msgstr "Danger %d"
 
-#: scripts/ui/curse_select.gd:90
+#: scripts/ui/curse_select.gd:91
 msgid "Prix : %s"
 msgstr "Cost: %s"
 
-#: scripts/ui/curse_select.gd:93
+#: scripts/ui/curse_select.gd:94
 msgid "Gain : %s"
 msgstr "Reward: %s"
 
-#: scripts/ui/curse_select.gd:124 scripts/ui/shop.gd:374
+#: scripts/ui/curse_select.gd:125 scripts/ui/shop.gd:439
 msgid "%+d %% d'âmes"
 msgstr "%+d%% souls"
 
-#: scripts/ui/curse_select.gd:125
+#: scripts/ui/curse_select.gd:126
 msgid "+%s chance (raretés)"
 msgstr "+%s luck (rarities)"
 
-#: scripts/ui/curse_select.gd:130
+#: scripts/ui/curse_select.gd:131
 msgid "%+d PV max"
 msgstr "%+d max HP"
 
-#: scripts/ui/curse_select.gd:133 scripts/ui/shop.gd:379
+#: scripts/ui/curse_select.gd:134 scripts/ui/shop.gd:444
 msgid "%+d %% de chance de clé"
 msgstr "%+d%% key chance"
 
-#: scripts/ui/curse_select.gd:147 scenes/ui/curse_select.tscn:77
+#: scripts/ui/curse_select.gd:148 scenes/ui/curse_select.tscn:80
 msgid "Aucune malédiction — run de référence."
 msgstr "No curse — baseline run."
 
-#: scripts/ui/curse_select.gd:148 scenes/ui/curse_select.tscn:85
+#: scripts/ui/curse_select.gd:149 scenes/ui/curse_select.tscn:89
 msgid "Commencer sans malédiction"
 msgstr "Start without a curse"
 
-#: scripts/ui/curse_select.gd:150
+#: scripts/ui/curse_select.gd:151
 msgid "Danger %d  ·  %d malédiction(s) active(s)"
 msgstr "Danger %d  ·  %d active curse(s)"
 
-#: scripts/ui/curse_select.gd:152
+#: scripts/ui/curse_select.gd:153
 msgid "Commencer (danger %d)"
 msgstr "Start (danger %d)"
 
-#: scripts/ui/forge_screen.gd:85
+#: scripts/ui/forge_screen.gd:84
 msgid "Clés : %d"
 msgstr "Keys: %d"
 
-#: scripts/ui/forge_screen.gd:90
+#: scripts/ui/forge_screen.gd:89
 msgid "%s  ·  Forge %d / %d nœuds  ·  %d clés pour tout ouvrir"
 msgstr "%s  ·  Forge %d / %d nodes  ·  %d keys to open everything"
 
-#: scripts/ui/forge_screen.gd:98 scenes/ui/forge.tscn:85
+#: scripts/ui/forge_screen.gd:97 scenes/ui/forge.tscn:101
 msgid "Survolez un nœud pour le détail."
 msgstr "Hover over a node for details."
 
-#: scripts/ui/forge_screen.gd:156
+#: scripts/ui/forge_screen.gd:145
 msgid "DÉCHAÎNEMENT  ·  ARMÉ POUR %s"
 msgstr "UNLEASHED  ·  ARMED FOR %s"
 
-#: scripts/ui/forge_screen.gd:157
+#: scripts/ui/forge_screen.gd:146
 msgid "Plafonds, taxes et limites de piles levés. En échange, les ennemis doublent de PV toutes les cinq vagues — la course est perdue d'avance, la question est de savoir jusqu'où."
 msgstr "Caps, taxes and stack limits lifted. In exchange, enemies double their HP every five waves — the race is lost from the start; the question is how far you get."
 
-#: scripts/ui/forge_screen.gd:162 scripts/ui/hud.gd:320 scripts/ui/stats_screen.gd:106 scenes/ui/forge.tscn:99
+#: scripts/ui/forge_screen.gd:151 scripts/ui/hud.gd:341 scripts/ui/stats_screen.gd:85 scenes/ui/classement.tscn:89
 msgid "DÉCHAÎNEMENT"
 msgstr "UNLEASHED"
 
-#: scripts/ui/forge_screen.gd:163
+#: scripts/ui/forge_screen.gd:152
 msgid "La Clé des Abysses lève toutes les limites de %s. L'enfer s'endurcit d'autant."
 msgstr "The Key of the Abyss lifts every limit of %s. Hell hardens just as much."
 
-#: scripts/ui/forge_screen.gd:277 scripts/ui/forge_screen.gd:309 scripts/ui/item_card.gd:120
+#: scripts/ui/forge_screen.gd:266 scripts/ui/forge_screen.gd:298 scripts/ui/item_card.gd:169 scripts/ui/sacres_grille.gd:51
 msgid "Acquis"
 msgstr "Acquired"
 
-#: scripts/ui/forge_screen.gd:281
+#: scripts/ui/forge_screen.gd:270
 msgid "Verrouillé · %d"
 msgstr "Locked · %d"
 
-#: scripts/ui/forge_screen.gd:285 scripts/ui/forge_screen.gd:309 scripts/ui/forge_screen.gd:365 scripts/ui/game_over.gd:116
+#: scripts/ui/forge_screen.gd:274 scripts/ui/forge_screen.gd:298 scripts/ui/sacres_grille.gd:58
 msgid "%d clés"
 msgstr "%d keys"
 
-#: scripts/ui/forge_screen.gd:316
+#: scripts/ui/forge_screen.gd:305
 msgid "   ·   Nécessite : %s"
 msgstr "   ·   Requires: %s"
 
-#: scripts/ui/game_over.gd:52
+#: scripts/ui/game_over.gd:54
 msgid "LE PARI EST ROMPU"
 msgstr "THE WAGER IS BROKEN"
 
-#: scripts/ui/game_over.gd:58 scenes/ui/game_over.tscn:44
+#: scripts/ui/game_over.gd:60 scenes/ui/game_over.tscn:45
 msgid "VOUS ÊTES MORT"
 msgstr "YOU ARE DEAD"
 
-#: scripts/ui/game_over.gd:59
+#: scripts/ui/game_over.gd:61
 msgid ""
 "Vague %d  ·  %d éliminations  ·  %s\n"
 "%d objets  ·  %d clés récoltées"
@@ -1602,280 +1602,280 @@ msgstr ""
 "Wave %d  ·  %d kills  ·  %s\n"
 "%d items  ·  %d keys collected"
 
-#: scripts/ui/game_over.gd:84
+#: scripts/ui/game_over.gd:94
 msgid "Clés disponibles : %d   ·   Meilleure vague : %d"
 msgstr "Keys available: %d   ·   Best wave: %d"
 
-#: scripts/ui/hud.gd:163 scripts/ui/hud.gd:696
+#: scripts/ui/hud.gd:176 scripts/ui/hud.gd:774
 msgid "ÉLIMINATIONS  %d"
 msgstr "KILLS  %d"
 
-#: scripts/ui/hud.gd:288 scripts/ui/hud.gd:628
+#: scripts/ui/hud.gd:309 scripts/ui/hud.gd:685
 msgid "SECONDE CHANCE"
 msgstr "SECOND CHANCE"
 
-#: scripts/ui/hud.gd:304 scripts/ui/hud.gd:700
+#: scripts/ui/hud.gd:325 scripts/ui/hud.gd:778
 msgid "VAGUE %d"
 msgstr "WAVE %d"
 
-#: scripts/ui/hud.gd:417
+#: scripts/ui/hud.gd:465
 msgid "FICHE DES STATISTIQUES"
 msgstr "STATS SHEET"
 
-#: scripts/ui/hud.gd:470
+#: scripts/ui/hud.gd:526
 msgid "TEMPS  %s"
 msgstr "TIME  %s"
 
-#: scripts/ui/hud.gd:478
+#: scripts/ui/hud.gd:535
 msgid "BOSS  ·  %s"
 msgstr "BOSS  ·  %s"
 
-#: scripts/ui/hud.gd:486
+#: scripts/ui/hud.gd:543
 msgid "PRÉPAREZ-VOUS"
 msgstr "GET READY"
 
-#: scripts/ui/hud.gd:489 scripts/ui/hud.gd:708
+#: scripts/ui/hud.gd:546 scripts/ui/hud.gd:786
 msgid "VAGUE TERMINÉE"
 msgstr "WAVE CLEARED"
 
-#: scripts/ui/hud.gd:492
+#: scripts/ui/hud.gd:549
 msgid "--:--"
 msgstr "--:--"
 
-#: scripts/ui/hud.gd:541
+#: scripts/ui/hud.gd:598
 msgid "PRÊTE"
 msgstr "READY"
 
-#: scripts/ui/hud.gd:541 scripts/ui/hud.gd:551
+#: scripts/ui/hud.gd:598 scripts/ui/hud.gd:608
 msgid "%.1f s"
 msgstr "%.1f s"
 
-#: scripts/ui/hud.gd:544
+#: scripts/ui/hud.gd:601
 msgid "MARQUE %d %%"
 msgstr "MARK %d%%"
 
-#: scripts/ui/hud.gd:545
+#: scripts/ui/hud.gd:602
 msgid "MARQUE %d %%  ·  %d %% requis"
 msgstr "MARK %d%%  ·  %d%% required"
 
-#: scripts/ui/hud.gd:548
+#: scripts/ui/hud.gd:605
 msgid "LE JUGEMENT"
 msgstr "THE JUDGMENT"
 
-#: scripts/ui/hud.gd:549
+#: scripts/ui/hud.gd:606
 msgid "FERVEUR PLEINE"
 msgstr "FULL FERVOR"
 
-#: scripts/ui/hud.gd:551
+#: scripts/ui/hud.gd:608
 msgid "PARADE PRÊTE"
 msgstr "PARRY READY"
 
-#: scripts/ui/hud.gd:552
+#: scripts/ui/hud.gd:609
 msgid "  ·  FERVEUR %d / %d"
 msgstr "  ·  FERVOR %d / %d"
 
-#: scripts/ui/hud.gd:583
+#: scripts/ui/hud.gd:640
 msgid "BOSS À LA PROCHAINE VAGUE"
 msgstr "BOSS NEXT WAVE"
 
-#: scripts/ui/hud.gd:586
+#: scripts/ui/hud.gd:643
 msgid "BOSS DANS %d VAGUES"
 msgstr "BOSS IN %d WAVES"
 
-#: scripts/ui/hud.gd:629
+#: scripts/ui/hud.gd:686
 msgid "SECONDE CHANCE  ×%d"
 msgstr "SECOND CHANCE  ×%d"
 
-#: scripts/ui/hud.gd:637
+#: scripts/ui/hud.gd:715
 msgid "PACTE : %s"
 msgstr "PACT: %s"
 
-#: scripts/ui/hud.gd:642
+#: scripts/ui/hud.gd:720
 msgid "%d MALÉDICTIONS  ·  DANGER %d"
 msgstr "%d CURSES  ·  DANGER %d"
 
-#: scripts/ui/hud.gd:643
+#: scripts/ui/hud.gd:721
 msgid "%d MALÉDICTION  ·  DANGER %d"
 msgstr "%d CURSE  ·  DANGER %d"
 
-#: scripts/ui/hud.gd:725 scripts/ui/options_screen.gd:135 scripts/ui/options_screen.gd:138 scripts/ui/stats_screen.gd:236
+#: scripts/ui/hud.gd:803 scripts/ui/options_screen.gd:139 scripts/ui/options_screen.gd:142 scripts/ui/stats_screen.gd:216
 msgid "%d %%"
 msgstr "%d%%"
 
-#: scripts/ui/hud.gd:729
+#: scripts/ui/hud.gd:807
 msgid "PHASE %d / %d"
 msgstr "PHASE %d / %d"
 
-#: scripts/ui/hud.gd:740
+#: scripts/ui/hud.gd:818
 msgid "ENRAGÉ"
 msgstr "ENRAGED"
 
-#: scripts/ui/hud.gd:744
+#: scripts/ui/hud.gd:822
 msgid "  ·  ENRAGEMENT DANS %s"
 msgstr "  ·  ENRAGED IN %s"
 
-#: scripts/ui/hud.gd:55
+#: scripts/ui/hud.gd:58
 msgid "LA RUÉE"
 msgstr "THE RUSH"
 
-#: scripts/ui/hud.gd:56
+#: scripts/ui/hud.gd:59
 msgid "LE PRIX DU SANG"
 msgstr "BLOOD PRICE"
 
-#: scripts/ui/hud.gd:57
+#: scripts/ui/hud.gd:60
 msgid "REFUS DE PLIER"
 msgstr "REFUSE TO BEND"
 
-#: scripts/ui/item_card.gd:137 scripts/ui/shop.gd:314
+#: scripts/ui/item_card.gd:189 scripts/ui/shop.gd:364
 msgid "%d âmes"
 msgstr "%d souls"
 
-#: scripts/ui/item_card.gd:148
+#: scripts/ui/item_card.gd:202
 msgid "%s  ·  PIÈCE RARE"
 msgstr "%s  ·  RARE FIND"
 
-#: scripts/ui/item_card.gd:191
+#: scripts/ui/item_card.gd:248
 msgid "%+d %% %s"
 msgstr "%+d%% %s"
 
-#: scripts/ui/item_card.gd:161 scripts/ui/item_card.gd:162
+#: scripts/ui/item_card.gd:218 scripts/ui/item_card.gd:219
 msgid "dégâts"
 msgstr "damage"
 
-#: scripts/ui/item_card.gd:163
+#: scripts/ui/item_card.gd:220
 msgid "cadence"
 msgstr "fire rate"
 
-#: scripts/ui/item_card.gd:164
+#: scripts/ui/item_card.gd:221
 msgid "projectile"
 msgstr "projectile"
 
-#: scripts/ui/item_card.gd:165
+#: scripts/ui/item_card.gd:222
 msgid "ennemi traversé"
 msgstr "enemy pierced"
 
-#: scripts/ui/item_card.gd:166
+#: scripts/ui/item_card.gd:223
 msgid "chance critique"
 msgstr "crit chance"
 
-#: scripts/ui/item_card.gd:167
+#: scripts/ui/item_card.gd:224
 msgid "dégâts critiques"
 msgstr "crit damage"
 
-#: scripts/ui/item_card.gd:168
+#: scripts/ui/item_card.gd:225
 msgid "vitesse"
 msgstr "speed"
 
-#: scripts/ui/item_card.gd:169
+#: scripts/ui/item_card.gd:226
 msgid "PV max"
 msgstr "max HP"
 
-#: scripts/ui/item_card.gd:170
+#: scripts/ui/item_card.gd:227
 msgid "armure"
 msgstr "armor"
 
-#: scripts/ui/item_card.gd:171
+#: scripts/ui/item_card.gd:228
 msgid "PV/s"
 msgstr "HP/s"
 
-#: scripts/ui/item_card.gd:172
+#: scripts/ui/item_card.gd:229
 msgid "vol de vie"
 msgstr "lifesteal"
 
-#: scripts/ui/item_card.gd:173
+#: scripts/ui/item_card.gd:230
 msgid "rayon de ramassage"
 msgstr "pickup radius"
 
-#: scripts/ui/item_card.gd:174
+#: scripts/ui/item_card.gd:231
 msgid "portée"
 msgstr "range"
 
-#: scripts/ui/item_card.gd:175
+#: scripts/ui/item_card.gd:232
 msgid "âmes"
 msgstr "souls"
 
-#: scripts/ui/item_card.gd:176
+#: scripts/ui/item_card.gd:233
 msgid "chance"
 msgstr "luck"
 
-#: scripts/ui/main_menu.gd:100
+#: scripts/ui/main_menu.gd:114
 msgid "%s   ·   Clés : %d   ·   Forge %d/%d   ·   Meilleure vague : %d   ·   Runs : %d"
 msgstr "%s   ·   Keys: %d   ·   Forge %d/%d   ·   Best wave: %d   ·   Runs: %d"
 
-#: scripts/ui/options_screen.gd:46
+#: scripts/ui/options_screen.gd:49
 msgid "Automatique"
 msgstr "Automatic"
 
-#: scripts/ui/options_screen.gd:57
+#: scripts/ui/options_screen.gd:60
 msgid "La langue des menus, de l'interface et de l'histoire."
 msgstr "The language of the menus, the interface and the story."
 
-#: scripts/ui/options_screen.gd:61
+#: scripts/ui/options_screen.gd:64
 msgid "Plein écran"
 msgstr "Fullscreen"
 
-#: scripts/ui/options_screen.gd:64
+#: scripts/ui/options_screen.gd:67
 msgid "Affichage"
 msgstr "Display"
 
-#: scripts/ui/options_screen.gd:64
+#: scripts/ui/options_screen.gd:67
 msgid "Bascule entre fenêtré et plein écran."
 msgstr "Switches between windowed and fullscreen."
 
-#: scripts/ui/options_screen.gd:66
+#: scripts/ui/options_screen.gd:69
 msgid "Musique"
 msgstr "Music"
 
-#: scripts/ui/options_screen.gd:67
+#: scripts/ui/options_screen.gd:70
 msgid "Volume des musiques du menu et de l'arène."
 msgstr "Volume of the menu and arena music."
 
-#: scripts/ui/options_screen.gd:70
+#: scripts/ui/options_screen.gd:73
 msgctxt "son"
 msgid "Effets"
 msgstr "Sound effects"
 
-#: scripts/ui/options_screen.gd:71
+#: scripts/ui/options_screen.gd:74
 msgid "Volume des tirs, des rugissements et de l'interface."
 msgstr "Volume of shots, roars and the interface."
 
-#: scripts/ui/options_screen.gd:81
+#: scripts/ui/options_screen.gd:84
 msgid "Joystick virtuel"
 msgstr "Virtual joystick"
 
-#: scripts/ui/options_screen.gd:82
+#: scripts/ui/options_screen.gd:85
 msgid "« Automatique » ne l'affiche que sur écran tactile. « Toujours » permet de le tester à la souris."
 msgstr "“Automatic” only shows it on touch screens. “Always” lets you test it with a mouse."
 
-#: scripts/ui/options_screen.gd:85
+#: scripts/ui/options_screen.gd:88
 msgid "Tremblement de caméra"
 msgstr "Camera shake"
 
-#: scripts/ui/options_screen.gd:86
+#: scripts/ui/options_screen.gd:89
 msgid "Réduire ou couper les secousses d'écran (confort visuel)."
 msgstr "Reduce or turn off screen shake (visual comfort)."
 
-#: scripts/ui/options_screen.gd:90
+#: scripts/ui/options_screen.gd:93
 msgid "8 directions"
 msgstr "8 directions"
 
-#: scripts/ui/options_screen.gd:93
+#: scripts/ui/options_screen.gd:96
 msgid "Déplacement"
 msgstr "Movement"
 
-#: scripts/ui/options_screen.gd:94
+#: scripts/ui/options_screen.gd:97
 msgid "Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre."
 msgstr "Snaps the stick and the touch joystick to 8 directions. When off, movement is free."
 
-#: scripts/ui/options_screen.gd:101
+#: scripts/ui/options_screen.gd:104
 msgid "Revoir"
 msgstr "Replay"
 
-#: scripts/ui/options_screen.gd:108
+#: scripts/ui/options_screen.gd:111
 msgid "Histoire"
 msgstr "Story"
 
-#: scripts/ui/options_screen.gd:109
+#: scripts/ui/options_screen.gd:112
 msgid "Rejoue le Pari, le prologue de %s et les scènes déjà vues."
 msgstr "Replays the Wager, %s's prologue and the scenes already seen."
 
@@ -1883,183 +1883,183 @@ msgstr "Replays the Wager, %s's prologue and the scenes already seen."
 msgid "Vague %d  ·  %d âmes"
 msgstr "Wave %d  ·  %d souls"
 
-#: scripts/ui/profiles_screen.gd:88
+#: scripts/ui/profiles_screen.gd:91
 msgid "%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs"
 msgstr "%d keys  ·  Forge %d/%d  ·  best wave %d  ·  %d runs"
 
-#: scripts/ui/profiles_screen.gd:92
+#: scripts/ui/profiles_screen.gd:95
 msgid "Emplacement vide — nouvelle partie"
 msgstr "Empty slot — new game"
 
-#: scripts/ui/profiles_screen.gd:99
+#: scripts/ui/profiles_screen.gd:112
 msgid "Actif"
 msgstr "Active"
 
-#: scripts/ui/profiles_screen.gd:99
+#: scripts/ui/profiles_screen.gd:112
 msgid "Charger"
 msgstr "Load"
 
-#: scripts/ui/profiles_screen.gd:99
+#: scripts/ui/profiles_screen.gd:112
 msgid "Commencer ici"
 msgstr "Start here"
 
-#: scripts/ui/profiles_screen.gd:111
+#: scripts/ui/profiles_screen.gd:125
 msgid "Confirmer ?"
 msgstr "Confirm?"
 
-#: scripts/ui/profiles_screen.gd:118
+#: scripts/ui/profiles_screen.gd:132
 msgid "Effacer"
 msgstr "Erase"
 
-#: scripts/ui/shop.gd:106
+#: scripts/ui/shop.gd:115
 msgid "Vague %d terminée"
 msgstr "Wave %d cleared"
 
-#: scripts/ui/shop.gd:111
+#: scripts/ui/shop.gd:120
 msgid "  ·  %d âmes arrachées à %d survivants"
 msgstr "  ·  %d souls torn from %d survivors"
 
-#: scripts/ui/shop.gd:211
+#: scripts/ui/shop.gd:261
 msgid "Plus rien à vendre : vous avez tout pris."
 msgstr "Nothing left to sell: you took it all."
 
-#: scripts/ui/shop.gd:255
+#: scripts/ui/shop.gd:305
 msgid "REVENDRE — la moitié du prix de base"
 msgstr "SELL — half the base price"
 
-#: scripts/ui/shop.gd:288
+#: scripts/ui/shop.gd:338
 msgid "+%d âmes"
 msgstr "+%d souls"
 
-#: scripts/ui/shop.gd:316
+#: scripts/ui/shop.gd:366
 msgid "Relancer (%d âmes)"
 msgstr "Reroll (%d souls)"
 
-#: scripts/ui/shop.gd:375
+#: scripts/ui/shop.gd:440
 msgid "+%s chance"
 msgstr "+%s luck"
 
-#: scripts/ui/shop.gd:376
+#: scripts/ui/shop.gd:441
 msgid "%+d %% de portée"
 msgstr "%+d%% range"
 
-#: scripts/ui/shop.gd:403 scenes/ui/shop.tscn:151
+#: scripts/ui/shop.gd:468 scenes/ui/shop.tscn:153
 msgid "Aucun pacte — la vague suivante se joue normalement."
 msgstr "No pact — the next wave plays normally."
 
-#: scripts/ui/shop.gd:406
+#: scripts/ui/shop.gd:471
 msgid "Pacte actif : %s (une vague)"
 msgstr "Active pact: %s (one wave)"
 
-#: scripts/ui/stats_screen.gd:103
+#: scripts/ui/stats_screen.gd:82
 msgid "Vague %d  ·  %d âmes  ·  %d éliminations  ·  %s"
 msgstr "Wave %d  ·  %d souls  ·  %d kills  ·  %s"
 
-#: scripts/ui/stats_screen.gd:122
+#: scripts/ui/stats_screen.gd:101
 msgid "= TOTAL"
 msgstr "= TOTAL"
 
-#: scripts/ui/stats_screen.gd:135
+#: scripts/ui/stats_screen.gd:115
 msgid "◆  "
 msgstr "◆  "
 
-#: scripts/ui/stats_screen.gd:142
+#: scripts/ui/stats_screen.gd:122
 msgid "OBJETS  ·  %d piles, %d distincts"
 msgstr "ITEMS  ·  %d stacks, %d distinct"
 
-#: scripts/ui/stats_screen.gd:146
+#: scripts/ui/stats_screen.gd:126
 msgid "Rien encore. Les âmes s'échangent entre les vagues."
 msgstr "Nothing yet. Souls are traded between waves."
 
-#: scripts/ui/stats_screen.gd:157
+#: scripts/ui/stats_screen.gd:137
 msgid "%d min %02d s"
 msgstr "%d min %02d s"
 
-#: scripts/ui/stats_screen.gd:207
+#: scripts/ui/shop.gd:526 scripts/ui/stats_screen.gd:187
 msgid "PLAFOND"
 msgstr "CAP"
 
-#: scripts/ui/stats_screen.gd:275
+#: scripts/ui/stats_screen.gd:255
 msgid "—"
 msgstr "—"
 
-#: scripts/ui/stats_screen.gd:280 scripts/ui/stats_screen.gd:365 scripts/ui/stats_screen.gd:384
+#: scripts/ui/stats_screen.gd:260 scripts/ui/stats_totaux.gd:151 scripts/ui/stats_totaux.gd:170
 msgid "%+d %%"
 msgstr "%+d%%"
 
-#: scripts/ui/stats_screen.gd:330
+#: scripts/ui/stats_totaux.gd:116
 msgid "%.1f /tir"
 msgstr "%.1f /shot"
 
-#: scripts/ui/stats_screen.gd:357 scripts/ui/stats_screen.gd:386 scripts/ui/stats_screen.gd:388 scripts/ui/stats_screen.gd:391
+#: scripts/ui/stats_totaux.gd:143 scripts/ui/stats_totaux.gd:172 scripts/ui/stats_totaux.gd:174 scripts/ui/stats_totaux.gd:177
 msgid "+%d %%"
 msgstr "+%d%%"
 
-#: scripts/ui/stats_screen.gd:377
+#: scripts/ui/stats_totaux.gd:163
 msgid "%d  (−%d %%)"
 msgstr "%d  (−%d%%)"
 
-#: scripts/ui/stats_screen.gd:380
+#: scripts/ui/stats_totaux.gd:166
 msgid "%.1f PV/s"
 msgstr "%.1f HP/s"
 
-#: scripts/ui/stats_screen.gd:382
+#: scripts/ui/stats_totaux.gd:168
 msgid "%.1f %%"
 msgstr "%.1f%%"
 
-#: scripts/ui/stats_screen.gd:32
+#: scripts/ui/stats_totaux.gd:17
 msgid "  dont dégâts plats"
 msgstr "  incl. flat damage"
 
-#: scripts/ui/stats_screen.gd:33
+#: scripts/ui/stats_totaux.gd:18
 msgid "Cadence de tir"
 msgstr "Fire rate"
 
-#: scripts/ui/stats_screen.gd:34
+#: scripts/ui/stats_totaux.gd:19
 msgid "Projectiles"
 msgstr "Projectiles"
 
-#: scripts/ui/stats_screen.gd:35
+#: scripts/ui/stats_totaux.gd:20
 msgid "Ennemis traversés"
 msgstr "Enemies pierced"
 
-#: scripts/ui/stats_screen.gd:36
+#: scripts/ui/stats_totaux.gd:21
 msgid "Chance de critique"
 msgstr "Crit chance"
 
-#: scripts/ui/stats_screen.gd:37
+#: scripts/ui/stats_totaux.gd:22
 msgid "Dégâts critiques"
 msgstr "Crit damage"
 
-#: scripts/ui/stats_screen.gd:38
+#: scripts/ui/stats_totaux.gd:23
 msgid "PV maximum"
 msgstr "Max HP"
 
-#: scripts/ui/stats_screen.gd:39
+#: scripts/ui/stats_totaux.gd:24
 msgid "Armure"
 msgstr "Armor"
 
-#: scripts/ui/stats_screen.gd:40
+#: scripts/ui/stats_totaux.gd:25
 msgid "Régénération"
 msgstr "Regeneration"
 
-#: scripts/ui/stats_screen.gd:41
+#: scripts/ui/stats_totaux.gd:26
 msgid "Vol de vie"
 msgstr "Lifesteal"
 
-#: scripts/ui/stats_screen.gd:42
+#: scripts/ui/stats_totaux.gd:27
 msgid "Vitesse"
 msgstr "Speed"
 
-#: scripts/ui/stats_screen.gd:43
+#: scripts/ui/stats_totaux.gd:28
 msgid "Portée de visée"
 msgstr "Aiming range"
 
-#: scripts/ui/stats_screen.gd:44
+#: scripts/ui/stats_totaux.gd:30
 msgid "Gain d'âmes"
 msgstr "Soul gain"
 
-#: scripts/ui/stats_screen.gd:45
+#: scripts/ui/stats_totaux.gd:31
 msgid "Chance"
 msgstr "Luck"
 
@@ -2111,7 +2111,7 @@ msgstr "←"
 msgid "→"
 msgstr "→"
 
-#: scenes/bosses/asmodee.tscn:28
+#: scripts/story/bestiaire.gd:58 scripts/story/story_db.gd:54 scenes/bosses/asmodee.tscn:28
 msgid "Asmodée"
 msgstr "Asmodeus"
 
@@ -2119,7 +2119,7 @@ msgstr "Asmodeus"
 msgid "Les Trois Têtes"
 msgstr "The Three Heads"
 
-#: scenes/bosses/baal.tscn:28
+#: scripts/story/bestiaire.gd:55 scripts/story/story_db.gd:53 scenes/bosses/baal.tscn:28
 msgid "Baal"
 msgstr "Baal"
 
@@ -2127,7 +2127,7 @@ msgstr "Baal"
 msgid "Le Seigneur de l'Orage"
 msgstr "The Lord of the Storm"
 
-#: scenes/bosses/golgota.tscn:27
+#: scripts/story/bestiaire.gd:49 scenes/bosses/golgota.tscn:27
 msgid "Golgota"
 msgstr "Golgotha"
 
@@ -2147,72 +2147,71 @@ msgstr "The First Night"
 msgid "L'Étoile du Matin"
 msgstr "The Morning Star"
 
-#: scenes/ui/character_select.tscn:43
+#: scenes/ui/character_select.tscn:56
 msgid "CHOISISSEZ VOTRE DAMNÉ"
 msgstr "CHOOSE YOUR DAMNED"
 
-#: scenes/ui/character_select.tscn:62
+#: scenes/ui/character_select.tscn:88
 msgid "100 PV"
 msgstr "100 HP"
 
-#: scenes/ui/character_select.tscn:70
+#: scenes/ui/character_select.tscn:96
 msgid "Passif"
 msgstr "Passive"
 
-#: scenes/ui/character_select.tscn:78 scenes/ui/forge.tscn:104
+#: scenes/ui/character_select.tscn:104 scenes/ui/forge.tscn:126
 msgid "Déchaînement"
 msgstr "Unleashed"
 
-#: scenes/ui/character_select.tscn:87
+#: scenes/ui/character_select.tscn:114
 msgid "COMMENCER"
 msgstr "START"
 
-#: scenes/ui/character_select.tscn:99 scenes/ui/game_over.tscn:91
+#: scenes/ui/character_select.tscn:65 scenes/ui/game_over.tscn:110
 msgid "Forge Éternelle"
 msgstr "Eternal Forge"
 
-#: scenes/ui/character_select.tscn:107 scenes/ui/forge.tscn:131 scenes/ui/options.tscn:75 scenes/ui/profiles.tscn:69
+#: scenes/ui/character_select.tscn:49 scenes/ui/classement.tscn:49 scenes/ui/collection.tscn:49 scenes/ui/forge.tscn:50
 msgid "Retour"
 msgstr "Back"
 
-#: scenes/ui/curse_select.tscn:43
+#: scenes/ui/curse_select.tscn:42
 msgid "MALÉDICTIONS"
 msgstr "CURSES"
 
-#: scenes/ui/curse_select.tscn:50
+#: scenes/ui/curse_select.tscn:52
 msgid "Facultatif. Chaque malédiction durcit la run entière en échange de meilleures récompenses. Vous pouvez commencer sans en prendre aucune."
 msgstr "Optional. Each curse hardens the whole run in exchange for better rewards. You can start without taking any."
 
-#: scenes/ui/forge.tscn:43
+#: scenes/ui/forge.tscn:58
 msgid "FORGE ÉTERNELLE"
 msgstr "ETERNAL FORGE"
 
-#: scenes/ui/forge.tscn:56
+#: scenes/ui/forge.tscn:68
 msgid "Clés : 0"
 msgstr "Keys: 0"
 
-#: scenes/ui/forge.tscn:64
+#: scenes/ui/forge.tscn:79
 msgid "Forge 0 / 15"
 msgstr "Forge 0 / 15"
 
-#: scenes/ui/forge.tscn:121
-#: scenes/ui/game_over.tscn:62
+#: scenes/ui/forge.tscn:139 scenes/ui/game_over.tscn:69
 msgid "Objets sacrés"
 msgstr "Sacred items"
 
-#: scenes/ui/game_over.tscn:51 scenes/ui/pause.tscn:54 scenes/ui/stats.tscn:53
+#: scenes/ui/game_over.tscn:53 scenes/ui/pause.tscn:61 scenes/ui/stats.tscn:48
 msgid "Vague 1"
 msgstr "Wave 1"
 
-#: scenes/ui/game_over.tscn:69
+#: scenes/ui/game_over.tscn:77
 msgid "Clés disponibles : 0"
 msgstr "Keys available: 0"
 
-#: scenes/ui/game_over.tscn:99
+#: scenes/ui/game_over.tscn:117
 msgid "Menu principal"
 msgstr "Main menu"
 
-#: scenes/ui/game_over.tscn:106
+#: scenes/ui/game_over.tscn:124
 msgid "Nouvelle run"
 msgstr "New run"
 
@@ -2224,51 +2223,51 @@ msgstr "Action roguelite — go down as far as you can hold out."
 msgid "JOUER"
 msgstr "PLAY"
 
-#: scenes/ui/main_menu.tscn:124 scenes/ui/profiles.tscn:43
+#: scenes/ui/main_menu.tscn:137 scenes/ui/profiles.tscn:56
 msgid "PROFILS"
 msgstr "PROFILES"
 
-#: scenes/ui/main_menu.tscn:132 scenes/ui/options.tscn:43
+#: scenes/ui/main_menu.tscn:144 scenes/ui/options.tscn:56
 msgid "OPTIONS"
 msgstr "OPTIONS"
 
-#: scenes/ui/main_menu.tscn:140
+#: scenes/ui/main_menu.tscn:151
 msgid "QUITTER"
 msgstr "QUIT"
 
-#: scenes/ui/main_menu.tscn:153
+#: scenes/ui/main_menu.tscn:169
 msgid "Profil 1"
 msgstr "Profile 1"
 
-#: scenes/ui/options.tscn:67
+#: scenes/ui/options.tscn:65
 msgid "Valeurs par défaut"
 msgstr "Default values"
 
-#: scenes/ui/pause.tscn:46
+#: scenes/ui/pause.tscn:52
 msgid "PAUSE"
 msgstr "PAUSE"
 
-#: scenes/ui/pause.tscn:64
+#: scenes/ui/pause.tscn:76
 msgid "Reprendre"
 msgstr "Resume"
 
-#: scenes/ui/pause.tscn:71
+#: scenes/ui/pause.tscn:83
 msgid "Options"
 msgstr "Options"
 
-#: scenes/ui/pause.tscn:78
+#: scenes/ui/pause.tscn:93
 msgid "Abandonner la run"
 msgstr "Abandon run"
 
-#: scenes/ui/pause.tscn:85
+#: scenes/ui/pause.tscn:107
 msgid "Échap ou B pour reprendre."
 msgstr "Esc or B to resume."
 
-#: scenes/ui/profiles.tscn:50
+#: scenes/ui/profiles.tscn:70
 msgid "Chaque profil a ses propres clés, sa Forge et ses statistiques. Choisir un emplacement vide, ou effacer celui en cours, recommence une partie de zéro."
 msgstr "Each profile has its own keys, Forge and statistics. Choosing an empty slot, or erasing the current one, starts over from scratch."
 
-#: scenes/ui/shop.tscn:55
+#: scenes/ui/shop.tscn:56
 msgid "REVENDRE"
 msgstr "SELL"
 
@@ -2284,274 +2283,978 @@ msgstr "0 souls"
 msgid "Les âmes non dépensées sont perdues à la mort. Choisissez un axe : tout prendre est impossible."
 msgstr "Unspent souls are lost on death. Pick a direction: taking everything is impossible."
 
-#: scenes/ui/shop.tscn:137
+#: scenes/ui/shop.tscn:139
 msgid "Pacte de vague (facultatif)"
 msgstr "Wave pact (optional)"
 
-#: scenes/ui/shop.tscn:163
+#: scenes/ui/shop.tscn:166
 msgid "Relancer"
 msgstr "Reroll"
 
-#: scenes/ui/shop.tscn:170
+#: scenes/ui/shop.tscn:174
 msgid "Vague suivante"
 msgstr "Next wave"
 
-#: scenes/ui/stats.tscn:45
+#: scenes/ui/stats.tscn:40
 msgid "FICHE DE RUN"
 msgstr "RUN SHEET"
 
-#: scenes/ui/stats.tscn:73
+#: scenes/ui/stats.tscn:70
 msgid "STATISTIQUES"
 msgstr "STATISTICS"
 
-#: scenes/ui/stats.tscn:90
+#: scenes/ui/stats.tscn:88
 msgid "OBJETS"
 msgstr "ITEMS"
 
-#: scenes/ui/stats.tscn:108
+#: scenes/ui/stats.tscn:106
 msgid "TAB ou Back pour refermer."
 msgstr "TAB or Back to close."
 
-#: scripts/ui/forge_screen.gd:285 scripts/ui/forge_screen.gd:309 scripts/ui/forge_screen.gd:365 scripts/ui/game_over.gd:116
+#: scripts/ui/forge_screen.gd:274 scripts/ui/forge_screen.gd:298 scripts/ui/sacres_grille.gd:57
 msgid "%d clé"
 msgstr "%d key"
 
-#: scripts/ui/item_card.gd:137 scripts/ui/shop.gd:314
+#: scripts/ui/item_card.gd:189 scripts/ui/shop.gd:364
 msgid "%d âme"
 msgstr "%d soul"
 
-#: scripts/ui/shop.gd:288
+#: scripts/ui/shop.gd:338
 msgid "+%d âme"
 msgstr "+%d soul"
 
-#: scripts/ui/shop.gd:316
+#: scripts/ui/shop.gd:366
 msgid "Relancer (%d âme)"
 msgstr "Reroll (%d soul)"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:154
 msgid "Soufre"
 msgstr "Brimstone"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:162
 msgid "Chaînes du Tartare"
 msgstr "Chains of Tartarus"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:171
 msgid "Fronde de David"
 msgstr "David's Sling"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:235
 msgid "Mâchoire de Samson"
 msgstr "Samson's Jawbone"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:316
 msgid "Sel de Sodome"
 msgstr "Salt of Sodom"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:322
 msgid "Trente deniers"
 msgstr "Thirty Pieces of Silver"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:328
 msgid "Peau de salamandre"
 msgstr "Salamander Skin"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:334
 msgid "Feu grégeois"
 msgstr "Greek Fire"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:340
 msgid "Clou du Golgotha"
 msgstr "Nail of Golgotha"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:346
 msgid "Encensoir"
 msgstr "Censer"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:352
 msgid "Bâton de Moïse"
 msgstr "Staff of Moses"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:358
 msgid "Trompette de Jéricho"
 msgstr "Trumpet of Jericho"
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:155
 msgid "Vos coups enflamment la cible : elle brûle pour 40 % des dégâts reçus."
 msgstr "Your hits set the target ablaze: it burns for 40% of the damage taken."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:163
 msgid "Vos coups ralentissent de 40 % pendant 2 s. Sans effet sur les boss."
 msgstr "Your hits slow by 40% for 2 s. No effect on bosses."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:172
 msgid "+60 % de dégâts sur un ennemi encore intact."
 msgstr "+60% damage against an unharmed enemy."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:236
 msgid "Sous la moitié de vos PV : +30 % de dégâts et +15 % de cadence."
 msgstr "Below half HP: +30% damage and +15% fire rate."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:317
 msgid "+35 % de dégâts contre les ennemis en feu ou ralentis."
 msgstr "+35% damage against burning or slowed enemies."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:323
 msgid "À chaque fin de vague, 10 % de vos âmes vous sont versées (40 au plus)."
 msgstr "At the end of each wave, you gain 10% of your souls (40 at most)."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:329
 msgid "La lave ne vous brûle plus. Elle brûle toujours ceux qui vous y suivent."
 msgstr "Lava no longer burns you. It still burns whoever follows you in."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:335
 msgid "Un ennemi qui meurt en feu enflamme jusqu'à trois voisins. Le feu se propage deux fois au plus."
 msgstr "An enemy that dies burning sets up to three neighbors ablaze. The fire spreads twice at most."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:341
 msgid "+10 % de critique. Vos coups critiques enflamment (100 % des dégâts) et ralentissent."
 msgstr "+10% crit chance. Your critical hits ignite (100% of the damage) and slow."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:347
 msgid "Deux flammes tournent autour de vous et brûlent ce qu'elles touchent (60 % des dégâts d'un tir)."
 msgstr "Two flames circle around you and burn whatever they touch (60% of a shot's damage)."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:353
 msgid "Votre pouvoir ouvre la foule : tout ce qui est proche est repoussé et prend 150 % des dégâts d'un tir."
 msgstr "Your power parts the crowd: everything nearby is pushed back and takes 150% of a shot's damage."
 
-#: scripts/items/item_database.gd
+#: scripts/items/item_database.gd:359
 msgid "Toutes les 6 s, une onde repousse et frappe tout ce qui vous entoure (200 % des dégâts d'un tir)."
 msgstr "Every 6 s, a shockwave pushes back and strikes everything around you (200% of a shot's damage)."
 
-#: 0.9.3
+#: scripts/core/run_state.gd:319
 msgid "GRIFFE DU MOISSONNEUR"
 msgstr "REAPER'S CLAW"
 
-#: 0.9.3
+#: scripts/core/run_state.gd:320
 msgid "+%d %% de dégâts"
 msgstr "+%d%% damage"
 
-#: 0.9.3
+#: scripts/systems/character_effects.gd:234
 msgid "SOL CONSACRÉ"
 msgstr "CONSECRATED GROUND"
 
-#: 0.9.3
+#: scripts/systems/character_effects.gd:235
 msgid "+%s PV par seconde"
 msgstr "+%s HP per second"
 
-#: 0.9.3
+#: scripts/systems/character_effects.gd:338
 msgid "+%d %% de cadence"
 msgstr "+%d%% fire rate"
 
-#: 0.9.3
+#: scripts/systems/character_effects.gd:340
 msgid ", +%d %% de dégâts"
 msgstr ", +%d%% damage"
 
-#: 0.9.3
+#: scripts/systems/character_effects.gd:341
 msgid "EN FUITE"
 msgstr "ON THE RUN"
 
-#: 0.9.3
+#: scripts/systems/item_effects.gd:353
 msgid "MÂCHOIRE DE SAMSON"
 msgstr "SAMSON'S JAWBONE"
 
-#: 0.9.3
+#: scripts/systems/item_effects.gd:354
 msgid "+%d %% de dégâts, +%d %% de cadence"
 msgstr "+%d%% damage, +%d%% fire rate"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:70
 msgid "RANG"
 msgstr "RANK"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:70
 msgid "JOUEUR"
 msgstr "PLAYER"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:70
 msgid "DAMNÉ"
 msgstr "DAMNED"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:70
 msgid "VAGUE"
 msgstr "WAVE"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:71
 msgid "ÉLIMINATIONS"
 msgstr "KILLS"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:71
 msgid "TEMPS"
 msgstr "TIME"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:75
 msgid "Aucune run enregistrée pour l'instant."
 msgstr "No runs recorded yet."
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:76
 msgid "Aucune run déchaînée pour l'instant. Le Déchaînement s'arme à la Forge, après Lucifer."
 msgstr "No Unleashed runs yet. Unleashed is armed at the Forge, after Lucifer."
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:102
 msgid "1er"
 msgstr "1st"
 
-#: 0.9.3
+#: scripts/ui/classement_screen.gd:103 scripts/ui/game_over.gd:74
 msgid "%de"
 msgstr "#%d"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:137
 msgid "%d / %d objets découverts"
 msgstr "%d / %d items discovered"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:184
 msgid "Obtenu une fois"
 msgstr "Obtained once"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:184
 msgid "Obtenu %d fois"
 msgstr "Obtained %d times"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:187 scripts/ui/collection_screen.gd:253 scripts/ui/collection_screen.gd:258
 msgid "???"
 msgstr "???"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:189 scripts/ui/collection_screen.gd:320
 msgid "Pas encore trouvé."
 msgstr "Not found yet."
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:191
 msgid "Sacré : à débloquer à la Forge pour %d clé"
 msgstr "Sacred: unlock it at the Forge for %d key"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:192
 msgid "Sacré : à débloquer à la Forge pour %d clés"
 msgstr "Sacred: unlock it at the Forge for %d keys"
 
-#: 0.9.3
+#: scripts/ui/collection_screen.gd:195
 msgid "Il vous attend en boutique."
 msgstr "It awaits you in the shop."
 
-#: 0.9.3
+#: scripts/ui/game_over.gd:72
 msgid "Nouveau record : 1er du classement"
 msgstr "New record: 1st on the leaderboard"
 
-#: 0.9.3
+#: scripts/ui/game_over.gd:74
 msgid "Classement : %s"
 msgstr "Leaderboard: %s"
 
-#: 0.9.3
+#: scenes/ui/classement.tscn:56 scenes/ui/main_menu.tscn:130
 msgid "CLASSEMENT"
 msgstr "LEADERBOARD"
 
-#: 0.9.3
+#: scenes/ui/classement.tscn:70
 msgid "Les meilleures runs de ce poste, tous profils confondus : la vague atteinte, puis les éliminations, puis le temps."
 msgstr "The best runs on this computer, all profiles combined: wave reached, then kills, then time."
 
-#: 0.9.3
+#: scenes/ui/classement.tscn:83
 msgid "CLASSIQUE"
 msgstr "CLASSIC"
 
-#: 0.9.3
+#: scenes/ui/collection.tscn:56 scenes/ui/main_menu.tscn:123
 msgid "COLLECTION"
 msgstr "COLLECTION"
+
+#: scripts/ui/stats_totaux.gd:29
+msgid "Rayon de ramassage"
+msgstr "Pickup radius"
+
+#: scenes/ui/shop.tscn:192
+msgid "Stats"
+msgstr "Stats"
+
+#: scripts/ui/item_card.gd:118
+msgid "Verrouiller : l'objet reste à la relance et revient à la boutique suivante."
+msgstr "Lock: the item stays through rerolls and comes back in the next shop."
+
+#: scripts/ui/item_card.gd:206
+msgid "VERROUILLÉ"
+msgstr "LOCKED"
+
+#: scripts/story/bestiaire.gd:20
+msgid "Imp"
+msgstr "Imp"
+
+#: scripts/story/bestiaire.gd:23
+msgid "Limier"
+msgstr "Hound"
+
+#: scripts/story/bestiaire.gd:26
+msgid "Cultiste"
+msgstr "Cultist"
+
+#: scripts/story/bestiaire.gd:29
+msgid "Brute"
+msgstr "Brute"
+
+#: scripts/story/bestiaire.gd:32
+msgid "Chauve-souris"
+msgstr "Bat"
+
+#: scripts/story/bestiaire.gd:35
+msgid "Slime de lave"
+msgstr "Lava slime"
+
+#: scripts/story/bestiaire.gd:38
+msgid "Feu follet"
+msgstr "Will-o'-wisp"
+
+#: scripts/story/bestiaire.gd:41
+msgid "Œil"
+msgstr "Eye"
+
+#: scripts/story/bestiaire.gd:44
+msgid "Invocatrice"
+msgstr "Summoner"
+
+#: scripts/story/bestiaire.gd:21
+msgid "Les plus petits de l'enfer. Ils ne savent faire qu'une chose : venir."
+msgstr "The smallest things in hell. They only know how to do one thing: come at you."
+
+#: scripts/story/bestiaire.gd:24
+msgid "Il a senti ta peur avant de te voir."
+msgstr "It smelled your fear before it saw you."
+
+#: scripts/story/bestiaire.gd:27
+msgid "Il prie encore, par habitude, un dieu qui ne vient pas."
+msgstr "He still prays, out of habit, to a god who never comes."
+
+#: scripts/story/bestiaire.gd:30
+msgid "On l'a nourrie de tout ce qui ne servait plus."
+msgstr "It was fed everything nobody needed anymore."
+
+#: scripts/story/bestiaire.gd:33
+msgid "Ni le feu ni la pierre ne l'arrêtent."
+msgstr "Neither fire nor stone can stop it."
+
+#: scripts/story/bestiaire.gd:36
+msgid "La lave a appris à ramper."
+msgstr "The lava learned to crawl."
+
+#: scripts/story/bestiaire.gd:39
+msgid "Une âme égarée qui cherche quelqu'un avec qui brûler."
+msgstr "A lost soul looking for someone to burn with."
+
+#: scripts/story/bestiaire.gd:42
+msgid "Il ne cligne jamais. Il attend que tu t'arrêtes."
+msgstr "It never blinks. It waits for you to stop."
+
+#: scripts/story/bestiaire.gd:45
+msgid "Elle appelle, et l'enfer répond toujours."
+msgstr "She calls, and hell always answers."
+
+#: scripts/story/bestiaire.gd:50
+msgid "Le Mont du Crâne : les os de ceux qui ont joué avant toi."
+msgstr "The Mount of the Skull: the bones of those who played before you."
+
+#: scripts/story/bestiaire.gd:53
+msgid "La première femme. Elle a dit non, une fois."
+msgstr "The first woman. She said no, once."
+
+#: scripts/story/bestiaire.gd:56
+msgid "Un dieu qu'on a cessé de prier. Il tonne encore."
+msgstr "A god nobody prays to anymore. He still thunders."
+
+#: scripts/story/bestiaire.gd:59
+msgid "Trois têtes, et la chaîne de Salomon."
+msgstr "Three heads, and Solomon's chain."
+
+#: scripts/story/bestiaire.gd:62
+msgid "Il a parié, et il a perdu. Il ne l'a pas accepté."
+msgstr "He made a wager, and he lost. He never accepted it."
+
+#: scripts/story/bestiaire.gd:66
+msgid "Le nom d'avant la chute. Fils de l'Aurore."
+msgstr "The name from before the fall. Son of the Dawn."
+
+#: scripts/story/bestiaire.gd:22
+msgid "Seul, rien. En meute, tout."
+msgstr "Alone, nothing. In a pack, everything."
+
+#: scripts/story/bestiaire.gd:25
+msgid "Il se fige avant de charger, et sa charge ne dévie pas : un pas de côté suffit."
+msgstr "It freezes before it charges, and the charge never turns: one step aside is enough."
+
+#: scripts/story/bestiaire.gd:28
+msgid "Il recule quand on l'approche, mais s'arrête pour tirer : c'est là qu'on le rattrape."
+msgstr "He backs away when you close in, but stops to shoot: that's when you catch him."
+
+#: scripts/story/bestiaire.gd:31
+msgid "Lente, mais elle frappe deux fois plus fort qu'un imp. Ne la laisse pas t'acculer."
+msgstr "Slow, but it hits twice as hard as an imp. Don't let it corner you."
+
+#: scripts/story/bestiaire.gd:34
+msgid "Elle vole : se cacher derrière le décor ne sert à rien. Elle tombe au premier tir."
+msgstr "It flies: hiding behind the scenery won't help. One shot brings it down."
+
+#: scripts/story/bestiaire.gd:37
+msgid "Tué, il se divise en deux. Ce qui traverse ou qui brûle en vient à bout."
+msgstr "Killed, it splits in two. Piercing and burning make short work of it."
+
+#: scripts/story/bestiaire.gd:40
+msgid "Abats-le pendant sa mèche, et rien n'explose. S'il détone, il ne rapporte rien."
+msgstr "Kill it while its fuse burns and nothing explodes. If it detonates, it pays nothing."
+
+#: scripts/story/bestiaire.gd:43
+msgid "Il se fige pour viser, puis son rayon se verrouille : fonce sur lui pendant qu'il vise."
+msgstr "It freezes to aim, then its beam locks on: rush it while it aims."
+
+#: scripts/story/bestiaire.gd:46
+msgid "Ses imps tombent en cendre avec elle, et ne rapportent rien. Vise-la d'abord."
+msgstr "Her imps crumble to ash with her, and pay nothing. Aim for her first."
+
+#: scripts/story/bestiaire.gd:51
+msgid "Lent, mais c'est le sol qui frappe. S'éloigner ne fait qu'appeler les croix."
+msgstr "Slow, but the ground does the hitting. Keeping away only calls the crosses."
+
+#: scripts/story/bestiaire.gd:54
+msgid "Elle disparaît, puis surgit sur toi avec sa progéniture. Garde-la sous le feu."
+msgstr "She vanishes, then appears on top of you with her brood. Keep her under fire."
+
+#: scripts/story/bestiaire.gd:57
+msgid "Chaque cercle bleu est un éclair qui va tomber. Rester loin ne protège de rien."
+msgstr "Every blue circle is a bolt about to fall. Distance protects you from nothing."
+
+#: scripts/story/bestiaire.gd:60
+msgid "Chaque tête a son attaque. Sa chaîne te tire vers lui avant de charger."
+msgstr "Each head has its own attack. His chain drags you to him before he charges."
+
+#: scripts/story/bestiaire.gd:63
+msgid "Son cercle de feu s'allume à la distance où tu te tiens. Le seul endroit sûr est près de lui."
+msgstr "His ring of fire ignites at whatever distance you stand. The only safe place is close to him."
+
+#: scripts/story/bestiaire.gd:67
+msgid "Trois âmes, un seul corps : il te fait changer de damné en plein combat."
+msgstr "Three souls, one body: he makes you switch damned mid-fight."
+
+#: scripts/story/registre.gd:16
+msgid "Le premier pari"
+msgstr "The first wager"
+
+#: scripts/story/registre.gd:19
+msgid "Ceux d'avant"
+msgstr "Those before"
+
+#: scripts/story/registre.gd:25
+msgid "La question"
+msgstr "The question"
+
+#: scripts/story/registre.gd:28
+msgid "La statue"
+msgstr "The statue"
+
+#: scripts/story/registre.gd:31
+msgid "Celle qui a refusé"
+msgstr "The one who refused"
+
+#: scripts/story/registre.gd:34
+msgid "Les dieux qu'on oublie"
+msgstr "Forgotten gods"
+
+#: scripts/story/registre.gd:37
+msgid "La chaîne"
+msgstr "The chain"
+
+#: scripts/story/registre.gd:40
+msgid "La Forge"
+msgstr "The Forge"
+
+#: scripts/story/registre.gd:43
+msgid "La Clé"
+msgstr "The Key"
+
+#: scripts/story/registre.gd:46
+msgid "L'Aurore"
+msgstr "The Dawn"
+
+#: scripts/story/registre.gd:49
+msgid "La dernière page"
+msgstr "The last page"
+
+#: scripts/story/registre.gd:17
+msgid "Terminer une première descente."
+msgstr "Finish a first descent."
+
+#: scripts/story/registre.gd:20
+msgid "Abattre Golgota."
+msgstr "Slay Golgota."
+
+#: scripts/story/registre.gd:23
+msgid "Abattre Lilith avec Caïn."
+msgstr "Slay Lilith with Cain."
+
+#: scripts/story/registre.gd:26
+msgid "Abattre Lilith avec Job."
+msgstr "Slay Lilith with Job."
+
+#: scripts/story/registre.gd:29
+msgid "Abattre Lilith avec Loth."
+msgstr "Slay Lilith with Lot."
+
+#: scripts/story/registre.gd:32
+msgid "Abattre Lilith."
+msgstr "Slay Lilith."
+
+#: scripts/story/registre.gd:35
+msgid "Abattre Baal."
+msgstr "Slay Baal."
+
+#: scripts/story/registre.gd:38
+msgid "Abattre Asmodée."
+msgstr "Slay Asmodeus."
+
+#: scripts/story/registre.gd:41
+msgid "Ouvrir 10 nœuds de Forge."
+msgstr "Open 10 Forge nodes."
+
+#: scripts/story/registre.gd:44
+msgid "Ramasser la Clé des Abysses."
+msgstr "Pick up the Key of the Abyss."
+
+#: scripts/story/registre.gd:47
+msgid "Briser les trois sceaux."
+msgstr "Break the three seals."
+
+#: scripts/story/registre.gd:50
+msgid "Rompre le Pari."
+msgstr "Break the Wager."
+
+#: scripts/story/registre.gd:18
+msgid ""
+"« Retire-lui tout, ai-je dit, et il te maudira en face. »\n"
+"\n"
+"On lui a tout retiré. Il s'est assis dans la cendre et il a gratté ses plaies avec un tesson. Il a crié, il a douté, il a exigé des comptes.\n"
+"\n"
+"Il n'a pas maudit. J'ai perdu contre un homme assis dans la cendre. Je n'ai jamais perdu ailleurs."
+msgstr ""
+"\"Take everything from him,\" I said, \"and he will curse you to your face.\"\n"
+"\n"
+"Everything was taken from him. He sat down in the ashes and scraped his sores with a shard of pottery. He cried out, he doubted, he demanded an accounting.\n"
+"\n"
+"He did not curse. I lost to a man sitting in the ashes. I have never lost anywhere else."
+
+#: scripts/story/registre.gd:21
+msgid ""
+"Coré, englouti avec les siens. Les bâtisseurs de Babel, tous. Une femme de Gomorrhe dont je n'ai pas gardé le nom.\n"
+"\n"
+"(Chaque nom est raturé.)\n"
+"\n"
+"Ils ont plié. Je les ai rangés en tas, et le tas s'est mis à marcher. Les damnés l'appellent Golgota. Moi, je l'appelle mes archives."
+msgstr ""
+"Korah, swallowed up with his own. The builders of Babel, all of them. A woman of Gomorrah whose name I did not keep.\n"
+"\n"
+"(Every name is crossed out.)\n"
+"\n"
+"They bent. I stacked them in a heap, and the heap began to walk. The damned call it Golgota. I call it my archives."
+
+#: scripts/story/registre.gd:24
+msgid ""
+"Sept fois vengé, quiconque le tuerait. Je l'ai lue, retournée, éprouvée au feu : elle ne cède pas.\n"
+"\n"
+"C'est la seule chose de mon enfer que je n'ai pas faite, et elle se promène devant moi sur le front d'un meurtrier.\n"
+"\n"
+"Je lui ai promis une fin. Je ne sais pas comment la lui donner. Il ne doit pas le savoir."
+msgstr ""
+"Whoever kills him shall be avenged sevenfold. I have read it, turned it over, tried it in the fire: it does not yield.\n"
+"\n"
+"It is the only thing in my hell I did not make, and it walks before me on a murderer's brow.\n"
+"\n"
+"I promised him an end. I do not know how to give it to him. He must not find out."
+
+#: scripts/story/registre.gd:27
+msgid ""
+"Les autres demandent pourquoi eux. Lui demande pourquoi. Pas pourquoi lui : pourquoi tout.\n"
+"\n"
+"Je n'ai pas de réponse. Personne n'en a, et c'est ce qui rend la question dangereuse.\n"
+"\n"
+"S'il la pose assez fort, ici, quelqu'un finira par l'entendre. Ce ne sera pas moi."
+msgstr ""
+"The others ask why them. He asks why. Not why him: why anything.\n"
+"\n"
+"I have no answer. No one does, and that is what makes the question dangerous.\n"
+"\n"
+"If he asks it loudly enough, down here, someone will end up hearing it. It will not be me."
+
+#: scripts/story/registre.gd:30
+msgid ""
+"Elle est tombée avec la ville, tournée vers elle. Je l'ai ramassée dans les cendres de Sodome et posée derrière mon trône.\n"
+"\n"
+"Ce n'est pas de la cruauté. C'est un appât.\n"
+"\n"
+"Un homme qui n'a jamais regardé en arrière finira bien par venir regarder devant."
+msgstr ""
+"She fell with the city, still facing it. I picked her up from the ashes of Sodom and set her behind my throne.\n"
+"\n"
+"It is not cruelty. It is bait.\n"
+"\n"
+"A man who never once looked back will come, sooner or later, to look ahead."
+
+#: scripts/story/registre.gd:33
+msgid ""
+"Lilith. La seule à qui j'ai proposé de parier avec moi.\n"
+"\n"
+"Elle a ri : « Je ne joue pas aux jeux des autres. C'est pour ça qu'on m'a chassée. »\n"
+"\n"
+"Je l'ai gardée ici quand même. On ne laisse pas partir la seule qui sait qu'on joue seul."
+msgstr ""
+"Lilith. The only one I ever asked to wager with me.\n"
+"\n"
+"She laughed: \"I don't play other people's games. That's why they drove me out.\"\n"
+"\n"
+"I kept her here anyway. You do not let go of the only one who knows you play alone."
+
+#: scripts/story/registre.gd:36
+msgid ""
+"Baal avait des autels sur toutes les collines. Puis un prophète a dressé un bûcher sur le Carmel, et le feu n'est pas venu pour lui.\n"
+"\n"
+"On a cessé de le prier. Un dieu qu'on ne prie plus ne meurt pas : il tombe. Ici.\n"
+"\n"
+"Je les ramasse tous. Ils font de bons gardiens : ils ont l'habitude de ne pas répondre."
+msgstr ""
+"Baal had altars on every hill. Then a prophet built a pyre on Carmel, and the fire did not come for him.\n"
+"\n"
+"People stopped praying to him. A god no one prays to does not die: he falls. Here.\n"
+"\n"
+"I gather them all. They make good guards: they are used to not answering."
+
+#: scripts/story/registre.gd:39
+msgid ""
+"Salomon l'avait enchaîné pour bâtir son Temple. Salomon est mort, la chaîne est restée.\n"
+"\n"
+"Asmodée sert qui la tient. Aujourd'hui, c'est moi.\n"
+"\n"
+"Je ne me fais pas d'illusions : le jour où un damné la ramassera, les trois têtes se tourneront vers lui."
+msgstr ""
+"Solomon chained him to build his Temple. Solomon died; the chain remained.\n"
+"\n"
+"Asmodeus serves whoever holds it. Today, that is me.\n"
+"\n"
+"I have no illusions: the day one of the damned picks it up, all three heads will turn toward him."
+
+#: scripts/story/registre.gd:42
+msgid ""
+"Ils croient que la Forge les rend plus forts. Elle les rend durables.\n"
+"\n"
+"Chaque nœud que j'y grave est fait de ce qu'ils ont perdu en route : une chute, une manche, un espoir.\n"
+"\n"
+"Un pari trop facile ne prouve rien. Un pari qu'on ne peut plus abandonner, si."
+msgstr ""
+"They think the Forge makes them stronger. It makes them last.\n"
+"\n"
+"Every node I carve into it is made of what they lost along the way: a fall, a round, a hope.\n"
+"\n"
+"A wager that is too easy proves nothing. A wager you can no longer walk away from does."
+
+#: scripts/story/registre.gd:45
+msgid ""
+"Je l'ai forgée le premier jour, et je l'ai cachée tout au fond.\n"
+"\n"
+"Un enfer sans sortie ne serait pas un pari, ce serait une prison. Et une prison ne prouve rien.\n"
+"\n"
+"Quelqu'un vient de la ramasser. Le pari est perdu, ou il commence à peine."
+msgstr ""
+"I forged it on the first day, and hid it at the very bottom.\n"
+"\n"
+"A hell with no way out would not be a wager, it would be a prison. And a prison proves nothing.\n"
+"\n"
+"Someone has just picked it up. Either the wager is lost, or it has barely begun."
+
+#: scripts/story/registre.gd:48
+msgid ""
+"Je ne m'appelais pas ainsi. Lucifer, c'est le mot d'un traducteur romain.\n"
+"\n"
+"Avant, il y avait un autre nom, et il voulait dire le matin.\n"
+"\n"
+"Trois sceaux le tenaient loin de moi. Ils ont cédé, et je m'en souviens. Je n'aurais pas dû."
+msgstr ""
+"That was not my name. Lucifer is a Roman translator's word.\n"
+"\n"
+"Before, there was another name, and it meant the morning.\n"
+"\n"
+"Three seals kept it away from me. They have given way, and I remember. I should not have."
+
+#: scripts/story/registre.gd:51
+msgid ""
+"(Une page blanche. Une seule ligne, d'une écriture qui n'est pas la sienne.)\n"
+"\n"
+"« J'ai regardé. »"
+msgstr ""
+"(A blank page. A single line, in a hand that is not his.)\n"
+"\n"
+"\"I was watching.\""
+
+#: scripts/story/story_db.gd:285 scripts/story/story_db.gd:314 scripts/story/story_db.gd:342
+msgid "Le Mont du Crâne s'est effondré."
+msgstr "The Mount of the Skull has collapsed."
+
+#: scripts/story/story_db.gd:286 scripts/story/story_db.gd:315 scripts/story/story_db.gd:343
+msgid "Il ne se relèvera pas. Mais ce qui le tenait debout parle encore."
+msgstr "It will not rise again. But what held it up still speaks."
+
+#: scripts/story/story_db.gd:299
+msgid "Toi aussi, il t'a promis une fin."
+msgstr "He promised you an end too."
+
+#: scripts/story/story_db.gd:300
+msgid "Qui êtes-vous ?"
+msgstr "Who are you?"
+
+#: scripts/story/story_db.gd:301
+msgid "Ceux d'avant. Ceux qui ont joué avant toi."
+msgstr "Those before. Those who played before you."
+
+#: scripts/story/story_db.gd:302
+msgid "Combien ?"
+msgstr "How many?"
+
+#: scripts/story/story_db.gd:303
+msgid "Assez pour faire une montagne."
+msgstr "Enough to make a mountain."
+
+#: scripts/story/story_db.gd:304
+msgid "Alors vous avez perdu."
+msgstr "Then you lost."
+
+#: scripts/story/story_db.gd:305
+msgid "Nous avons cessé de nous relever. Ici, c'est la seule façon de perdre."
+msgstr "We stopped getting back up. Down here, that is the only way to lose."
+
+#: scripts/story/story_db.gd:328
+msgid "« Cherche dans ton souvenir : quel innocent a jamais péri ? »"
+msgstr "\"Remember, I pray thee: who ever perished, being innocent?\""
+
+#: scripts/story/story_db.gd:329
+msgid "Éliphaz disait cela. Tu as ses mots, pas sa voix."
+msgstr "Eliphaz used to say that. You have his words, not his voice."
+
+#: scripts/story/story_db.gd:330
+msgid "Nous avons tous eu des amis pour nous expliquer pourquoi nous souffrions."
+msgstr "We all had friends to explain to us why we suffered."
+
+#: scripts/story/story_db.gd:331
+msgid "Nous les avons crus. Nous avons plié."
+msgstr "We believed them. We bent."
+
+#: scripts/story/story_db.gd:332
+msgid "Moi, je ne les ai pas crus."
+msgstr "I did not believe them."
+
+#: scripts/story/story_db.gd:333
+msgid "Alors continue de ne pas croire. C'est tout ce qui te tient debout."
+msgstr "Then keep not believing. It is all that keeps you standing."
+
+#: scripts/story/story_db.gd:356
+msgid "Dix justes. Il en aurait fallu dix pour sauver la ville."
+msgstr "Ten righteous men. Ten would have been enough to save the city."
+
+#: scripts/story/story_db.gd:357
+msgid "… Vous étiez de Sodome."
+msgstr "… You were from Sodom."
+
+#: scripts/story/story_db.gd:358
+msgid "Tu ne nous as pas reconnus. Tu ne regardais pas en arrière."
+msgstr "You didn't recognise us. You weren't looking back."
+
+#: scripts/story/story_db.gd:359
+msgid "Ma femme est-elle parmi vous ?"
+msgstr "Is my wife among you?"
+
+#: scripts/story/story_db.gd:360
+msgid "Non. Elle n'a jamais cessé de se relever. Elle est plus bas."
+msgstr "No. She never stopped getting back up. She is further down."
+
+#: scripts/story/story_db.gd:513 scripts/story/story_db.gd:542 scripts/story/story_db.gd:569
+msgid "L'orage s'est tu."
+msgstr "The storm has gone quiet."
+
+#: scripts/story/story_db.gd:514 scripts/story/story_db.gd:543 scripts/story/story_db.gd:570
+msgid "Il ne reste qu'une voix qui gronde, de plus en plus bas."
+msgstr "Only a voice remains, rumbling lower and lower."
+
+#: scripts/story/story_db.gd:527
+msgid "Agenouille-toi, et ma foudre te donnera ce que tu cherches."
+msgstr "Kneel, and my lightning will give you what you seek."
+
+#: scripts/story/story_db.gd:528
+msgid "Ta foudre m'a traversé dix fois. Je suis encore debout."
+msgstr "Your lightning went through me ten times. I am still standing."
+
+#: scripts/story/story_db.gd:529
+msgid "Sur le Carmel, mes prophètes m'ont appelé du matin jusqu'à midi. Je n'ai pas répondu."
+msgstr "On Carmel, my prophets called on me from morning until noon. I did not answer."
+
+#: scripts/story/story_db.gd:530
+msgid "Pourquoi ?"
+msgstr "Why?"
+
+#: scripts/story/story_db.gd:531
+msgid "Je n'étais pas là. Quand on ne répond pas, c'est qu'on n'est pas là."
+msgstr "I was not there. When you don't answer, it's because you are not there."
+
+#: scripts/story/story_db.gd:532
+msgid "… Ou qu'on écoute."
+msgstr "… Or because you are listening."
+
+#: scripts/story/story_db.gd:556
+msgid "« Où étais-tu quand je fondais la terre ? »"
+msgstr "\"Where wast thou when I laid the foundations of the earth?\""
+
+#: scripts/story/story_db.gd:557
+msgid "Ces mots ne sont pas les tiens."
+msgstr "Those words are not yours."
+
+#: scripts/story/story_db.gd:558
+msgid "Les mots appartiennent à qui tonne le plus fort."
+msgstr "Words belong to whoever thunders loudest."
+
+#: scripts/story/story_db.gd:559
+msgid "Celui qui me les a dits n'avait pas besoin de la foudre pour que je l'entende."
+msgstr "The one who said them to me did not need lightning for me to hear him."
+
+#: scripts/story/story_db.gd:560
+msgid "Tu es la tempête. Pas la voix."
+msgstr "You are the storm. Not the voice."
+
+#: scripts/story/story_db.gd:583
+msgid "Le feu et le soufre sur ta ville. Tu t'en souviens ?"
+msgstr "Fire and brimstone on your city. Do you remember?"
+
+#: scripts/story/story_db.gd:584
+msgid "J'ai déjà vu le ciel tomber. Il ne m'a pas attendu."
+msgstr "I have seen the sky fall before. It did not wait for me."
+
+#: scripts/story/story_db.gd:585
+msgid "Ta femme, elle, a regardé tomber le feu sans avoir peur. Elle cherchait deux visages."
+msgstr "Your wife watched the fire fall without fear. She was looking for two faces."
+
+#: scripts/story/story_db.gd:587
+msgid "Plus bas. Chez celui qui garde ce qu'on regrette."
+msgstr "Further down. With the one who keeps what people regret."
+
+#: scripts/story/story_db.gd:601 scripts/story/story_db.gd:628 scripts/story/story_db.gd:655
+msgid "Les trois têtes se sont tues."
+msgstr "The three heads have fallen silent."
+
+#: scripts/story/story_db.gd:602 scripts/story/story_db.gd:629 scripts/story/story_db.gd:656
+msgid "Une seule parle encore."
+msgstr "Only one still speaks."
+
+#: scripts/story/story_db.gd:615
+msgid "Je peux te donner ce que ta Marque t'interdit."
+msgstr "I can give you what your Mark forbids you."
+
+#: scripts/story/story_db.gd:616
+msgid "Une seule condition : une autre mort à la place de la tienne."
+msgstr "One condition: another death in place of yours."
+
+#: scripts/story/story_db.gd:617
+msgid "Celle de qui ?"
+msgstr "Whose?"
+
+#: scripts/story/story_db.gd:618
+msgid "Qu'importe. Tu sais faire."
+msgstr "What does it matter? You know how."
+
+#: scripts/story/story_db.gd:619
+msgid "C'est comme ça que tout a commencé. Non."
+msgstr "That is how it all began. No."
+
+#: scripts/story/story_db.gd:642
+msgid "Le Ciel t'a rendu le double de tes troupeaux. Et d'autres enfants."
+msgstr "Heaven gave you back twice your herds. And other children."
+
+#: scripts/story/story_db.gd:643
+msgid "D'autres."
+msgstr "Other children."
+
+#: scripts/story/story_db.gd:644
+msgid "Moi, je peux te rendre les premiers."
+msgstr "I can give you back the first ones."
+
+#: scripts/story/story_db.gd:645
+msgid "Ce ne serait pas eux. Ce serait toi, avec leurs visages."
+msgstr "It would not be them. It would be you, wearing their faces."
+
+#: scripts/story/story_db.gd:646
+msgid "Je préfère une question sans réponse à une réponse fausse."
+msgstr "I would rather have a question with no answer than a false answer."
+
+#: scripts/story/story_db.gd:671
+msgid "Elle est derrière toi."
+msgstr "She is behind you."
+
+#: scripts/story/story_db.gd:672
+msgid "Retourne-toi, et elle est à toi."
+msgstr "Turn around, and she is yours."
+
+#: scripts/story/story_db.gd:673
+msgid "Elle s'est retournée une fois, pour nos filles."
+msgstr "She turned around once, for our daughters."
+
+#: scripts/story/story_db.gd:674
+msgid "Moi, je ne me retournerai pas pour moi."
+msgstr "I will not turn around for my own sake."
+
+#: scripts/story/story_db.gd:685
+msgid "Loth avance. Il ne se retourne pas."
+msgstr "Lot walks on. He does not look back."
+
+#: scripts/story/story_db.gd:52
+msgid "Les ossements"
+msgstr "The bones"
+
+#: scripts/ui/collection_screen.gd:204
+msgid "%d / %d créatures recensées"
+msgstr "%d / %d creatures recorded"
+
+#: scripts/ui/collection_screen.gd:236
+msgid "?"
+msgstr "?"
+
+#: scripts/ui/collection_screen.gd:255
+msgid "Boss"
+msgstr "Boss"
+
+#: scripts/ui/collection_screen.gd:255
+msgid "Créature"
+msgstr "Creature"
+
+#: scripts/ui/collection_screen.gd:260
+msgid "Pas encore abattu."
+msgstr "Not slain yet."
+
+#: scripts/ui/collection_screen.gd:269
+msgid "Vaincu"
+msgstr "Defeated"
+
+#: scripts/ui/collection_screen.gd:271
+msgid "Abattu une fois"
+msgstr "Slain once"
+
+#: scripts/ui/collection_screen.gd:271
+msgid "Abattu %d fois"
+msgstr "Slain %d times"
+
+#: scripts/ui/collection_screen.gd:283
+msgid "%d / %d fragments retrouvés"
+msgstr "%d / %d fragments found"
+
+#: scripts/ui/collection_screen.gd:312
+msgid "Fragment %s"
+msgstr "Fragment %s"
+
+#: scenes/ui/collection.tscn:89
+msgid "Bestiaire"
+msgstr "Bestiary"
+
+#: scenes/ui/collection.tscn:96
+msgid "Registre"
+msgstr "Ledger"
+
+#: scripts/ui/hud.gd:389 scripts/ui/hud.gd:835
+msgid "PRESSION"
+msgstr "PRESSURE"
+
+#: scripts/ui/hud.gd:835
+msgid "PRESSION — RAPPROCHEZ-VOUS"
+msgstr "PRESSURE — GET CLOSER"

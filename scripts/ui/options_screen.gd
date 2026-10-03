@@ -6,6 +6,8 @@ extends CanvasLayer
 @onready var reset_button: Button = %OptionsResetButton
 @onready var close_button: Button = %OptionsCloseButton
 
+const JERSEY := preload("res://assets/fonts/Jersey10-Regular.ttf")
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -20,6 +22,7 @@ func open() -> void:
 	visible = true
 	refresh()
 	close_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -100,7 +103,7 @@ func refresh() -> void:
 	replay.name = "RevoirHistoire"
 	replay.text = "Revoir"
 	replay.theme_type_variation = &"SecondaryButton"
-	replay.custom_minimum_size = Vector2(200, 0)
+	replay.custom_minimum_size = Vector2(240, 52)
 	replay.pressed.connect(func() -> void:
 		Cinematic.play(StoryDB.all_for(Characters.selected_id), func() -> void:
 			if is_instance_valid(replay) and replay.is_visible_in_tree():
@@ -128,10 +131,11 @@ func _percent_row(title: String, help: String, value: float, maximum: float,
 	slider.max_value = maximum
 	slider.step = 0.05
 	slider.value = value
-	slider.custom_minimum_size = Vector2(240, 0)
+	slider.custom_minimum_size = Vector2(380, 28)
 
 	var readout := Label.new()
-	readout.custom_minimum_size = Vector2(60, 0)
+	readout.custom_minimum_size = Vector2(80, 0)
+	readout.add_theme_font_size_override(&"font_size", 22)
 	readout.text = tr("%d %%") % roundi(value * 100.0)
 	slider.value_changed.connect(func(v: float) -> void:
 		setter.call(v)
@@ -144,19 +148,17 @@ func _percent_row(title: String, help: String, value: float, maximum: float,
 	return _row(title, help, box)
 
 
-## Une ligne = intitulé + explication à gauche, contrôle à droite.
+## Une ligne = intitulé + explication à gauche, contrôle à droite. La ligne
+## s'allume en braise quand son contrôle a le focus (0.10.1) : à la manette, on
+## voit de loin quel réglage on touche.
 func _row(title: String, help: String, control: Control) -> Control:
 	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.06, 0.07, 0.95)
-	style.border_color = Color(0.34, 0.2, 0.18)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(12)
-	panel.add_theme_stylebox_override(&"panel", style)
+	var eteinte := Ecran.case(false, 18.0)
+	var allumee := Ecran.case(true, 18.0)
+	panel.add_theme_stylebox_override(&"panel", eteinte)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 18)
+	row.add_theme_constant_override(&"separation", 24)
 	panel.add_child(row)
 
 	var texts := VBoxContainer.new()
@@ -166,16 +168,27 @@ func _row(title: String, help: String, control: Control) -> Control:
 
 	var title_label := Label.new()
 	title_label.text = title
-	title_label.add_theme_font_size_override(&"font_size", 19)
+	title_label.add_theme_font_override(&"font", JERSEY)
+	title_label.add_theme_font_size_override(&"font_size", 32)
+	title_label.add_theme_color_override(&"font_color", Color(0.94, 0.88, 0.8))
 	texts.add_child(title_label)
 
 	var help_label := Label.new()
 	help_label.text = help
-	help_label.add_theme_font_size_override(&"font_size", 13)
-	help_label.add_theme_color_override(&"font_color", Color(0.7, 0.67, 0.66))
+	help_label.add_theme_font_size_override(&"font_size", 18)
+	help_label.add_theme_color_override(&"font_color", Color(0.74, 0.68, 0.64))
 	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	texts.add_child(help_label)
 
 	control.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(control)
+	var focal: Control = control
+	if control is HBoxContainer and control.get_child_count() > 0:
+		focal = control.get_child(0)
+	focal.focus_entered.connect(func() -> void:
+		panel.add_theme_stylebox_override(&"panel", allumee)
+		title_label.add_theme_color_override(&"font_color", Color(1, 0.72, 0.36)))
+	focal.focus_exited.connect(func() -> void:
+		panel.add_theme_stylebox_override(&"panel", eteinte)
+		title_label.add_theme_color_override(&"font_color", Color(0.94, 0.88, 0.8)))
 	return panel

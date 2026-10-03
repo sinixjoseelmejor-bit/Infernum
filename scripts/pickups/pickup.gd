@@ -54,6 +54,10 @@ enum Kind { SOULS, KEYS, HEAL, ABYSS_KEY }
 ## Délai avant que le butin puisse être attiré (petit effet d'éjection).
 @export var settle_time: float = 0.15
 @export var spawn_impulse: float = 90.0
+## Âmes EN PLUS pour une âme accrochée par le rayon du joueur, par rapport à
+## celle que l'aspiration de fin de vague ramène (0.10.1). Voir
+## `RunState.bonus_ramassage`.
+@export var bonus_ramassage: float = 0.5
 
 @export_group("Soin")
 ## Soin exprimé en COUPS ENCAISSABLES à la vague courante — voir la note du
@@ -69,6 +73,12 @@ var _player: Node2D
 var _latched: bool = false
 var _chase_speed: float = 0.0
 var _collected: bool = false
+## Accrochée par le RAYON du joueur PENDANT la vague : elle paie le bonus de
+## ramassage. Une âme accrochée avant la fin de vague le garde, même si elle
+## arrive pendant l'aspiration — le joueur l'a gagnée. Celles que les survivants
+## rendent en fin de vague naissent pendant l'aspiration : elles n'y ont pas
+## droit, même tombées dans le rayon.
+var _ramassee: bool = false
 
 
 func _ready() -> void:
@@ -98,6 +108,7 @@ func _physics_process(delta: float) -> void:
 	# portée d'une âme tombée juste derrière lui : elle naissait perdue.
 	if not _latched and distance <= get_magnet_radius():
 		_latched = true
+		_ramassee = _vague_en_cours()
 		_chase_speed = min_magnet_speed
 
 	if _timer < settle_time or not _latched:
@@ -141,6 +152,13 @@ func _hit_damage() -> float:
 	return 11.0
 
 
+func _vague_en_cours() -> bool:
+	for node in get_tree().get_nodes_in_group(Groups.WAVE_MANAGER):
+		if node is WaveManager:
+			return (node as WaveManager).state == WaveManager.State.RUNNING
+	return false
+
+
 func get_magnet_radius() -> float:
 	return base_magnet_radius * (1.0 + RunState.stats.get_pickup_radius_pct())
 
@@ -159,6 +177,8 @@ func collect() -> void:
 	match kind:
 		Kind.SOULS:
 			var gain := maxi(1, roundi(value * (1.0 + RunState.stats.get_soul_gain_pct())))
+			if _ramassee:
+				gain += RunState.bonus_ramassage(gain, bonus_ramassage)
 			RunState.add_souls(gain)
 			Audio.play(&"ame")
 		Kind.KEYS:
@@ -177,7 +197,7 @@ func collect() -> void:
 				GameEvents.announce.emit(tr("LA CLÉ DES ABYSSES"),
 					tr("Armez le Déchaînement à la Forge, pour le personnage de votre"
 					+ " choix : plus aucune limite, et un enfer qui répond."),
-					Color(0.78, 0.45, 1.0))
+					Color(0.78, 0.45, 1.0), 4.0)
 			GameEvents.request_shake(6.0)
 	set_physics_process(false)
 	set_deferred(&"monitoring", false)

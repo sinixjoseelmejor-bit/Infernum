@@ -50,6 +50,18 @@ extends Enemy
 @export_group("Récompenses")
 @export var guaranteed_keys: int = 1
 
+@export_group("Mise en scène")
+## L'ENTRÉE (0.10.1) : le boss se pose, son nom s'affiche, et il ne frappe pas
+## encore. Il frappait dès sa première image, souvent avant que le joueur ait
+## vu d'où il venait.
+@export var entree_duree: float = 1.6
+## LA BASCULE DE PHASE (0.10.1) : il vacille, le sol tremble, puis il reprend.
+## Elle enchaînait sans rien montrer, première attaque de la phase comprise —
+## on ne voyait le changement qu'à la barre de vie.
+@export var transition_duree: float = 1.0
+## Couleur de son nom dans le bandeau d'entrée.
+@export var couleur_titre: Color = Color(1.0, 0.35, 0.25)
+
 @export_group("Attaques")
 @export var projectile_scene: PackedScene
 @export var telegraph_scene: PackedScene
@@ -94,6 +106,14 @@ var attack_damage_multiplier: float = 1.0
 ## cessait d'etre esquivable.
 var attack_speed_multiplier: float = 1.0
 
+## Teinte de la phase en cours. Le flash d'un coup encaissé y revient.
+##
+## Il revenait au BLANC : chaque boss teintait son sprite en changeant de
+## phase, et le premier tir suivant effaçait la teinte 0,12 s plus tard. Les
+## phases ne se voyaient donc jamais, et la Nuit de Lilith, censée la rendre
+## à demi invisible, la laissait parfaitement visible.
+var teinte_phase: Color = Color.WHITE
+
 var current_phase: int = 0
 var fight_time: float = 0.0
 var pressure: float = 0.0
@@ -107,23 +127,61 @@ var _attack_timer: float = 0.0
 var _attack_step: int = 0
 var _rng := RandomNumberGenerator.new()
 
+var _entree: float = 0.0
+var _transition: float = 0.0
+## Posé par `strafe_around` : la boucle de phase a déjà choisi la vitesse.
+var _orbite: bool = false
+var _animateur: SpriteAnimator
+var _planches := {}
+var _horloge_lueur: float = 0.0
+var _accent: Color = Color.WHITE
+var _accent_duree: float = 0.0
+var _accent_reste: float = 0.0
+
+const EFFET_PLANCHE := preload("res://scripts/vfx/sprite_effect.gd")
+## Les gestes que le pack dessine pour chaque boss (voir `extract_assets.py`).
+const GESTES: Array[StringName] = [&"attaque1", &"attaque2", &"attaque3", &"touche", &"mort"]
+static var _ralenti_en_cours: bool = false
+
 
 func _ready() -> void:
+	prise_a_revers = false
 	super()
 	_rng.randomize()
 	add_to_group(Groups.BOSSES)
+	_animateur = get_node_or_null(^"Animator") as SpriteAnimator
+	_charger_gestes()
 	GameEvents.boss_spawned.emit(self)
 	GameEvents.boss_phase_changed.emit(current_phase, phase_thresholds.size() + 1)
 	health.health_changed.connect(_on_health_changed)
 	_on_phase_entered(0)
+	_entrer()
 
 
 func _physics_process(delta: float) -> void:
 	fight_time += delta
 	_time_since_damage += delta
-	_dash_time = maxf(0.0, _dash_time - delta)
+	if _dash_time > 0.0:
+		_dash_time = maxf(0.0, _dash_time - delta)
+		# IL S'ARRÊTE À L'IMPACT. La vitesse de la ruée restait dans `velocity`
+		# et la poursuite ne la rognait que de quelques px/s par image : le
+		# boss glissait loin au-delà de sa zone. Avec des ruées calées sur la
+		# distance, c'était pire qu'un défaut d'image — plus il glissait loin,
+		# plus la ruée suivante partait vite, et Asmodée finissait au banc à
+		# des millions de pixels de l'arène.
+		if _dash_time <= 0.0:
+			velocity = Vector2.ZERO
 	_update_enrage()
 	_update_phase()
+	_maj_lueur(delta)
+	# Entrée et bascule de phase : il ne frappe pas, et la jauge ne monte pas —
+	# on ne facture pas au joueur un temps où le boss ne se bat pas.
+	if _entree > 0.0 or _transition > 0.0:
+		_entree = maxf(0.0, _entree - delta)
+		_transition = maxf(0.0, _transition - delta)
+		_time_since_damage = 0.0
+		super(delta)
+		return
 	_update_pressure(delta)
 	# La boucle de phase voit un temps ACCELERE pour les rencontres repetees ;
 	# `fight_time` reste en temps reel, sans quoi l'enragement se declencherait
@@ -152,6 +210,146 @@ func _update_phase() -> void:
 		_on_phase_entered(phase)
 		GameEvents.boss_phase_changed.emit(current_phase, phase_thresholds.size() + 1)
 		GameEvents.request_shake(9.0)
+		_basculer()
+
+
+## Change la teinte de phase et l'applique tout de suite.
+func teinter_phase(teinte: Color) -> void:
+	teinte_phase = teinte
+	sprite.modulate = teinte
+
+
+func _teinte_repos() -> Color:
+	return teinte_phase
+
+
+# --- Mise en scène -----------------------------------------------------------
+
+func _charger_gestes() -> void:
+	if _animateur == null or _animateur.idle_texture == null:
+		return
+	# Les gestes vivent à côté de la planche de repos et portent son nom : Hélel,
+	# qui emprunte le corps de Lucifer, emprunte aussi ses gestes.
+	var base := _animateur.idle_texture.resource_path.trim_suffix("_idle.png")
+	for nom in GESTES:
+		var chemin := "%s_%s.png" % [base, nom]
+		if ResourceLoader.exists(chemin):
+			_planches[nom] = load(chemin)
+
+
+## Joue un geste du boss étiré sur `duree`. Calé sur le préavis d'une zone, le
+## coup part quand le sol explose : on voit QUI frappe, et quand. Sans planche
+## (assets non extraits), rien ne se passe — le combat ne dépend jamais d'un
+## dessin.
+func geste(nom: StringName, duree: float) -> void:
+	if _animateur != null and _planches.has(nom):
+		_animateur.jouer(_planches[nom], duree)
+
+
+func _entrer() -> void:
+	_entree = entree_duree
+	# Il se pose : il grandit en tombant, apparaît, et le sol encaisse.
+	sprite.self_modulate.a = 0.0
+	var echelle := sprite.scale
+	sprite.scale = echelle * 1.3
+	var anim := create_tween()
+	anim.tween_property(sprite, ^"self_modulate:a", 1.0, 0.35)
+	anim.parallel().tween_property(sprite, ^"scale", echelle, 0.45) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	anim.tween_callback(_atterrir)
+	anim.tween_interval(0.2)
+	anim.tween_callback(_annoncer)
+
+
+func _atterrir() -> void:
+	GameEvents.request_shake(8.0)
+	_onde(260.0, couleur_titre)
+
+
+## Son nom, en grand, au milieu de l'écran. Différé à la fin de l'entrée et
+## porté par le boss lui-même : si une cinématique fige l'arbre à son
+## apparition (Lucifer), le bandeau attend la fin de la scène au lieu de passer
+## dessous.
+func _annoncer() -> void:
+	if not _annonce_entree():
+		return
+	GameEvents.announce.emit(tr(boss_name).to_upper(), tr(subtitle), couleur_titre, 1.6)
+
+
+## Surchargé par Hélel, que le récit présente lui-même.
+func _annonce_entree() -> bool:
+	return true
+
+
+func _basculer() -> void:
+	_transition = transition_duree
+	geste(&"touche", 0.5)
+	_flash()
+	_onde(320.0, Color(1.0, 0.9, 0.75))
+
+
+## Allume le corps d'une couleur qui s'éteint en `duree` : la tête qui va
+## frapper, chez Asmodée. Composée avec la lueur de pression, et posée hors de
+## `modulate` pour que le flash des tirs du joueur — continu pendant un combat —
+## ne l'efface pas aussitôt.
+func eclairer(couleur: Color, duree: float) -> void:
+	_accent = couleur
+	_accent_duree = duree
+	_accent_reste = duree
+
+
+## Une onde qui s'élargit au sol. Sans effet de jeu : elle ne blesse ni ne
+## repousse rien, elle dit seulement « quelque chose vient de changer ».
+func _onde(rayon: float, couleur: Color) -> void:
+	var onde := Onde.new()
+	onde.rayon = rayon
+	onde.couleur = couleur
+	_projectile_parent().add_child(onde)
+	onde.global_position = global_position
+
+
+class Onde extends Node2D:
+	var rayon: float = 260.0
+	var couleur: Color = Color.WHITE
+	var duree: float = 0.5
+	var _t: float = 0.0
+
+	func _ready() -> void:
+		z_index = -1
+
+	func _process(delta: float) -> void:
+		_t += delta
+		if _t >= duree:
+			queue_free()
+			return
+		queue_redraw()
+
+	func _draw() -> void:
+		var u := _t / duree
+		var r := lerpf(rayon * 0.15, rayon, 1.0 - pow(1.0 - u, 2.0))
+		draw_arc(Vector2.ZERO, r, 0.0, TAU, 72,
+			Color(couleur.r, couleur.g, couleur.b, 0.85 * (1.0 - u)), lerpf(12.0, 2.0, u), true)
+
+
+## LA MENACE SE VOIT SUR LE CORPS (0.10.1). La jauge de pression n'était
+## affichée NULLE PART : le joueur qui kitait encaissait la sanction sans avoir
+## rien vu monter. Passé la moitié, le boss rougeoie, et de plus en plus vite ;
+## enragé, il garde une braise lente. Sur `self_modulate`, pour ne se battre ni
+## avec la teinte de phase ni avec le flash des coups, qui vivent sur `modulate`.
+func _maj_lueur(delta: float) -> void:
+	_horloge_lueur += delta
+	var charge := clampf((get_pressure_ratio() - 0.5) / 0.5, 0.0, 1.0)
+	var rouge := 0.0
+	if charge > 0.0:
+		rouge = charge * (0.6 + 0.4 * sin(_horloge_lueur * (7.0 + 11.0 * charge)))
+	if is_enraged:
+		rouge = maxf(rouge, 0.3 + 0.2 * sin(_horloge_lueur * 3.5))
+	var teinte := Color.WHITE.lerp(Color(1.8, 0.55, 0.4), clampf(rouge, 0.0, 1.0))
+	if _accent_reste > 0.0:
+		_accent_reste = maxf(0.0, _accent_reste - delta)
+		teinte *= Color.WHITE.lerp(_accent, _accent_reste / maxf(0.01, _accent_duree))
+	teinte.a = sprite.self_modulate.a
+	sprite.self_modulate = teinte
 
 
 ## Surchargé : changement de comportement visuel / d'ouverture de phase.
@@ -211,6 +409,17 @@ func _update_movement(delta: float) -> void:
 	if _dash_time > 0.0:
 		velocity = _dash_velocity
 		return
+	if _entree > 0.0 or _transition > 0.0:
+		velocity = velocity.move_toward(Vector2.ZERO, acceleration * 2.0 * delta)
+		return
+	# LES BOSS QUI ORBITENT ORBITENT VRAIMENT (0.10.1). La poursuite de base
+	# repassait derrière `strafe_around` à chaque image, et les deux tiraient
+	# la vitesse chacun de son côté : Baal, qui « tient ses distances », et
+	# Lilith, qui tourne autour du joueur, finissaient à mi-chemin entre
+	# l'orbite voulue et la course droit sur lui.
+	if _orbite:
+		_orbite = false
+		return
 	super(delta)
 
 
@@ -228,6 +437,18 @@ func is_dashing() -> bool:
 	return _dash_time > 0.0
 
 
+## UNE RUÉE NE BLESSE QUE PAR SA ZONE (0.10.1). Le corps en pleine ruée touchait
+## au passage, et le trajet n'est annoncé nulle part : seule l'arrivée l'est.
+## Depuis que la ruée part AVANT la détonation pour tomber dessus, ce trajet
+## croisait le joueur en train de sortir de la zone — au banc, un joueur qui
+## esquive prenait 0,18 contact par seconde face à Lucifer en phase 3, contre
+## 0,08 avant. La zone reste le coup ; le corps qui la traverse n'en est plus un.
+func _handle_contact_damage() -> void:
+	if is_dashing():
+		return
+	super()
+
+
 ## Orbite autour de la cible à `preferred` : base des phases « insaisissables ».
 func strafe_around(preferred: float, speed: float, delta: float, clockwise: bool = true) -> void:
 	if not is_instance_valid(target):
@@ -239,6 +460,32 @@ func strafe_around(preferred: float, speed: float, delta: float, clockwise: bool
 	var correction := radial * clampf((preferred - distance) / 120.0, -1.0, 1.0)
 	velocity = velocity.move_toward((tangent + correction).normalized() * speed, acceleration * delta)
 	face(-radial)
+	_orbite = true
+
+
+## LA RUÉE QUI TOMBE SUR SA ZONE (0.10.1). Asmodée et Lucifer annoncent leur
+## charge par une zone, puis partaient à vitesse et durée FIXES une fois le
+## préavis écoulé : loin de la zone, ils s'arrêtaient avant ; près, ils la
+## dépassaient ; et dans tous les cas ils arrivaient APRÈS l'explosion. Le coup
+## et le corps ne se rencontraient jamais.
+##
+## Le boss part maintenant juste assez tôt pour toucher le sol au centre de la
+## zone à l'instant où elle détone. Le préavis, lui, ne bouge pas : la zone
+## reste ce qu'on esquive. Rend la main quand la ruée part (ou si le boss est
+## mort entre-temps).
+func ruee_annoncee(destination: Vector2, preavis: float, vitesse: float) -> void:
+	var trajet := clampf(global_position.distance_to(destination) / maxf(1.0, vitesse),
+		0.12, preavis * 0.6)
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(maxf(0.0, preavis - trajet), false, true).timeout
+	if not is_instance_valid(self) or health.is_dead:
+		return
+	# Bornée : parti de très loin, il n'atteint pas la zone plutôt que de
+	# traverser l'arène en une image.
+	var allure := minf(global_position.distance_to(destination) / trajet, vitesse * 2.5)
+	dash_toward(destination, allure, trajet)
 
 
 # --- Primitives d'attaque ----------------------------------------------------
@@ -375,7 +622,56 @@ func apply_wave_scaling(_health_mult: float, _damage_mult: float, _speed_mult: f
 
 
 func _on_died(source: Node) -> void:
+	_depouille()
+	_ralenti()
 	GameEvents.boss_died.emit(self)
 	var keys := guaranteed_keys + int(Forge.get_special_total(&"boss_keys"))
 	DropSystem.spawn_keys(get_parent(), global_position, keys)
 	super(source)
+
+
+## LA VRAIE MORT (0.10.1) : sa planche de mort, à sa taille, à sa teinte, qui
+## reste un instant au sol avant de s'éteindre. Il disparaissait dans la même
+## bouffée que le dernier des imps.
+##
+## Montée sur le conteneur : le boss est libéré dans la foulée.
+func _depouille() -> void:
+	var planche: Texture2D = _planches.get(&"mort")
+	var hote := get_parent()
+	if planche == null or hote == null:
+		return
+	var corps: Sprite2D = EFFET_PLANCHE.new()
+	corps.texture = planche
+	corps.hframes = maxi(1, planche.get_width() / maxi(1, planche.get_height()))
+	corps.texture_filter = sprite.texture_filter
+	corps.scale = sprite.scale
+	corps.offset = sprite.offset
+	corps.flip_h = sprite.flip_h
+	# Hélel garde son or : le shader suit le corps.
+	corps.material = sprite.material
+	corps.modulate = teinte_phase
+	corps.set(&"fps", float(corps.hframes) / 0.9)
+	corps.set(&"random_flip", false)
+	corps.set(&"hold_time", 1.6)
+	corps.set(&"hold_fade", 1.0)
+	hote.add_child(corps)
+	corps.global_position = global_position
+
+
+## Un demi-temps d'une demi-seconde à la mort du boss : le coup qui l'achève
+## doit peser. Rendu par une fonction STATIQUE, et non par une fonction du
+## boss : le boss est libéré pendant le ralenti, et un rappel attaché à lui ne
+## serait jamais appelé — le jeu resterait ralenti. L'échelle d'avant est
+## rendue telle quelle (le panneau de développement peut en avoir posé une).
+func _ralenti() -> void:
+	if _ralenti_en_cours:
+		return
+	_ralenti_en_cours = true
+	var avant := Engine.time_scale
+	Engine.time_scale = avant * 0.3
+	get_tree().create_timer(0.5, true, false, true).timeout.connect(Boss._fin_du_ralenti.bind(avant))
+
+
+static func _fin_du_ralenti(avant: float) -> void:
+	Engine.time_scale = avant
+	_ralenti_en_cours = false

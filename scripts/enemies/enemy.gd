@@ -90,8 +90,28 @@ const TEINTE_ENTRAVE := Color(0.7, 0.86, 1.25)
 @onready var health: Health = $Health
 @onready var sprite: Sprite2D = $Sprite
 
+## PRISE À REVERS (0.10.1). Un poursuivant ne vise pas le joueur mais un point
+## À CÔTÉ de lui, sur un angle qui lui est propre, et ce point se resserre à
+## mesure qu'il approche : au contact, il vise le joueur lui-même. Sans ça, tous
+## fonçaient sur la même position et formaient une seule traînée derrière un
+## joueur qui tournait en rond — la meilleure stratégie du jeu était le cercle.
+## Avec, la meute arrive de plusieurs côtés et referme le cercle. Les boss n'y
+## ont pas droit : leurs déplacements sont réglés à part.
+@export var prise_a_revers: bool = true
+## Décalage maximal du point visé, et part de la distance qu'il représente : à
+## 500 px, un poursuivant vise 240 px à côté du joueur ; sous 100 px, le joueur.
+const REVERS_MAX := 260.0
+const REVERS_PART := 0.6
+const REVERS_CONTACT := 60.0
+## ANTICIPATION (0.10.1) : le point visé est celui où le joueur SERA, en suivant
+## sa vitesse, sur au plus `anticipation` secondes (le temps qu'il faudrait à
+## l'ennemi pour l'atteindre). Face à un joueur qui tourne en rond, la meute
+## coupe à travers le cercle au lieu de le suivre.
+@export var anticipation: float = 1.0
+
 var target: Node2D
 var is_elite: bool = false
+var _angle_revers: float = 0.0
 
 var _brulure: float = 0.0
 var _brulure_generation: int = 0
@@ -120,6 +140,7 @@ func _ready() -> void:
 		queue_free()
 		return
 	add_to_group(Groups.ENEMIES)
+	_angle_revers = randf() * TAU
 	health.max_health = max_health
 	health.current = max_health
 	health.died.connect(_on_died)
@@ -168,6 +189,9 @@ func engendrer(scene: PackedScene, at: Vector2) -> Enemy:
 			at = at.move_toward(global_position, 40.0)
 	enfant.apply_wave_scaling(_echelle_vague.x, _echelle_vague.y, _echelle_vague.z)
 	enfant.target = target
+	# Même poursuite que le parent : un slime des premières vagues qui chasse à
+	# l'ancienne n'engendre pas des enfants qui interceptent.
+	enfant.prise_a_revers = prise_a_revers
 	enfant.position = at
 	var conteneur := get_parent()
 	if conteneur != null:
@@ -228,9 +252,22 @@ func _update_movement(delta: float) -> void:
 		velocity = velocity.move_toward(Vector2.ZERO, acceleration * delta)
 		target = get_tree().get_first_node_in_group(Groups.PLAYER)
 		return
-	var direction := (target.global_position - global_position).normalized()
+	var direction := (_point_vise() - global_position).normalized()
 	velocity = velocity.move_toward(direction * move_speed, acceleration * delta)
 	face(direction)
+
+
+## Le point que la poursuite vise : le joueur, ou à côté de lui (voir
+## `prise_a_revers`).
+func _point_vise() -> Vector2:
+	var cible := target.global_position
+	if not prise_a_revers:
+		return cible
+	var distance := global_position.distance_to(cible)
+	if anticipation > 0.0 and target is CharacterBody2D:
+		cible += (target as CharacterBody2D).velocity 			* minf(distance / maxf(move_speed, 1.0), anticipation)
+	var decalage := clampf(distance * REVERS_PART - REVERS_CONTACT, 0.0, REVERS_MAX)
+	return cible + Vector2.from_angle(_angle_revers) * decalage
 
 
 func face(direction: Vector2) -> void:

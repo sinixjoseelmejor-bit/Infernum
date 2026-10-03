@@ -52,6 +52,19 @@ const ELITE_LURE_SOUL_MULT := 2
 @export var max_alive: int = 160
 @export var min_spawn_distance: float = 480.0
 @export var max_spawn_distance: float = 700.0
+## APPARITIONS DEVANT (0.10.1) : une part des ennemis naît dans le sens où le
+## joueur se déplace, à ± `ouverture_devant` radians. Tirées au hasard sur tout
+## l'anneau, les apparitions laissaient courir en rond sans jamais rien croiser
+## de neuf ; ainsi, tourner en rond revient à foncer dans les arrivants. Joueur
+## immobile ou presque : l'anneau entier, comme avant.
+@export_range(0.0, 1.0, 0.05) var part_devant: float = 0.33
+@export var ouverture_devant: float = 0.6
+## LA POURSUITE COMPLÈTE (anticipation et prise à revers, voir `Enemy`) n'est
+## donnée qu'à `part_poursuite_debut` des ennemis avant la vague
+## `vague_poursuite_complete`, à tous ensuite. Les premières vagues apprennent le
+## jeu : la meute qui intercepte y arrive par touches, pas d'un bloc.
+@export var vague_poursuite_complete: int = 15
+@export_range(0.0, 1.0, 0.05) var part_poursuite_debut: float = 0.25
 
 @export_group("Boss")
 ## Un boss toutes les `boss_wave_interval` vagues. Sa vague ne se termine PAS au
@@ -292,10 +305,11 @@ func spawn_one() -> Node2D:
 		return null
 
 	var enemy := scene.instantiate() as Node2D
-	enemy.global_position = _random_ring_position()
+	enemy.global_position = _random_ring_position(true)
 	var scalable := enemy as Enemy
 	if scalable != null:
 		scalable.target = target
+		scalable.prise_a_revers = wave >= vague_poursuite_complete 			or _rng.randf() < part_poursuite_debut
 		scalable.apply_wave_scaling(
 			_enemy_health_multiplier(), _enemy_damage_multiplier(), _enemy_speed_multiplier()
 		)
@@ -352,10 +366,19 @@ func _last_boss_base_health() -> float:
 ## dans la lave : quelques essais, puis le dernier tiré — un ennemi né contre une
 ## statue en est repoussé par la physique, alors qu'une vague qui ne ferait
 ## plus naître personne serait un blocage.
-func _random_ring_position() -> Vector2:
+##
+## `devant` : la piétaille peut naître dans le sens de la marche (voir
+## `part_devant`). Les boss, eux, naissent n'importe où sur l'anneau.
+func _random_ring_position(devant: bool = false) -> Vector2:
 	var point := Vector2.ZERO
+	var marche := Vector2.ZERO
+	if devant and target is CharacterBody2D:
+		marche = (target as CharacterBody2D).velocity
+	var vers_l_avant := marche.length() > 40.0 and _rng.randf() < part_devant
 	for _essai in 8:
 		var angle := _rng.randf_range(0.0, TAU)
+		if vers_l_avant:
+			angle = marche.angle() + _rng.randf_range(-ouverture_devant, ouverture_devant)
 		var distance := _rng.randf_range(min_spawn_distance, max_spawn_distance)
 		point = target.global_position + Vector2.RIGHT.rotated(angle) * distance
 		if Carte.courante == null or Carte.courante.libre(point, 40.0):

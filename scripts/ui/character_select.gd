@@ -17,7 +17,7 @@ signal forge_requested()
 
 ## Mesurées sur la plus longue des trois descriptions, à la taille de police
 ## ci-dessous : à remesurer si l'une d'elles s'allonge.
-const CARD_MIN_SIZE := Vector2(400, 480)
+const CARD_MIN_SIZE := Vector2(480, 560)
 ## Hauteur visée du portrait ; le facteur réel est l'entier juste en dessous.
 const PORTRAIT_HEIGHT := 176.0
 
@@ -39,6 +39,7 @@ func open() -> void:
 	_refresh()
 	UIUtils.chain_focus(self)
 	start_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -75,7 +76,9 @@ func _build_card(character: CharacterData) -> Button:
 	# c'est la carte qui doit prévoir la place de la description entière. À 288
 	# elle était coupée au milieu d'une phrase pour les trois personnages.
 	card.custom_minimum_size = CARD_MIN_SIZE
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Plein écran depuis la 0.10.1 : étirées, les cartes faisaient 600 px de
+	# large pour trois lignes de texte. Elles gardent leur taille, au centre.
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.pressed.connect(func() -> void: Characters.select(character.id))
 	# À la manette, se poser sur une carte CHOISIT le personnage : il n'y a rien
 	# d'autre à faire sur une carte, et un appui sur A de plus avant de pouvoir
@@ -89,7 +92,7 @@ func _build_card(character: CharacterData) -> Button:
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override(StringName("margin_" + side), 14)
+		margin.add_theme_constant_override(StringName("margin_" + side), 18)
 	card.add_child(margin)
 
 	var box := VBoxContainer.new()
@@ -113,19 +116,19 @@ func _build_card(character: CharacterData) -> Button:
 		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		box.add_child(portrait)
 
-	box.add_child(_label(character.display_name, 32, character.color, 1))
-	box.add_child(_label(character.title, 17, Color(0.82, 0.78, 0.76), 1))
-	box.add_child(_label(character.archetype.to_upper(), 15, character.color, 1))
+	box.add_child(_label(character.display_name, 40, character.color, 1))
+	box.add_child(_label(character.title, 20, Color(0.86, 0.8, 0.76), 1))
+	box.add_child(_label(character.archetype.to_upper(), 17, character.color, 1))
 	# L'état de SA Forge, sur SA carte. Les clés sont communes au profil mais les
 	# nœuds ne le sont pas : choisir un personnage, c'est aussi choisir dans quel
 	# investissement on repart, et ça doit se voir avant de cliquer.
 	var avancement := Forge.get_progress_for(character.id)
 	var branche: String = String(Forge.BRANCHES_PERSO.get(character.id, ""))
 	box.add_child(_label(tr("Forge %d/%d  ·  branche %s") % [
-		avancement.x, avancement.y, tr(branche)], 14, Color(0.72, 0.68, 0.66), 1))
+		avancement.x, avancement.y, tr(branche)], 16, Color(0.74, 0.68, 0.64), 1))
 	box.add_child(HSeparator.new())
 
-	var desc := _label(character.description, 16, Color(0.78, 0.76, 0.76), 0)
+	var desc := _label(character.description, 19, Color(0.84, 0.8, 0.77), 0)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(desc)

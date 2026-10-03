@@ -23,7 +23,11 @@ Panneau, boutons, barres et icônes. `LICENSE.txt` fourni avec le pack.
 
 Utilisé ici : `panel`, `button` (3 états), `bar_hp`, et les icônes `heart`,
 `coin`, `lock`, `star`, `gear`, `close`. Les boutons ont été reconstruits sans
-leur texte gravé, les barres découpées en rail + remplissage.
+leur texte gravé, les barres découpées en rail + remplissage. Depuis la 0.10.1,
+les menus utilisent aussi `slot`, `slot_selected`, `arrow_left/right`,
+`toggle_on/off` et `checkbox_on/off`, **recolorisés** (violet et or → charbon et
+braise) et agrandis ×2 ou ×3 par `tools/extract_assets.py` — la licence permet
+la recolorisation, et ces dérivés restent hors du dépôt comme les originaux.
 
 ### Tiny RPG Character Asset Pack (v1.03 et 02) — personnages, ennemis, boss
 
@@ -228,6 +232,12 @@ la page d'achat qui fait foi, faute de `LICENSE.txt`.
 
 Utilisée pour les zones annoncées de Golgota, Baal, Asmodée et Lucifer.
 
+### L'éclair de Baal (0.10.1)
+
+`assets/sprites/bosses/Eclaire.png` — planche de foudre (3 variantes de
+5 images), déposée par l'auteur du projet pour les zones de foudre de Baal.
+**Source et licence à consigner ici** avant une diffusion publique.
+
 ### Icônes d'objets
 
 `assets/packs/ItemIconPack/` — 1244 icônes 16×16, `LICENSE.txt` fourni avec le
@@ -239,7 +249,8 @@ pack.
 - Crédit vivement apprécié (d'où cette page) ; le fichier de licence ne nomme
   pas son auteur.
 
-24 icônes en sont tirées, une par objet du catalogue. La table de correspondance
+48 icônes en sont tirées, une par objet du catalogue, plus quatre pour le
+butin (âme, clé, soin, Clé des Abysses) depuis la 0.10.1. La table de correspondance
 est dans [`tools/extract_assets.py`](tools/extract_assets.py).
 
 ### Sol de l'arène

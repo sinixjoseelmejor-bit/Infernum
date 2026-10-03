@@ -4,12 +4,16 @@ extends PanelContainer
 ## est purement dérivée de son `ItemData`, il n'y a rien à régler dans l'éditeur.
 
 signal buy_requested(item: ItemData)
+## Le cadenas a été basculé (0.10.1) : la boutique tient la liste.
+signal lock_toggled(item: ItemData, locked: bool)
 
 const CARD_MIN_SIZE := Vector2(196, 214)
 
 var item: ItemData
 var cost: int = 0
 var purchased: bool = false
+## VERROUILLÉE : la carte reste à la relance et revient à la boutique suivante.
+var locked: bool = false
 ## La pièce rare de l'offre : liseré épais et fond teinté de sa rareté.
 var featured: bool = false
 ## Le bouton d'achat a le focus : c'est la CARTE entière qui doit se désigner,
@@ -22,6 +26,21 @@ var _rarity_label: Label
 var _desc_label: Label
 var _mods_label: Label
 var _buy_button: Button
+var _lock_button: Button
+var _cadenas: TextureRect
+
+## Vert menthe : aucune rareté ne l'utilise. Le cyan d'abord essayé se
+## confondait avec le bleu des objets rares.
+const VERROU := Color(0.5, 1.0, 0.68)
+## Le cadenas du kit d'interface (32 px, affiché à sa taille : facteur entier).
+## Ouvert, il est éteint ; fermé, en pleine couleur.
+const CADENAS := preload("res://assets/sprites/ui/lock.png")
+## Le cadre du kit d'interface, celui des grands panneaux (0.10.1). La carte
+## était un rectangle à bordure plate, dessiné par le code : c'est ce qui
+## faisait le plus « interface générée » à l'écran le plus fréquenté du jeu.
+## Depuis la refonte des menus, la version neutre du cadre de l'enfer : son
+## liseré est gris, la teinte de la rareté le colore sans se mêler à la braise.
+const CADRE := preload("res://assets/sprites/ui/enfer/cadre_neutre.png")
 
 
 func _ready() -> void:
@@ -66,25 +85,48 @@ func _build() -> void:
 	title.add_child(_name_label)
 
 	_rarity_label = Label.new()
-	_rarity_label.add_theme_font_size_override(&"font_size", 13)
+	_rarity_label.add_theme_font_size_override(&"font_size", 15)
 	box.add_child(_rarity_label)
 
 	_desc_label = Label.new()
-	_desc_label.add_theme_font_size_override(&"font_size", 14)
+	_desc_label.add_theme_font_size_override(&"font_size", 16)
 	_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_desc_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(_desc_label)
 
 	_mods_label = Label.new()
-	_mods_label.add_theme_font_size_override(&"font_size", 14)
+	_mods_label.add_theme_font_size_override(&"font_size", 16)
 	_mods_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(_mods_label)
 
+	# Le prix et le cadenas sur la même ligne : le cadenas ne coûte aucune
+	# hauteur à une carte déjà contrainte par l'écran.
+	var pied := HBoxContainer.new()
+	pied.add_theme_constant_override(&"separation", 6)
+	box.add_child(pied)
+
 	_buy_button = Button.new()
+	_buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_buy_button.pressed.connect(_on_buy_pressed)
 	_buy_button.focus_entered.connect(_set_focused.bind(true))
 	_buy_button.focus_exited.connect(_set_focused.bind(false))
-	box.add_child(_buy_button)
+	pied.add_child(_buy_button)
+
+	_lock_button = Button.new()
+	_lock_button.theme_type_variation = &"SecondaryButton"
+	_lock_button.custom_minimum_size = Vector2(44, 0)
+	_lock_button.tooltip_text = tr("Verrouiller : l'objet reste à la relance et revient à la boutique suivante.")
+	_lock_button.pressed.connect(_on_lock_pressed)
+	_lock_button.focus_entered.connect(_set_focused.bind(true))
+	_lock_button.focus_exited.connect(_set_focused.bind(false))
+	pied.add_child(_lock_button)
+	_cadenas = TextureRect.new()
+	_cadenas.texture = CADENAS
+	_cadenas.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cadenas.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	_cadenas.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_cadenas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lock_button.add_child(_cadenas)
 
 	_refresh()
 
@@ -93,6 +135,12 @@ func setup(new_item: ItemData, new_cost: int) -> void:
 	item = new_item
 	cost = new_cost
 	purchased = false
+	if is_node_ready():
+		_refresh()
+
+
+func set_locked(value: bool) -> void:
+	locked = value
 	if is_node_ready():
 		_refresh()
 
@@ -115,9 +163,13 @@ func set_affordable(affordable: bool) -> void:
 
 func mark_purchased() -> void:
 	purchased = true
+	locked = false
 	if _buy_button != null:
 		_buy_button.disabled = true
 		_buy_button.text = "Acquis"
+	if _lock_button != null:
+		_lock_button.disabled = true
+		_cadenas.modulate = _teinte_cadenas(false)
 	modulate = Color(0.55, 0.55, 0.55)
 
 
@@ -136,21 +188,26 @@ func _refresh() -> void:
 	_mods_label.add_theme_color_override(&"font_color", Color(0.85, 0.85, 0.85))
 	_buy_button.text = (tr("%d âme") if cost == 1 else tr("%d âmes")) % cost
 
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.11, 0.05, 0.06, 0.96)
-	style.border_color = color
-	style.set_border_width_all(2)
+	# Le cadre du kit, TEINTÉ : sa dorure prend la couleur de la rareté, et le
+	# fond s'en colore à peine. Les états modulent la même teinte au lieu
+	# d'épaissir une bordure.
+	var style := StyleBoxTexture.new()
+	style.texture = CADRE
+	style.set_texture_margin_all(16.0)
+	style.set_content_margin_all(4)
+	var teinte := Color.WHITE.lerp(color, 0.75)
 	if featured:
-		# Le fond prend un cinquième de la couleur de rareté, le liseré double :
-		# la carte se repère d'un coup d'œil, sans rien masquer des autres.
-		style.bg_color = style.bg_color.lerp(color, 0.2)
-		style.set_border_width_all(4)
+		# La pièce rare : la teinte de sa rareté, pleine.
+		teinte = color.lerp(Color.WHITE, 0.15)
 		_rarity_label.text = tr("%s  ·  PIÈCE RARE") % item.get_rarity_name().to_upper()
+	if locked:
+		# La couleur du cadenas : la carte gardée se voit de loin.
+		teinte = VERROU
+		_rarity_label.text += "  ·  " + tr("VERROUILLÉ")
+	_cadenas.modulate = _teinte_cadenas(locked)
 	if _focused:
-		style.border_color = color.lerp(Color.WHITE, 0.5)
-		style.set_border_width_all(4)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(2)
+		teinte = teinte * 1.35
+	style.modulate_color = teinte
 	add_theme_stylebox_override(&"panel", style)
 
 
@@ -195,6 +252,17 @@ static func format_mods(mods: Dictionary) -> String:
 			line = "%+.1f %s" % [value, label]
 		lines.append(line)
 	return "\n".join(lines)
+
+
+func _teinte_cadenas(ferme: bool) -> Color:
+	return Color.WHITE if ferme else Color(0.55, 0.52, 0.52, 0.55)
+
+
+func _on_lock_pressed() -> void:
+	if purchased or item == null:
+		return
+	set_locked(not locked)
+	lock_toggled.emit(item, locked)
 
 
 func _on_buy_pressed() -> void:

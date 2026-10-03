@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/forge_screen.gd" id="1_forge"]
 [ext_resource type="Script" path="res://scripts/ui/sacres_grille.gd" id="2_sacres"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/fleche_gauche.png" id="3_retour"]
+[ext_resource type="Material" path="res://assets/ui/fond_braise.tres" id="fb_mat"]
 
 [node name="Forge" type="CanvasLayer"]
 layer = 8
@@ -13,7 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.04, 0.01, 0.015, 0.8)
+material = ExtResource("fb_mat")
 
 [node name="Center" type="MarginContainer" parent="."]
 anchors_preset = 15
@@ -27,10 +29,8 @@ theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 12
 
 [node name="Panel" type="PanelContainer" parent="Center"]
-custom_minimum_size = Vector2(1560, 0)
+theme_type_variation = &"CadreEcran"
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
 
 [node name="Layout" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
@@ -38,38 +38,52 @@ theme_override_constants/separation = 8
 
 [node name="Header" type="HBoxContainer" parent="Center/Panel/Layout"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 16
 
-[node name="ForgeKeysLabel" type="Label" parent="Center/Panel/Layout/Header"]
+[node name="ForgeCloseButton" type="Button" parent="Center/Panel/Layout/Header"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 52)
 layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 30
-text = "Clés : 0"
+size_flags_vertical = 4
+theme_type_variation = &"SecondaryButton"
+theme_override_constants/icon_max_width = 30
+text = "Retour"
+icon = ExtResource("3_retour")
 
 [node name="Title" type="Label" parent="Center/Panel/Layout/Header"]
 layout_mode = 2
-theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(1, 0.62, 0.16, 1)
-theme_override_font_sizes/font_size = 50
+size_flags_horizontal = 3
+theme_type_variation = &"TitreEcran"
+theme_override_font_sizes/font_size = 60
 text = "FORGE ÉTERNELLE"
 horizontal_alignment = 1
 
-[node name="ForgeProgressLabel" type="Label" parent="Center/Panel/Layout/Header"]
+[node name="ForgeKeysLabel" type="Label" parent="Center/Panel/Layout/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_colors/font_color = Color(1, 0.8, 0.42, 1)
+theme_override_font_sizes/font_size = 36
+text = "Clés : 0"
+horizontal_alignment = 2
+
+[node name="Filet" type="HSeparator" parent="Center/Panel/Layout"]
+layout_mode = 2
+
+[node name="ForgeProgressLabel" type="Label" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.72, 0.68, 0.66, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8, 0.74, 0.7, 1)
+theme_override_font_sizes/font_size = 18
 text = "Forge 0 / 15"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
 [node name="TreeScroll" type="ScrollContainer" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 552)
 layout_mode = 2
+size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
 [node name="BranchesRow" type="HBoxContainer" parent="Center/Panel/Layout/TreeScroll"]
@@ -82,29 +96,33 @@ theme_override_constants/separation = 28
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.86, 0.78, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.92, 0.86, 0.78, 1)
+theme_override_font_sizes/font_size = 18
 text = "Survolez un nœud pour le détail."
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="AbyssPanel" type="PanelContainer" parent="Center/Panel/Layout"]
 unique_name_in_owner = true
+layout_mode = 2
 
 [node name="AbyssBox" type="HBoxContainer" parent="Center/Panel/Layout/AbyssPanel"]
+layout_mode = 2
 theme_override_constants/separation = 16
 
 [node name="AbyssButton" type="Button" parent="Center/Panel/Layout/AbyssPanel/AbyssBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(460, 46)
+layout_mode = 2
 toggle_mode = true
 text = "DÉCHAÎNEMENT"
 
 [node name="AbyssLabel" type="Label" parent="Center/Panel/Layout/AbyssPanel/AbyssBox"]
 unique_name_in_owner = true
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 text = "Déchaînement"
 autowrap_mode = 3
 
@@ -116,8 +134,8 @@ alignment = 1
 [node name="ItemsTitle" type="Label" parent="Center/Panel/Layout/Sacres"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-theme_override_colors/font_color = Color(1, 0.85, 0.39, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1, 0.8, 0.42, 1)
+theme_override_font_sizes/font_size = 32
 text = "Objets sacrés"
 horizontal_alignment = 2
 
@@ -127,10 +145,3 @@ layout_mode = 2
 size_flags_vertical = 4
 columns = 13
 script = ExtResource("2_sacres")
-
-[node name="ForgeCloseButton" type="Button" parent="Center/Panel/Layout"]
-theme_type_variation = &"SecondaryButton"
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 46)
-layout_mode = 2
-text = "Retour"

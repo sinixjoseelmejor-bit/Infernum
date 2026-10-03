@@ -47,6 +47,7 @@ func open() -> void:
 	visible = true
 	get_tree().paused = true
 	resume_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:

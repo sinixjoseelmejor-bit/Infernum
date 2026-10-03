@@ -1,3 +1,4 @@
+class_name StatsScreen
 extends CanvasLayer
 ## Fiche de run : TAB au clavier, Back à la manette.
 ##
@@ -18,32 +19,9 @@ extends CanvasLayer
 @onready var items_column: VBoxContainer = %StatsItems
 @onready var items_title: Label = %StatsItemsTitle
 
-## Intitulé, clé, plafond, UNITÉ.
-##
-## Afficher le plafond n'est pas décoratif : tout l'équilibrage du jeu repose sur
-## eux, et un joueur qui ignore qu'il est à +200 % de dégâts continue d'acheter
-## des objets de dégâts pour rien.
-##
-## L'unité ne sert qu'aux colonnes de source : le total garde son écriture riche
-## (« ×2.00 », « 12 (−18 %) »), qui n'aurait aucun sens répétée cinq fois sur
-## une ligne.
-const ROWS := [
-	["Dégâts", "damage", PlayerStats.CAP_DAMAGE_PCT, "pct"],
-	["  dont dégâts plats", "damage_flat", 0.0, "dec"],
-	["Cadence de tir", "fire_rate", PlayerStats.CAP_FIRE_RATE_PCT, "pct"],
-	["Projectiles", "projectiles", PlayerStats.CAP_PROJECTILE_BONUS, "ent"],
-	["Ennemis traversés", "pierce", PlayerStats.CAP_PIERCE, "ent"],
-	["Chance de critique", "crit", PlayerStats.CAP_CRIT_CHANCE, "pct"],
-	["Dégâts critiques", "crit_damage", 0.0, "pct"],
-	["PV maximum", "health", 0.0, "plat"],
-	["Armure", "armor", PlayerStats.CAP_ARMOR, "plat"],
-	["Régénération", "regen", 0.0, "dec"],
-	["Vol de vie", "lifesteal", PlayerStats.CAP_LIFESTEAL, "pct"],
-	["Vitesse", "speed", PlayerStats.CAP_MOVE_SPEED_PCT, "pct"],
-	["Portée de visée", "range", PlayerStats.CAP_RANGE_PCT, "pct"],
-	["Gain d'âmes", "souls", PlayerStats.CAP_SOUL_PCT, "pct"],
-	["Chance", "luck", PlayerStats.CAP_LUCK, "dec"],
-]
+## Intitulé, clé, plafond, unité : partagés avec la colonne de la boutique,
+## voir `StatsTotaux`.
+const ROWS := StatsTotaux.LIGNES
 
 ## Lignes qui disparaissent quand AUCUNE source ne les alimente.
 ##
@@ -54,8 +32,8 @@ const ROWS := [
 const LIGNES_CONDITIONNELLES := ["damage_flat"]
 
 ## Largeur d'une colonne de source, et de la colonne du total.
-const LARGEUR_SOURCE := 104
-const LARGEUR_TOTAL := 156
+const LARGEUR_SOURCE := 118
+const LARGEUR_TOTAL := 176
 
 const MAXED := Color(1.0, 0.62, 0.16)
 const NEUTRAL := Color(0.72, 0.72, 0.70)
@@ -76,6 +54,7 @@ func open() -> void:
 	_rebuild()
 	visible = true
 	get_tree().paused = true
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -126,6 +105,7 @@ func _rebuild() -> void:
 		if String(row[1]) in LIGNES_CONDITIONNELLES and not _alimentee(String(row[1]), sources):
 			continue
 		_ligne(grille, row, stats, sources)
+	StatsTotaux.zebrer(grille, 1)
 
 	var specials := _special_names(stats)
 	if not specials.is_empty():
@@ -133,7 +113,7 @@ func _rebuild() -> void:
 		for name in specials:
 			var label := Label.new()
 			label.text = "◆  " + name
-			label.add_theme_font_size_override(&"font_size", 15)
+			label.add_theme_font_size_override(&"font_size", 19)
 			label.add_theme_color_override(&"font_color", Color(1.0, 0.62, 0.16))
 			stats_column.add_child(label)
 
@@ -148,8 +128,8 @@ func _rebuild() -> void:
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		items_column.add_child(empty)
 		return
-	for entry in owned:
-		items_column.add_child(_item_row(entry[0], entry[1]))
+	for i in owned.size():
+		items_column.add_child(_item_row(owned[i][0], owned[i][1], i))
 
 
 func _duration() -> String:
@@ -173,7 +153,7 @@ func _alimentee(cle: String, sources: Array) -> bool:
 func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Array) -> void:
 	var titre := Label.new()
 	titre.text = tr(String(row[0]))
-	titre.add_theme_font_size_override(&"font_size", 15)
+	titre.add_theme_font_size_override(&"font_size", 19)
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	titre.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
 	grille.add_child(titre)
@@ -193,10 +173,10 @@ func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Arra
 	# s'allume. Laisser la mention serait le pire mensonge possible sur cette
 	# fiche — elle dirait au joueur d'arrêter d'acheter ce qui est justement
 	# devenu illimité.
-	var au_plafond: bool = not RunState.unleashed and cap > 0.0 and valeur >= cap - 0.0001
+	var au_plafond := StatsTotaux.au_plafond(valeur, cap)
 	var total := Label.new()
 	total.text = String(brut[0])
-	total.add_theme_font_size_override(&"font_size", 15)
+	total.add_theme_font_size_override(&"font_size", 19)
 	total.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	total.custom_minimum_size = Vector2(LARGEUR_TOTAL, 0)
 	total.add_theme_color_override(&"font_color",
@@ -205,8 +185,8 @@ func _ligne(grille: GridContainer, row: Array, stats: PlayerStats, sources: Arra
 
 	var plafond := Label.new()
 	plafond.text = tr("PLAFOND") if au_plafond else ""
-	plafond.add_theme_font_size_override(&"font_size", 11)
-	plafond.custom_minimum_size = Vector2(62, 0)
+	plafond.add_theme_font_size_override(&"font_size", 13)
+	plafond.custom_minimum_size = Vector2(72, 0)
 	plafond.add_theme_color_override(&"font_color", MAXED)
 	grille.add_child(plafond)
 
@@ -248,7 +228,7 @@ func _cellule_base(cle: String, perso: PlayerStats) -> Label:
 
 	var cellule := Label.new()
 	cellule.text = texte
-	cellule.add_theme_font_size_override(&"font_size", 14)
+	cellule.add_theme_font_size_override(&"font_size", 17)
 	cellule.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cellule.custom_minimum_size = Vector2(LARGEUR_SOURCE, 0)
 	cellule.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
@@ -268,7 +248,7 @@ func _unite(cle: String) -> String:
 func _cellule_source(cle: String, unite: String, source: PlayerStats) -> Label:
 	var brut := _valeur_brute(cle, source)
 	var cellule := Label.new()
-	cellule.add_theme_font_size_override(&"font_size", 14)
+	cellule.add_theme_font_size_override(&"font_size", 17)
 	cellule.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cellule.custom_minimum_size = Vector2(LARGEUR_SOURCE, 0)
 	if absf(brut) < 0.0001:
@@ -311,93 +291,14 @@ func _valeur_brute(cle: String, stats: PlayerStats) -> float:
 	return 0.0
 
 
-## Total affiché : par les ACCESSEURS, donc plafonné, et surtout lu sur les
-## NŒUDS VIVANTS quand la statistique a une valeur absolue.
-##
-## Lire l'arme et le joueur plutôt que refaire leur calcul est le seul moyen
-## d'être sûr que la fiche dise la même chose que le jeu. Une formule recopiée
-## ici se désynchroniserait au premier changement d'équilibrage, et une fiche
-## qui ment est pire qu'une fiche absente.
 func _valeur_totale(cle: String, stats: PlayerStats) -> Array:
-	var joueur := get_tree().get_first_node_in_group(&"player")
-	if joueur != null and is_instance_valid(joueur):
-		var arme := joueur.get_node_or_null("Weapons/Weapon")
-		var visee := joueur.get_node_or_null("Targeting")
-		var sante := joueur.get_node_or_null("Health")
-		match cle:
-			"damage":
-				if arme != null:
-					return [tr("%.1f /tir") % arme.get_projectile_damage(), stats.get_damage_pct()]
-			"fire_rate":
-				if arme != null:
-					var duree: float = arme.get_cooldown_duration()
-					return ["%.1f /s" % (1.0 / maxf(0.01, duree)), stats.get_fire_rate_pct()]
-			"projectiles":
-				if arme != null:
-					return ["%d" % arme.get_projectile_count(),
-						float(stats.get_projectile_bonus())]
-			"crit":
-				if arme != null:
-					return [tr("%d %%") % roundi(arme.get_crit_chance() * 100.0),
-						stats.get_crit_chance()]
-			"crit_damage":
-				if arme != null:
-					return ["×%.2f" % arme.get_crit_multiplier(), stats.get_crit_damage_pct()]
-			"health":
-				if sante != null:
-					return ["%d" % roundi(sante.max_health), stats.max_health_flat]
-			"speed":
-				return ["%d px/s" % roundi(joueur.move_speed), stats.get_move_speed_pct()]
-			"range":
-				if visee != null:
-					return ["%d px" % roundi(visee.range_radius), stats.get_range_pct()]
-
-	match cle:
-		"damage":
-			return [tr("+%d %%") % roundi(stats.get_damage_pct() * 100.0), stats.get_damage_pct()]
-		"damage_flat":
-			# S'ajoute AVANT le pourcentage, donc il est multiplié par lui : +1.5
-			# plat sur une arme à +50 % vaut +2.25 de dégâts réels. La ligne
-			# « Dégâts » juste au-dessus en porte déjà la conséquence, celle-ci
-			# ne fait que dire d'où vient l'écart.
-			return ["%+.1f" % stats.damage_flat, stats.damage_flat]
-		"fire_rate":
-			return [tr("%+d %%") % roundi(stats.get_fire_rate_pct() * 100.0), stats.get_fire_rate_pct()]
-		"projectiles":
-			return ["+%d" % stats.get_projectile_bonus(), float(stats.get_projectile_bonus())]
-		"pierce":
-			return ["+%d" % stats.get_pierce(), float(stats.get_pierce())]
-		"crit":
-			return [tr("%d %%") % roundi(stats.get_crit_chance() * 100.0), stats.get_crit_chance()]
-		"crit_damage":
-			return ["×%.2f" % (2.0 + stats.get_crit_damage_pct()), stats.get_crit_damage_pct()]
-		"health":
-			return ["%+d" % roundi(stats.max_health_flat), stats.max_health_flat]
-		"armor":
-			return [tr("%d  (−%d %%)") % [roundi(stats.get_armor()),
-				roundi(stats.get_damage_reduction() * 100.0)], stats.get_armor()]
-		"regen":
-			return [tr("%.1f PV/s") % stats.regen, stats.regen]
-		"lifesteal":
-			return [tr("%.1f %%") % (stats.get_lifesteal() * 100.0), stats.get_lifesteal()]
-		"speed":
-			return [tr("%+d %%") % roundi(stats.get_move_speed_pct() * 100.0), stats.get_move_speed_pct()]
-		"range":
-			return [tr("+%d %%") % roundi(stats.get_range_pct() * 100.0), stats.get_range_pct()]
-		"pickup":
-			return [tr("+%d %%") % roundi(stats.get_pickup_radius_pct() * 100.0),
-				stats.get_pickup_radius_pct()]
-		"souls":
-			return [tr("+%d %%") % roundi(stats.get_soul_gain_pct() * 100.0), stats.get_soul_gain_pct()]
-		"luck":
-			return ["%.1f" % stats.get_luck(), stats.get_luck()]
-	return ["", 0.0]
+	return StatsTotaux.total(cle, stats, get_tree())
 
 
 func _entete(texte: String, largeur: int = 0) -> Label:
 	var l := Label.new()
 	l.text = texte
-	l.add_theme_font_size_override(&"font_size", 11)
+	l.add_theme_font_size_override(&"font_size", 13)
 	l.add_theme_color_override(&"font_color", Color(0.62, 0.58, 0.56))
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	if largeur > 0:
@@ -428,9 +329,21 @@ func _owned_sorted() -> Array:
 	return out
 
 
-func _item_row(item: ItemData, count: int) -> Control:
+func _item_row(item: ItemData, count: int, rang: int) -> Control:
+	# La même rayure que les statistiques, une ligne sur deux.
+	var fond := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = StatsTotaux.RAYURE if rang % 2 == 0 else Color(0, 0, 0, 0)
+	style.border_color = StatsTotaux.FILET
+	style.border_width_bottom = 1
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 3.0
+	style.content_margin_bottom = 3.0
+	fond.add_theme_stylebox_override(&"panel", style)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 8)
+	fond.add_child(row)
 
 	var icon := TextureRect.new()
 	# Facteur ENTIER sur la source de 16 px, au plus proche : un agrandissement
@@ -444,17 +357,17 @@ func _item_row(item: ItemData, count: int) -> Control:
 
 	var name_label := Label.new()
 	name_label.text = item.display_name
-	name_label.add_theme_font_size_override(&"font_size", 15)
+	name_label.add_theme_font_size_override(&"font_size", 19)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_color_override(&"font_color", item.get_rarity_color())
 	row.add_child(name_label)
 
 	var count_label := Label.new()
 	count_label.text = "×%d" % count if count > 1 else ""
-	count_label.add_theme_font_size_override(&"font_size", 15)
-	count_label.custom_minimum_size = Vector2(44, 0)
+	count_label.add_theme_font_size_override(&"font_size", 19)
+	count_label.custom_minimum_size = Vector2(52, 0)
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	count_label.add_theme_color_override(&"font_color",
 		MAXED if count >= item.max_stacks else NEUTRAL)
 	row.add_child(count_label)
-	return row
+	return fond
