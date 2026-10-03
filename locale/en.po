@@ -14,7 +14,7 @@ msgstr "Cain"
 msgid "Job"
 msgstr "Job"
 
-#: scripts/characters/character_db.gd:78 scripts/story/story_db.gd:48
+#: scripts/characters/character_db.gd:79 scripts/story/story_db.gd:48
 msgid "Loth"
 msgstr "Lot"
 
@@ -26,7 +26,7 @@ msgstr "The First Blood"
 msgid "L'Éprouvé"
 msgstr "The Tested"
 
-#: scripts/characters/character_db.gd:78
+#: scripts/characters/character_db.gd:79
 msgid "Le Fuyard"
 msgstr "The Fugitive"
 
@@ -38,7 +38,7 @@ msgstr "Damage"
 msgid "Paladin"
 msgstr "Paladin"
 
-#: scripts/characters/character_db.gd:79
+#: scripts/characters/character_db.gd:80
 msgid "Mobilité"
 msgstr "Mobility"
 
@@ -50,7 +50,7 @@ msgstr "The first murderer, marked never to die and never to know peace. He hits
 msgid "On lui a tout pris pour voir s'il plierait. Il n'a pas plié. Là où il se tient, le sol devient sacré."
 msgstr "Everything was taken from him to see if he would bend. He did not. Where he stands, the ground turns holy."
 
-#: scripts/characters/character_db.gd:80
+#: scripts/characters/character_db.gd:81
 msgid "Il a quitté la ville en flammes sans se retourner — contrairement à sa femme. Rapide, léger, incapable de tenir une ligne : il tire vite et de près."
 msgstr "He left the burning city without looking back — unlike his wife. Fast, light, unable to hold a line: he shoots quickly and up close."
 
@@ -62,7 +62,7 @@ msgstr "The Mark"
 msgid "La Consécration"
 msgstr "Consecration"
 
-#: scripts/characters/character_db.gd:93
+#: scripts/characters/character_db.gd:94
 msgid "Ne pas se retourner"
 msgstr "Never Look Back"
 
@@ -82,7 +82,7 @@ msgstr ""
 "Standing still for a moment, he consecrates the ground: whatever enters it burns, and he heals on it. His lance pierces one enemy.\n"
 "REFUSE TO BEND (Space / A): cancels the next hit and sends back whatever touches him. Three parries — or enemies fallen on his ground — charge the JUDGMENT: the next press unleashes a holy wave."
 
-#: scripts/characters/character_db.gd:97
+#: scripts/characters/character_db.gd:98
 msgid ""
 "+20 % de cadence de tir tant qu'il se déplace. Le bonus tombe dès qu'il s'arrête.\n"
 "RUÉE (Espace / A) : il traverse les corps sur 240 px. Ni les zones ni les tirs ne l'épargnent pour autant."
@@ -114,15 +114,15 @@ msgstr "Pacts"
 msgid "Profil %d"
 msgstr "Profile %d"
 
-#: scripts/core/settings.gd:25
+#: scripts/core/settings.gd:40
 msgid "Automatique (tactile)"
 msgstr "Automatic (touch)"
 
-#: scripts/core/settings.gd:26
+#: scripts/core/settings.gd:41
 msgid "Toujours affiché"
 msgstr "Always shown"
 
-#: scripts/core/settings.gd:27
+#: scripts/core/settings.gd:42
 msgid "Masqué"
 msgstr "Hidden"
 
@@ -1698,7 +1698,7 @@ msgstr "%d CURSES  ·  DANGER %d"
 msgid "%d MALÉDICTION  ·  DANGER %d"
 msgstr "%d CURSE  ·  DANGER %d"
 
-#: scripts/ui/hud.gd:803 scripts/ui/options_screen.gd:139 scripts/ui/options_screen.gd:142 scripts/ui/stats_screen.gd:216
+#: scripts/ui/hud.gd:803 scripts/ui/options_screen.gd:279 scripts/ui/options_screen.gd:282 scripts/ui/stats_screen.gd:216
 msgid "%d %%"
 msgstr "%d%%"
 
@@ -1802,80 +1802,80 @@ msgstr "luck"
 msgid "%s   ·   Clés : %d   ·   Forge %d/%d   ·   Meilleure vague : %d   ·   Runs : %d"
 msgstr "%s   ·   Keys: %d   ·   Forge %d/%d   ·   Best wave: %d   ·   Runs: %d"
 
-#: scripts/ui/options_screen.gd:49
+#: scripts/ui/options_screen.gd:56
 msgid "Automatique"
 msgstr "Automatic"
 
-#: scripts/ui/options_screen.gd:60
+#: scripts/ui/options_screen.gd:67
 msgid "La langue des menus, de l'interface et de l'histoire."
 msgstr "The language of the menus, the interface and the story."
 
-#: scripts/ui/options_screen.gd:64
+#: scripts/ui/options_screen.gd:71
 msgid "Plein écran"
 msgstr "Fullscreen"
 
-#: scripts/ui/options_screen.gd:67
+#: scripts/ui/options_screen.gd:74
 msgid "Affichage"
 msgstr "Display"
 
-#: scripts/ui/options_screen.gd:67
+#: scripts/ui/options_screen.gd:74
 msgid "Bascule entre fenêtré et plein écran."
 msgstr "Switches between windowed and fullscreen."
 
-#: scripts/ui/options_screen.gd:69
+#: scripts/ui/options_screen.gd:76
 msgid "Musique"
 msgstr "Music"
 
-#: scripts/ui/options_screen.gd:70
+#: scripts/ui/options_screen.gd:77
 msgid "Volume des musiques du menu et de l'arène."
 msgstr "Volume of the menu and arena music."
 
-#: scripts/ui/options_screen.gd:73
+#: scripts/ui/options_screen.gd:80
 msgctxt "son"
 msgid "Effets"
 msgstr "Sound effects"
 
-#: scripts/ui/options_screen.gd:74
+#: scripts/ui/options_screen.gd:81
 msgid "Volume des tirs, des rugissements et de l'interface."
 msgstr "Volume of shots, roars and the interface."
 
-#: scripts/ui/options_screen.gd:84
+#: scripts/ui/options_screen.gd:91
 msgid "Joystick virtuel"
 msgstr "Virtual joystick"
 
-#: scripts/ui/options_screen.gd:85
+#: scripts/ui/options_screen.gd:92
 msgid "« Automatique » ne l'affiche que sur écran tactile. « Toujours » permet de le tester à la souris."
 msgstr "“Automatic” only shows it on touch screens. “Always” lets you test it with a mouse."
 
-#: scripts/ui/options_screen.gd:88
+#: scripts/ui/options_screen.gd:95
 msgid "Tremblement de caméra"
 msgstr "Camera shake"
 
-#: scripts/ui/options_screen.gd:89
+#: scripts/ui/options_screen.gd:96
 msgid "Réduire ou couper les secousses d'écran (confort visuel)."
 msgstr "Reduce or turn off screen shake (visual comfort)."
 
-#: scripts/ui/options_screen.gd:93
+#: scripts/ui/options_screen.gd:100
 msgid "8 directions"
 msgstr "8 directions"
 
-#: scripts/ui/options_screen.gd:96
+#: scripts/ui/options_screen.gd:103
 msgid "Déplacement"
 msgstr "Movement"
 
-#: scripts/ui/options_screen.gd:97
+#: scripts/ui/options_screen.gd:104
 msgid "Quantifie le stick et le joystick tactile sur 8 axes. Désactivé, le déplacement est libre."
 msgstr "Snaps the stick and the touch joystick to 8 directions. When off, movement is free."
 
-#: scripts/ui/options_screen.gd:104
+#: scripts/ui/options_screen.gd:111
 msgid "Revoir"
 msgstr "Replay"
 
-#: scripts/ui/options_screen.gd:111
+#: scripts/ui/options_screen.gd:118
 msgid "Histoire"
 msgstr "Story"
 
-#: scripts/ui/options_screen.gd:112
+#: scripts/ui/options_screen.gd:119
 msgid "Rejoue le Pari, le prologue de %s et les scènes déjà vues."
 msgstr "Replays the Wager, %s's prologue and the scenes already seen."
 
@@ -3258,3 +3258,79 @@ msgstr "PRESSURE"
 #: scripts/ui/hud.gd:835
 msgid "PRESSION — RAPPROCHEZ-VOUS"
 msgstr "PRESSURE — GET CLOSER"
+
+#: scripts/ui/options_screen.gd:122
+msgid "Commandes"
+msgstr "Controls"
+
+#: scripts/ui/options_screen.gd:123
+msgid "Choisissez une commande, puis appuyez sur la touche ou le bouton de manette voulu. Échap ou B annule."
+msgstr "Pick a control, then press the key or gamepad button you want. Escape or B cancels."
+
+#: scripts/ui/options_screen.gd:136
+msgid "Monter"
+msgstr "Move up"
+
+#: scripts/ui/options_screen.gd:136
+msgid "Se déplacer vers le haut."
+msgstr "Move upwards."
+
+#: scripts/ui/options_screen.gd:138
+msgid "Descendre"
+msgstr "Move down"
+
+#: scripts/ui/options_screen.gd:138
+msgid "Se déplacer vers le bas."
+msgstr "Move downwards."
+
+#: scripts/ui/options_screen.gd:140
+msgid "Aller à gauche"
+msgstr "Move left"
+
+#: scripts/ui/options_screen.gd:140
+msgid "Se déplacer vers la gauche."
+msgstr "Move to the left."
+
+#: scripts/ui/options_screen.gd:142
+msgid "Aller à droite"
+msgstr "Move right"
+
+#: scripts/ui/options_screen.gd:142
+msgid "Se déplacer vers la droite."
+msgstr "Move to the right."
+
+#: scripts/ui/options_screen.gd:144
+msgid "Pouvoir"
+msgstr "Power"
+
+#: scripts/ui/options_screen.gd:145
+msgid "Le pouvoir du damné : la ruée de Loth, le Prix du sang de Caïn, le Refus de plier de Job."
+msgstr "The damned soul's power: Lot's Rush, Cain's Blood Price, Job's Refuse to Bend."
+
+#: scripts/ui/options_screen.gd:147
+msgid "Fiche des statistiques"
+msgstr "Stats sheet"
+
+#: scripts/ui/options_screen.gd:147
+msgid "Ouvre la fiche de run pendant une partie."
+msgstr "Opens the run sheet during a game."
+
+#: scripts/ui/options_screen.gd:149
+msgid "Abandonner et relancer"
+msgstr "Abandon and restart"
+
+#: scripts/ui/options_screen.gd:149
+msgid "Termine la run en cours et en commence une autre."
+msgstr "Ends the current run and starts a new one."
+
+#: scripts/ui/options_screen.gd:207
+msgid "Appuyez sur une touche…"
+msgstr "Press a key…"
+
+#: scripts/characters/character_db.gd:65
+msgid ""
+"Immobile un instant, il consacre le sol : ce qui y entre brûle, et il s'y soigne. Sa lance traverse un ennemi.\n"
+"LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et renvoie ce qui le touche ; réussie, elle revient trois fois plus vite. Trois parades — ou des ennemis tombés sur son sol — chargent le JUGEMENT : l'appui suivant libère une onde sacrée."
+msgstr ""
+"Standing still for a moment, he consecrates the ground: whatever enters it burns, and he heals on it. His lance pierces one enemy.\n"
+"REFUSE TO BEND (Space / A): cancels the next hit and sends back whatever touches him; a successful parry comes back three times faster. Three parries — or enemies fallen on his ground — charge the JUDGMENT: the next press unleashes a holy wave."

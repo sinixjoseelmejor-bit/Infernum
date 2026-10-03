@@ -65,7 +65,8 @@ const CHARACTERS: Array[Dictionary] = [
 		"passive_desc": "Immobile un instant, il consacre le sol : ce qui y entre "
 			+ "brûle, et il s'y soigne. Sa lance traverse un ennemi.\n"
 			+ "LE REFUS DE PLIER (Espace / A) : il annule le coup suivant et renvoie "
-			+ "ce qui le touche. Trois parades — ou des ennemis tombés sur son sol — "
+			+ "ce qui le touche ; réussie, elle revient trois fois plus vite. "
+			+ "Trois parades — ou des ennemis tombés sur son sol — "
 			+ "chargent le JUGEMENT : l'appui suivant libère une onde sacrée.",
 		"special": &"consecration",
 		"power": &"steadfast",
@@ -212,6 +213,11 @@ const PARADE_AMORCE := 0.15
 const PARADE_FENETRE := 0.25
 const PARADE_RACINE := 0.5
 const PARADE_RECHARGE := 4.0
+## UNE PARADE RÉUSSIE REVIENT VITE (0.10.2) : sa recharge est amputée de 70 %,
+## 4 s → 1,2 s. Ratée, elle garde ses 4 s et la sanction. C'est la lecture qui
+## est récompensée : qui pare juste enchaîne, et charge son Jugement d'autant
+## plus vite. Le coup paré n'ouvre toujours aucune i-frame (voir `_contrer`).
+const PARADE_RECHARGE_REUSSIE := 0.3
 const PARADE_RAYON := 150.0
 ## Multiple des dégâts d'arme. FIXE, et surtout pas une fraction de ce qui a été
 ## paré : au Déchaînement les dégâts ennemis montent en exponentielle, donc un

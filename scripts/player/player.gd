@@ -353,7 +353,9 @@ func etat_pouvoir() -> Dictionary:
 ## exponentielle, et un contre proportionnel y deviendrait la réponse à tout.
 func _contrer(source: Node) -> void:
 	_parade_fenetre = 0.0
-	_parade_recharge = _recharge_parade()
+	# Réussie, elle revient vite (0.10.2) : 30 % de la recharge. La jauge part
+	# donc remplie aux sept dixièmes — elle dit la vérité sur ce qui reste.
+	_parade_recharge = _recharge_parade() * Characters.PARADE_RECHARGE_REUSSIE
 	var armes := get_weapons()
 	var degats: float = armes[0].get_projectile_damage() * Characters.PARADE_RATIO \
 		if not armes.is_empty() else 0.0
