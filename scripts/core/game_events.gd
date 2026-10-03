@@ -50,10 +50,12 @@ signal power_requested()
 ## cours) n'émet rien. C'est à lui que les objets s'accrochent (Bâton de Moïse).
 signal pouvoir_utilise(at: Vector2)
 
-## Nouvelle à afficher en grand, au centre de l'écran. Réservée à ce qui change
-## la partie pour de bon — il n'y en a qu'une aujourd'hui, la Clé des Abysses.
-## Un bandeau qui servirait à tout ne serait plus lu.
-signal announce(titre: String, detail: String, couleur: Color)
+## Nouvelle à afficher en grand, au centre de l'écran, tenue `duree` secondes.
+## Réservée à ce qui change la partie pour de bon : la Clé des Abysses, le
+## damné qui reprend le corps face à Hélel, et l'arrivée d'un boss (0.10.1) —
+## brève, celle-là, parce que le combat commence dessous. Un bandeau qui
+## servirait à tout ne serait plus lu.
+signal announce(titre: String, detail: String, couleur: Color, duree: float)
 
 
 func request_shake(strength: float = 4.0) -> void:

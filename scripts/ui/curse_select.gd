@@ -16,7 +16,7 @@ const CURSE_COLOR := Color(0.83, 0.42, 0.92)
 const PRICE_COLOR := Color(1.0, 0.52, 0.42)
 const GAIN_COLOR := Color(0.56, 0.94, 1.0)
 ## Une carte : la hauteur loge la plus longue description sur deux lignes.
-const CARD_MIN_SIZE := Vector2(380, 176)
+const CARD_MIN_SIZE := Vector2(530, 220)
 
 var _rows: Dictionary = {}
 
@@ -36,6 +36,7 @@ func open() -> void:
 	_refresh()
 	UIUtils.chain_focus(self)
 	start_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func _build() -> void:
@@ -78,19 +79,19 @@ func _build_card(curse: Dictionary) -> Button:
 	var head := HBoxContainer.new()
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(head)
-	var title := _label(tr(curse["name"]), 30, CURSE_COLOR)
+	var title := _label(tr(curse["name"]), 36, CURSE_COLOR)
 	title.theme_type_variation = &"TitleLabel"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	head.add_child(_label(tr("Danger %d") % int(curse.get("danger", 0)), 15, Color(0.72, 0.62, 0.7)))
+	head.add_child(_label(tr("Danger %d") % int(curse.get("danger", 0)), 18, Color(0.76, 0.64, 0.72)))
 
-	var desc := _label(tr(curse["desc"]), 14, Color(0.7, 0.67, 0.68))
+	var desc := _label(tr(curse["desc"]), 18, Color(0.78, 0.72, 0.72))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(desc)
-	var price := _label(tr("Prix : %s") % tr(curse["penalty"]), 17, PRICE_COLOR)
+	var price := _label(tr("Prix : %s") % tr(curse["penalty"]), 20, PRICE_COLOR)
 	price.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(price)
-	var gain := _label(tr("Gain : %s") % _format_rewards(curse), 17, GAIN_COLOR)
+	var gain := _label(tr("Gain : %s") % _format_rewards(curse), 20, GAIN_COLOR)
 	gain.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(gain)
 	return card

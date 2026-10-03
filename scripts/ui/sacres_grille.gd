@@ -76,10 +76,8 @@ func _vignette(item: ItemData) -> Button:
 	# visuel sur tout l'écran — un doré de texte seul se confondait avec le prix
 	# d'un objet abordable.
 	if acquis:
-		var fond := StyleBoxFlat.new()
-		fond.bg_color = Color(0.29, 0.21, 0.1, 0.98)
-		fond.border_color = ACQUIS
-		fond.set_border_width_all(2)
+		var fond := Ecran.case(true, 0.0)
+		fond.modulate_color = Color(1.0, 0.86, 0.62)
 		for etat in [&"normal", &"disabled", &"hover"]:
 			b.add_theme_stylebox_override(etat, fond)
 	b.focus_entered.connect(func() -> void: survole.emit(item))

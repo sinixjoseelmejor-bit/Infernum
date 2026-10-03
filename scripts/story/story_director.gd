@@ -7,7 +7,8 @@ extends Node
 ## le bon ordre :
 ##
 ## - Lucifer apparaît : son entrée, la première fois que CE damné l'atteint.
-## - Un boss tombe : sa scène d'après-boss (Lilith), puis la boutique.
+## - Un boss tombe : sa scène d'après-boss (Golgota, Lilith, Baal, Asmodée),
+##   puis la boutique.
 ## - Lucifer tombe : le sceau de ce damné se brise — sa fin, puis Lucifer qui se
 ##   relève — et un CHOIX : l'enfer sans fin, ou le portail vers Hélel si les
 ##   trois sceaux sont brisés.
@@ -288,7 +289,7 @@ func _swap() -> void:
 	_player.swap_character(Characters.get_selected())
 	var character := Characters.get_selected()
 	GameEvents.announce.emit(character.display_name.to_upper(), character.title,
-		COULEURS.get(next, Color.WHITE))
+		COULEURS.get(next, Color.WHITE), 4.0)
 	GameEvents.request_shake(6.0)
 
 

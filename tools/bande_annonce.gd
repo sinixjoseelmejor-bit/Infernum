@@ -333,7 +333,7 @@ func _changer(id: StringName) -> void:
 		Characters.swap_in_run(id)
 		_joueur.call(&"swap_character", Characters.get_selected())
 	var c := Characters.get_selected()
-	GameEvents.announce.emit(c.display_name.to_upper(), c.title, COULEURS.get(id, Color.WHITE))
+	GameEvents.announce.emit(c.display_name.to_upper(), c.title, COULEURS.get(id, Color.WHITE), 4.0)
 
 
 func _ennemis_proches(rayon: float) -> Vector2:
@@ -489,7 +489,7 @@ func _tourner() -> void:
 	_poser_pres_de_la_lave()
 	await _avancer(6.0, 20)
 	_ouvrir()
-	GameEvents.announce.emit(_texte("profondeurs"), _texte("profondeurs_2"), Color(1.0, 0.5, 0.2))
+	GameEvents.announce.emit(_texte("profondeurs"), _texte("profondeurs_2"), Color(1.0, 0.5, 0.2), 4.0)
 
 	# --- Les seigneurs ---
 	t += 5.0

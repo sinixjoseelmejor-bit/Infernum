@@ -49,6 +49,7 @@ func open() -> void:
 		if first == null:
 			first = control
 	(first if first != null else close_button).grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -216,23 +217,18 @@ func _build_node_tile(node: Dictionary) -> Control:
 	var panel := PanelContainer.new()
 	panel.name = "case_%s" % id
 	panel.custom_minimum_size = TILE_SIZE
-	var style := StyleBoxFlat.new()
-	style.set_border_width_all(2)
-	style.set_content_margin_all(6)
+	# Les cases du kit depuis la 0.10.1 : acquis, la case allumée et réchauffée ;
+	# achetable, la case allumée ; verrouillé, la case éteinte et assombrie.
+	var style := Ecran.case(unlocked or available, 8.0)
 	# Deux pixels de moins en haut et en bas : sur les six rangs de l'arbre le
 	# plus profond, c'est ce qui manquait pour tenir dans 1080 (README, « Mise en
 	# page des écrans »).
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
+	style.content_margin_top = 5
+	style.content_margin_bottom = 5
 	if unlocked:
-		style.bg_color = Color(0.29, 0.21, 0.1, 0.98)
-		style.border_color = Color(0.91, 0.722, 0.282)
-	elif available:
-		style.bg_color = Color(0.19, 0.16, 0.23, 0.98)
-		style.border_color = Color(0.98, 0.86, 0.5)
-	else:
-		style.bg_color = Color(0.11, 0.1, 0.13, 0.9)
-		style.border_color = Color(0.3, 0.24, 0.2)
+		style.modulate_color = Color(1.0, 0.86, 0.62)
+	elif not available:
+		style.modulate_color = Color(0.62, 0.56, 0.56)
 	panel.add_theme_stylebox_override(&"panel", style)
 
 	var box := VBoxContainer.new()
@@ -241,7 +237,7 @@ func _build_node_tile(node: Dictionary) -> Control:
 
 	var name_label := Label.new()
 	name_label.text = tr(node["name"])
-	name_label.add_theme_font_size_override(&"font_size", 15)
+	name_label.add_theme_font_size_override(&"font_size", 16)
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	if not available and not unlocked:
 		name_label.add_theme_color_override(&"font_color", Color(0.55, 0.5, 0.5))
@@ -249,7 +245,7 @@ func _build_node_tile(node: Dictionary) -> Control:
 
 	var effect := Label.new()
 	effect.text = _effect_text(node)
-	effect.add_theme_font_size_override(&"font_size", 12)
+	effect.add_theme_font_size_override(&"font_size", 13)
 	effect.add_theme_color_override(&"font_color",
 		Color(0.85, 0.82, 0.78) if available or unlocked else Color(0.5, 0.47, 0.46))
 	effect.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -310,7 +306,7 @@ func _show_detail(node: Dictionary) -> void:
 	detail_label.text = text
 
 
-## Les liens entre prérequis et nœuds, dessinés SOUS les cases : un trait doré
+## Les liens entre prérequis et nœuds, dessinés SOUS les cases : un trait de braise
 ## quand le prérequis est acquis — le chemin est ouvert —, sombre sinon. Coude à
 ## angle droit, comme tout le reste de l'interface en pixels.
 func _draw_links() -> void:
@@ -329,7 +325,7 @@ func _draw_links() -> void:
 			# Le coude dans l'intervalle JUSTE AU-DESSUS de la case d'arrivée : à
 			# mi-chemin, il tombait dans la rangée intermédiaire, derrière ses cases.
 			var mid := b.y - ROW_GAP * 0.5
-			var color := Color(0.91, 0.722, 0.282) if Forge.is_unlocked(req) else Color(0.34, 0.27, 0.22)
+			var color := Color(0.9, 0.45, 0.18) if Forge.is_unlocked(req) else Color(0.34, 0.2, 0.16)
 			branches_row.draw_polyline(PackedVector2Array([a, Vector2(a.x, mid), Vector2(b.x, mid), b]),
 				color, 2.0)
 

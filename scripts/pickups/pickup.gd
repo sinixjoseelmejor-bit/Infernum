@@ -55,7 +55,7 @@ enum Kind { SOULS, KEYS, HEAL, ABYSS_KEY }
 @export var settle_time: float = 0.15
 @export var spawn_impulse: float = 90.0
 ## Âmes EN PLUS pour une âme accrochée par le rayon du joueur, par rapport à
-## celle que l'aspiration de fin de vague ramène (0.9.4). Voir
+## celle que l'aspiration de fin de vague ramène (0.10.1). Voir
 ## `RunState.bonus_ramassage`.
 @export var bonus_ramassage: float = 0.5
 
@@ -197,7 +197,7 @@ func collect() -> void:
 				GameEvents.announce.emit(tr("LA CLÉ DES ABYSSES"),
 					tr("Armez le Déchaînement à la Forge, pour le personnage de votre"
 					+ " choix : plus aucune limite, et un enfer qui répond."),
-					Color(0.78, 0.45, 1.0))
+					Color(0.78, 0.45, 1.0), 4.0)
 			GameEvents.request_shake(6.0)
 	set_physics_process(false)
 	set_deferred(&"monitoring", false)

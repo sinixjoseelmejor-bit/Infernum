@@ -261,14 +261,14 @@ Deux détails qui comptent :
 L'appel est répété à chaque image et non passé une fois : un ennemi mort au même
 instant dépose ses âmes en différé, elles doivent être rattrapées aussi.
 
-#### Le bonus de ramassage (0.9.4)
+#### Le bonus de ramassage (0.10.1)
 
 L'aspiration avait un effet de bord : **le rayon de ramassage ne valait plus
 rien**. Tout finissait par arriver, ramasser tôt ne rapportait rien, et la stat
 avait été retirée des deux objets qui la portaient (Aimant d'âmes, Siphon du
 vide) — plus rien dans le jeu ne la donnait.
 
-Depuis la 0.9.4, **une âme accrochée par le rayon du joueur pendant la vague
+Depuis la 0.10.1, **une âme accrochée par le rayon du joueur pendant la vague
 rapporte 50 % d'âmes en plus** ; celles que l'aspiration ramène restent au
 tarif normal. Trois précisions :
 
@@ -325,6 +325,60 @@ son poids d'apparition qui croît le plus vite.
 Le limier s'immobilise pendant son armement : la menace vient de la pression au sol,
 pas d'un coup inévitable. Les projectiles ennemis n'ont **ni tir à l'avance ni
 auto-correction** — l'aide à la visée est un confort réservé au joueur.
+
+#### La course en cercle ne paie plus (0.10.1)
+
+**Tourner en rond était la meilleure stratégie du jeu, de loin.** Les
+poursuivants fonçaient tous sur la position ACTUELLE du joueur, et la meute
+s'étirait en une seule traînée derrière lui. Mesuré en vague 14 (Caïn, dix
+objets, joueur increvable, 60 s mesurées, quatre répétitions) :
+
+| Déplacement | Coups encaissés / min, avant | après |
+|---|---|---|
+| Cercle | **25** | **37** |
+| Zigzag au hasard (cap changé toutes les 1,5 s) | 51 | 37 |
+| Immobile | 123 | 124 |
+
+(Immobile est au plafond des i-frames : 2,5 coups par seconde au plus.) Le
+cercle ne vaut plus mieux que bouger au hasard, et le zigzag n'est pas plus
+puni qu'avant. Trois changements, dans cet ordre d'importance :
+
+- **L'anticipation** (`Enemy.anticipation`, 1 s) : un poursuivant vise l'endroit
+  où le joueur SERA, en suivant sa vitesse, sur le temps qu'il lui faudrait pour
+  l'atteindre (1 s au plus). Face à un cercle, la meute coupe à travers au lieu
+  de le suivre. **C'est elle qui fait l'effet** : 25 → 37.
+- **La prise à revers** (`Enemy.prise_a_revers`) : chacun vise un point décalé
+  autour du joueur, sur un angle qui lui est propre (240 px à côté à 500 px de
+  distance, le joueur lui-même sous 100 px). La meute arrive de plusieurs
+  côtés. Seule, sans anticipation, elle ne changeait **rien** : 25 → 23, parce
+  qu'au contact chacun revise le joueur et la traînée se reforme.
+- **Les apparitions devant** (`WaveManager.part_devant`, 33 %) : un tiers des
+  ennemis naît dans le sens de la marche (± 0,6 rad). Effet faible et noyé dans
+  le bruit : 36 coups/min à 0 %, 37 à 33 %, 45 à 60 % — mais à 60 %, le cercle
+  devient plus puni que le zigzag, ce qui n'est pas le but.
+
+Seuls les poursuivants directs changent : imp, brute, slime (et les imps de
+l'invocatrice). Le limier, le cultiste, l'Œil, la chauve-souris, le feu follet
+et l'invocatrice ont leur propre déplacement ; **les boss sont exclus**, leurs
+mouvements sont réglés à part. Le regroupement d'un seul côté du joueur (1 =
+tous du même côté) passe de 0,77 à 0,66 en cercle.
+
+**Les vagues 1 à 14 n'y ont droit qu'à un quart** (`part_poursuite_debut`,
+`vague_poursuite_complete`) : un ennemi sur quatre chasse ainsi, les autres à
+l'ancienne, et tous à partir de la vague 15. Demandé après essai en jeu : les
+premières vagues servent à apprendre, la meute qui intercepte y arrive par
+touches. Les enfants d'un slime et les imps d'une invocatrice prennent la
+poursuite de leur parent. Les apparitions devant, elles, valent dès la
+vague 1. Pas remesuré : le banc qui a mesuré l'effet jouait la vague 14.
+
+**Mesuré en vague 7 d'abord, et ça ne mesurait rien** : la build tuait tout ce
+qui apparaissait (116 éliminations par minute dans tous les cas, quatre
+ennemis à moins de 500 px). Un banc de déplacement demande une vague où les
+ennemis arrivent jusqu'au joueur.
+
+**Conséquence pour les bancs** : ceux qui décrivent un cercle — la plupart —
+encaissent désormais autant qu'un joueur qui bouge au hasard. Leurs mesures
+de survie d'avant la 0.10.1 étaient optimistes.
 
 #### Quatre ennemis de plus (0.9.2)
 
@@ -687,7 +741,7 @@ au lieu de ×3.5. [`PlayerStats`](scripts/core/player_stats.gd) additionne des
 
 | Stat | Plafond |
 |---|---|
-| Dégâts | +230 % *(+200 % jusqu'à la 0.9.3)* |
+| Dégâts | +210 % *(+200 % jusqu'à la 0.9.3)* |
 | Cadence | +150 % |
 | Ennemis traversés | +3 |
 | Projectiles | +4 |
@@ -699,11 +753,14 @@ au lieu de ×3.5. [`PlayerStats`](scripts/core/player_stats.gd) additionne des
 | Gain d'âmes | +75 % |
 | Chance (raretés) | +3 |
 
-**Relevés en 0.9.4**, à la demande : dégâts de +200 à +230 %, chance de
-critique de 60 à 75 %. Ce sont deux des cinq plafonds qu'on atteint vraiment
+**Relevés en 0.10.1**, à la demande : dégâts de +200 à +210 %, chance de
+critique de 60 à 75 %. Les dégâts sont d'abord passés à +230 % ; essayé en
+jeu, c'était trop (63 par tir pour Caïn et Job), et le joueur a demandé de
+revenir à peine au-dessus de l'ancien plafond : 59 par tir au plus, 28 pour
+Loth. Ce sont deux des cinq plafonds qu'on atteint vraiment
 (voir le Déchaînement plus bas) ; le DPS théorique tous plafonds atteints passe
-de ×39 à ×49 (3,3 × 2,5 × 2,08 × 2,875), et le plateau réellement atteignable
-d'environ ×1,26 — calculé sur les pools, pas remesuré en run.
+de ×39 à ×46 (3,1 × 2,5 × 2,08 × 2,875), et le plateau réellement atteignable
+d'environ ×1,18 — calculé sur les pools, pas remesuré en run.
 
 L'armure et la chance étaient les deux seuls axes **sans plafond**. L'armure
 montait à 236 (70 % de réduction) et les trois objets les plus rentables du jeu
@@ -1631,6 +1688,70 @@ Deux choses ont demandé du travail plutôt qu'une copie :
   variation de thème `CardButton` — panneau sombre à liseré doré, qui s'allume
   à la sélection.
 
+### La refonte des menus (0.10.1)
+
+Les douze écrans se ressemblaient tous : un panneau violet à liseré doré posé
+au centre sur un voile, sept tailles différentes, des titres de quatre
+couleurs et du texte en 13 à 16 px sur un écran de 1080. Et le kit lui-même
+est un kit de fantasy générique — ses captures de démonstration s'appellent
+« Pixel Quest ». Trois changements :
+
+- **La palette de l'enfer.** Les pièces du kit sont repeintes par
+  `tools/extract_assets.py` (`ui_enfer`, dans `assets/sprites/ui/enfer/`) :
+  les gris violacés deviennent un charbon rouge, l'or devient braise, le vert
+  des curseurs devient feu. Seule la TEINTE change : la valeur de chaque pixel
+  est gardée, les biseaux et les reflets survivent. Les pièces sont agrandies
+  **×2** (cadres, cases, boutons) ou **×3** (flèches) : à ×1, le biseau d'un
+  cadre ne faisait que 2 px. Une version **neutre** du cadre, au liseré gris,
+  sert aux cartes d'objet de la boutique : la couleur de la rareté la teint
+  sans se mêler à la braise.
+- **Le menu principal et la pause en colonne de texte**, à gauche, sur
+  l'illustration ou sur la partie figée : pas de cadre, des entrées en Jersey
+  de 52 px (`MenuItem`, [`menu_item.gd`](scripts/ui/menu_item.gd)). Celle qui a
+  le focus s'allume en braise, glisse de 18 px et prend une flèche du kit. Un
+  voile en dégradé horizontal assombrit seulement la gauche : l'illustration
+  reste entière à droite. Le numéro de version est en bas à droite.
+- **Les sous-écrans en plein cadre** : choix du damné, profils, options,
+  Forge, collection, classement, malédictions, boutique, fiche de run. Même
+  en-tête partout — « Retour » à gauche avec sa flèche, le titre au centre
+  (`TitreEcran`, Jersey 68, braise, ombre portée), une action ou une
+  information à droite (la Forge, les clés, « Valeurs par défaut ») — et un
+  filet de braise dessous. Les écrans apparaissent en 0,18 s (fondu et
+  montée, [`Ecran.apparaitre`](scripts/ui/ecran.gd)). La fin de run n'a pas de
+  cadre : un grand titre sur le même fond.
+- **Le fond des braises.** Le cadre plein écran ne dessine plus que son liseré
+  (variation `CadreEcran`) ; derrière, le voile `Dim` porte un dégradé
+  ([`fond_braise.gdshader`](assets/ui/fond_braise.gdshader)) : noir en haut,
+  qui rougeoie vers le bas, les côtés un peu plus sombres. Le premier essai
+  remplissait le cadre du brun-rouge uni du kit — terne, refusé à l'œil. Trois
+  fonds ont été comparés en capture (l'illustration floutée, un noir uni, les
+  braises) ; les braises l'ont emporté. La pause garde son voile en dégradé
+  horizontal : on y voit la partie figée.
+- **Les tableaux de stats se suivent à l'œil** : la fiche de run et la colonne
+  de la boutique alignaient leurs lignes sans rien entre elles — sur la fiche,
+  900 px séparent l'intitulé du total. Une rayure une ligne sur deux, un filet
+  sous chaque ligne, et la ligne sous la souris s'allume
+  (`StatsTotaux.zebrer`, dessiné par la grille sous ses cellules). La liste
+  des objets de la fiche prend les mêmes rayures.
+
+Le texte gagne 25 à 40 % partout (aides de 13-14 px → 18-21 px). Les profils
+deviennent trois cartes d'emplacement côte à côte ; une ligne d'options et une
+ligne du classement sont des cases du kit, allumées pour le réglage qui a le
+focus et pour les runs du profil actif ; le podium du classement prend l'or,
+l'argent et le bronze.
+
+**Piège rencontré : ne jamais animer la POSITION d'un cadre ancré plein
+écran.** La première version faisait monter le cadre en tweenant sa
+`position` : sur un contrôle ancré, la position fige les marges à la taille
+qu'il a à cet instant. À l'ouverture, avant la première mise en page, un texte
+à la ligne réclamait 5 600 px de haut — le cadre est resté à cette taille, tout
+son contenu sous le bord de l'écran. La montée passe par le décalage
+(`offset`) du `CanvasLayer`.
+
+Vérifié en image en 21:9 et en 16:9 (1920 × 1080 logiques), tous les écrans,
+menus et jeu. Rien n'a changé à la navigation manette : le focus se cherche
+par géométrie (`MenuNav`), « Retour » est atteint en remontant.
+
 ### Trois boutons, trois rôles
 
 Jusqu'à la 0.8.6, tous les boutons du jeu étaient le même rectangle doré :
@@ -1640,8 +1761,8 @@ en doré plein sur le profil actif. L'action la plus destructrice de l'interface
 
 | Variation | Aspect | Usage |
 |---|---|---|
-| `Button` | doré plein | l'action principale de l'écran, une seule si possible |
-| `SecondaryButton` | sombre, liseré doré qui s'allume au survol | Retour, Forge Éternelle, Valeurs par défaut, nœuds acquis |
+| `Button` | braise pleine (dorée avant la 0.10.1) | l'action principale de l'écran, une seule si possible |
+| `SecondaryButton` | case sombre du kit, qui s'allume en braise au survol | Retour, Forge Éternelle, Valeurs par défaut, nœuds acquis |
 | `DangerButton` | rouge sombre, jamais mis en avant | Effacer un profil, Abandonner la run |
 
 Appliqué partout, écrans de jeu compris : à la fin de run, « Nouvelle run » est
@@ -1769,6 +1890,37 @@ textes à retour à la ligne n'avaient **pas encore leur largeur** et réclamaie
 une ligne par mot. On mesure donc après **une image de mise en page** — même garde
 sur les malédictions.
 
+**Les stats en direct dans la boutique (0.10.1).** Une troisième colonne, à
+droite de l'offre, donne les totaux de la fiche de run (TAB) : dégâts par tir,
+cadence, critique, PV, armure… mis à jour à chaque achat et à chaque revente.
+Ce qu'un achat vient de changer s'allume un instant, et la mention PLAFOND dit
+quand acheter sur un axe ne sert plus à rien. Un seul calcul pour les deux
+écrans (`StatsTotaux`) : la boutique et la fiche ne peuvent pas se contredire.
+Les trois colonnes prennent 1 842 px de large, 1 890 avec les marges, en
+français comme en anglais, sur 1 920 : c'est la place qui reste, **une
+quatrième colonne ne tiendrait pas**. La ligne « Rayon de ramassage » est
+revenue dans la fiche avec le bonus de ramassage.
+
+Au passage, un défaut ancien : **un achat ne reconstruisait pas la colonne de
+revente**. L'objet acheté n'y apparaissait qu'à la boutique suivante, avec des
+compteurs ×N faux entre-temps.
+
+**Verrouiller un objet (0.10.1).** Chaque carte de l'offre porte un cadenas à
+côté de son prix. Verrouillée, elle **garde sa place à la relance** et
+**revient en tête de la boutique suivante**, au prix de la nouvelle vague — on
+peut repérer un objet qu'on n'a pas encore les moyens de payer. L'acheter le
+déverrouille ; un objet qu'on ne peut plus prendre (piles au maximum) perd son
+verrou. La relance se désactive quand toutes les cartes non achetées sont
+verrouillées : elle coûterait sans rien changer. La liste vit dans la run
+(`RunState.objets_verrouilles`) et meurt avec elle.
+
+Le cadenas est **dessiné en traits**, faute de glyphe dans la police, et un mot
+aurait pris la place du prix. Il est **vert menthe**, comme le liseré de la
+carte verrouillée : le cyan d'abord essayé se confondait avec le bleu des
+objets rares. Vérifié par une sonde : deux cartes verrouillées gardent leurs
+places 1 et 3 à la relance, reviennent à la boutique suivante, et l'achat de
+l'une la retire de la liste.
+
 **La pièce rare de l'offre est mise en valeur** : liseré doublé, fond teinté de sa
 rareté, mention « PIÈCE RARE ». Seulement si elle est épique ou légendaire, et
 strictement plus rare que les trois autres — un marqueur qui s'allumerait à
@@ -1872,6 +2024,68 @@ les runs d'avant la 0.9.3 n'ont rien retenu de ce qu'elles ont acheté.
 
 Les vignettes font 72 px et l'icône 48, le détail 96 : des multiples entiers
 des 16 px de l'icône (voir « Les icônes d'objets »).
+
+### Le bestiaire et le Registre (0.10.1)
+
+Deux onglets de plus dans la collection : **Objets | Bestiaire | Registre**.
+L'onglet ouvert est doré, les autres sombres — le bouton enfoncé du thème ne se
+distinguait pas du survol.
+
+**Le bestiaire** ([`Bestiaire`](scripts/story/bestiaire.gd)) : les 9 ennemis et
+les 6 boss. Une créature est **recensée à sa première élimination** ; sa fiche
+dit d'où elle vient, ce qu'elle punit et combien on en a abattu. Les conseils
+ont été relus contre le script de chaque créature : ils doivent rester VRAIS
+(la brute frappe 16 contre 7 pour un imp, d'où « deux fois plus fort »).
+Hélel ne montre ni sa silhouette ni son nom avant d'être abattu.
+
+- Compté par profil (`SaveGame.compter_tue`), par le **nom de la scène** de la
+  créature : un slime né d'un autre et un imp d'invocatrice comptent sous leur
+  espèce. Un feu follet qui détone n'est pas une élimination (README, « Le feu
+  follet ») : il ne compte pas non plus ici. Comme l'album, la première
+  s'écrit tout de suite, le reste attend la fin de la run.
+- **Les profils existants retrouvent leurs boss** : ce qu'une progression a
+  forcément vaincu se déduit d'elle — une vague dépassée pour les quatre
+  premiers boss, un sceau brisé pour Lucifer, la vraie fin pour Hélel. Ils
+  s'affichent « Vaincu », sans compteur. Les ennemis ordinaires, eux, repartent
+  de zéro : une première run les recense presque tous.
+- Les portraits sont la première image de la planche de repos, **recadrée** sur
+  le dessin (x 32-77, y 29-59 mesurés sur les quatorze planches ; Asmodée et
+  ses lames fixent la largeur) et affichée **×3** dans la grille, ×4 dans le
+  détail. À ×2, un imp n'y faisait que 40 px de haut. Quatre colonnes font la
+  largeur des huit d'objets : le panneau ne change pas de taille d'un onglet à
+  l'autre.
+
+Vérifié au banc : une run réelle de 22 s (joueur invincible) a compté
+12 imps en mémoire, et le premier était déjà écrit dans le profil.
+
+**Le Registre de l'Accusateur** ([`Registre`](scripts/story/registre.gd)) :
+douze pages du carnet où Lucifer tient son pari, dans sa voix. Elles comblent ce
+que les scènes ne disent pas — sa première défaite contre Job, d'où viennent
+les os de Golgota, pourquoi il garde la statue, ce qu'il pense de la Marque
+qu'il n'a pas faite — et la dernière page est d'une autre écriture que la
+sienne.
+
+| # | Page | Trouvée en |
+|---|---|---|
+| I | Le premier pari | terminant une première descente |
+| II | Ceux d'avant | abattant Golgota |
+| III-V | La Marque, La question, La statue | abattant Lilith avec Caïn, Job, Loth |
+| VI | Celle qui a refusé | abattant Lilith |
+| VII | Les dieux qu'on oublie | abattant Baal |
+| VIII | La chaîne | abattant Asmodée |
+| IX | La Forge | ouvrant 10 nœuds de Forge |
+| X | La Clé | ramassant la Clé des Abysses |
+| XI | L'Aurore | brisant les trois sceaux |
+| XII | La dernière page | rompant le Pari |
+
+**Rien n'est stocké** : une page se déduit de la progression du profil à chaque
+lecture. Rien à migrer, et un profil d'avant le Registre retrouve d'un coup ce
+qu'il a déjà mérité. Les pages III à V passent par la scène d'après Lilith de
+ce damné (ou son sceau) : on ne garde pas la meilleure vague par personnage.
+Les deux dernières cachent leur titre tant qu'elles ne sont pas trouvées.
+
+**Pas encore fait** : aucune annonce quand une page ou une créature s'ajoute —
+on le découvre en ouvrant la collection.
 
 ## Le classement (0.9.3)
 
@@ -2614,6 +2828,10 @@ Mesuré en test, joueur fuyant en permanence à pleine vitesse : Golgota 8
 sanctions, Baal 6, Lucifer 7, Asmodée 3, Lilith 1 — Lilith étant celle dont la
 mobilité suffit à rattraper le joueur, sa jauge sature rarement.
 
+**Depuis la 0.10.1, la jauge se voit** : une barre sous la phase du boss, et le
+boss rougeoie passé la moitié. Avant, rien ne la montrait — voir « La passe des
+boss ».
+
 ### Lisibilité
 
 Aucun boss ne touche le joueur sans préavis : toutes les frappes au sol passent
@@ -2621,6 +2839,10 @@ par [`Telegraph`](scripts/combat/telegraph.gd), un disque qui se remplit avant d
 détoner. La difficulté vient du nombre et du placement des zones, jamais d'un coup
 impossible à lire. Les charges (Asmodée, Lucifer) sont annoncées par une zone au
 point d'arrivée, et le boss s'immobilise pendant l'armement.
+
+La 0.10.1 a trouvé cinq exceptions à cette règle — l'Appel et les sauts de
+Lilith, la chaîne et les têtes d'Asmodée, l'anneau de crânes de Golgota — et
+les a corrigées : voir « La passe des boss ».
 
 ### Baal était le seul à se laisser jouer sans regarder l'écran
 
@@ -2647,6 +2869,9 @@ durcir Baal en raccourcissant sa mèche l'aurait cassée.
 | Anneaux, phase 2 | 1 | **2 contrarotatifs** |
 | Déluge | 8 zones, quelle que soit la distance | **9 à 16**, selon la distance |
 
+*(0.10.1 : 1,3 s en phase 1, 1,15 s en phase 2, et la nuée devient une ligne
+d'orage — Baal orbite enfin vraiment, voir « La passe des boss ».)*
+
 Le **doublet** pose une zone là où le joueur va et une là où il est : rester
 immobile est puni par la seconde, courir tout droit par la première. Il faut
 changer de direction, ce qui n'était pas demandé avant.
@@ -2667,6 +2892,31 @@ entrants à 2,5 coups par seconde. Baal produisait 0,67 zone par seconde : le
 plafond n'était jamais atteint, les zones étaient la seule limite. Il en produit
 maintenant 1,94 en moyenne — toujours **sous** le plafond. La pression à se
 déplacer augmente ; le mur de dégâts inévitables, non.
+
+### Le plongeon de Lucifer ne s'esquivait pas (0.10.1)
+
+La zone rouge du plongeon (deuxième et troisième phases) faisait 120 px de
+rayon et frappait **0,4 s** après son apparition. Sortir d'une zone de 120 px
+depuis son centre demande 0,56 s de marche à 215 px/s — avant même le temps
+de réaction. Et elle visait là où le joueur SERAIT à la fin de l'annonce : qui
+continuait tout droit arrivait pile au centre. **Elle était impossible à
+esquiver**, et le joueur l'a dit en jeu.
+
+L'annonce passe à **0,9 s**, et sa visée reste à 0,4 s d'avance
+(`dive_prediction`) : allonger les deux aurait posé la zone deux fois plus loin
+devant le joueur. En troisième phase, un plongeon toutes les 1,6 s pour
+0,9 + 0,4 s d'annonce et de ruée : ça tient.
+
+Au même moment, ses **projectiles** perdent 25 % de dégâts
+(`projectile_damage_scale`) — la croix de la première phase et les anneaux, dont
+les deux contrarotatifs de la troisième se lisent mal. Ses zones annoncées ne
+changent pas.
+
+**La charge d'Asmodée avait le même défaut** (zone de 110 px, 0,45 s d'annonce,
+0,51 s de marche pour en sortir) : même correction, annonce à **0,9 s** et visée
+gardée à 0,45 s (`charge_prediction`). En phase 2 ses attaques tombent toutes
+les 1,35 s, mais la charge ne revient qu'une fois sur trois têtes : 0,9 + 0,42 s
+tiennent dans le rythme.
 
 ### Lucifer était le plus petit des cinq
 
@@ -2690,6 +2940,227 @@ l'agrandir le rendrait plus facile à toucher ET plus dangereux au contact, deux
 changements d'équilibrage pour une demande d'apparence. Le décalage entre son
 dessin et sa boîte existait déjà — Asmodée mesure 253 px de large pour un rayon
 de 52 — parce que la boîte représente le corps, pas l'envergure.
+
+### La passe des boss (0.10.1)
+
+Demandée après des parties : Golgota, Lilith, Baal et Asmodée « ratés », avec
+une consigne — **plus juste, même niveau**. Trois chantiers : ce qui ne se
+voyait pas, ce qui touchait sans préavis, et ce qui ne se passait pas.
+
+#### Ce qui ne se voyait pas
+
+- **Les gestes.** Chaque planche du pack a deux ou trois attaques, un coup
+  encaissé et une mort, et aucun boss ne les jouait : ils marchaient en
+  frappant. Les 24 planches sont extraites par `extract_assets.py`
+  (`<boss>_attaque1.png`…), et le geste est **étiré sur le préavis** de sa
+  zone — le coup part quand le sol explose. Sans les planches, le combat est
+  identique : rien n'en dépend.
+- **Les teintes de phase étaient effacées par le premier tir.** Le flash d'un
+  coup revenait au blanc et non à la teinte de la phase : on ne voyait jamais
+  Golgota se fendre ni Lucifer brûler, et la Nuit de Lilith — censée la rendre à
+  demi invisible — la laissait parfaitement visible. Elle passe à 0,6
+  d'opacité, et non 0,45 : à 0,45 elle se perdait sur le sol sombre de la carte.
+- **L'entrée.** Le boss frappait dès sa première image. Il se pose maintenant
+  (1,6 s sans frapper, la jauge de pression gelée), son nom s'affiche pendant
+  1,6 s — et non les 4 s de la Clé des Abysses : le combat commence dessous.
+- **Le milieu de l'écran reste libre.** Le bandeau des annonces était à 42 %
+  de la hauteur, en 70 px : son sous-titre tombait exactement sur le joueur.
+  Il passe à 26 %, en 52 px, juste sous la pile du haut. Le panneau du boss,
+  qui prenait toute la largeur de la pile (920 px), passe à 640 px et perd un
+  tiers de sa hauteur.
+- **La bascule de phase.** Elle enchaînait sur la première attaque de la phase
+  suivante sans rien montrer. Une seconde de flottement : geste « touché »,
+  flash, onde au sol.
+- **La pression.** La jauge anti-kite n'était affichée **nulle part** : le
+  joueur qui kitait encaissait la sanction sans avoir rien vu monter. Une barre
+  sous la phase du boss (« PRESSION — RAPPROCHEZ-VOUS » passé la moitié, qui
+  clignote passé les trois quarts), et le boss rougeoie de plus en plus vite.
+- **La mort.** Le boss disparaissait dans la même bouffée que les imps. Il joue
+  sa planche de mort et reste au sol un instant, et le jeu passe à ×0,3 pendant
+  une demi-seconde. Ce ralenti est rendu par une fonction **statique** : le boss
+  est libéré pendant qu'il dure, et un rappel attaché à lui ne serait jamais
+  appelé — le jeu resterait ralenti pour de bon.
+
+#### Ce qui touchait sans préavis
+
+| | Avant | Après |
+|---|---|---|
+| L'Appel de Lilith | surgit à 70 px et tire son anneau dans la même image | surgit à 150 px, cercle d'arrivée 0,35 s, anneau après 0,45 s de geste |
+| Les sauts de Lilith | cercle au DÉPART, salve dès l'arrivée à 120 px | cercle à l'ARRIVÉE, salve après 0,3 s de geste |
+| La chaîne d'Asmodée | 10 dégâts au moment où elle saisit | trait de visée de 0,6 s, aucun dégât ; zone là où le joueur retombe, puis la charge promise |
+| L'homme et le bélier d'Asmodée | tirent sans prévenir — le bélier, au contact, ne s'esquivait pas | tête allumée, geste, 0,45 s figé, puis le tir |
+| L'anneau de crânes de Golgota | part du corps sans prévenir | 0,45 s de geste avant |
+
+La zone d'après-chaîne était posée **autour d'Asmodée**, sur 150 px — mais la
+chaîne ramène le joueur à 170 px au plus près. Elle ne pouvait toucher
+personne, et toute la sanction tenait dans les dégâts de la chaîne, sans
+préavis.
+
+**Les ruées tombent sur leur zone** (`Boss.ruee_annoncee`). Asmodée et Lucifer
+partaient à vitesse et durée fixes une fois le préavis écoulé : loin de leur
+zone ils s'arrêtaient avant, près ils la dépassaient, et ils arrivaient
+toujours **après** l'explosion — puis glissaient, la vitesse de ruée n'étant
+rognée que de quelques px/s par image. Le boss part maintenant juste assez tôt
+pour toucher le centre de la zone à l'instant où elle détone, et s'y arrête.
+Le préavis ne change pas. Et **le corps en pleine ruée ne blesse plus au
+contact** : seule l'arrivée est annoncée, pas le trajet — et depuis que la
+ruée part avant la détonation, ce trajet croisait le joueur en train de sortir
+de la zone (voir « Le joueur qui esquive » ci-dessous).
+
+Le banc a trouvé le piège de cette correction : une ruée calée sur la distance
+**sans** arrêt à l'impact diverge. Plus le boss glisse loin, plus la ruée
+suivante part vite et le porte loin — Asmodée a fini à **16 millions de
+pixels** de l'arène en sept secondes. D'où l'arrêt net, et une allure bornée à
+2,5 fois la vitesse nominale.
+
+#### Les boss qui orbitent orbitent vraiment
+
+`strafe_around` choisissait une vitesse d'orbite, puis la poursuite de base
+repassait derrière à chaque image et tirait la vitesse vers le joueur. Baal,
+qui « tient ses distances », et Lilith, qui tourne autour du joueur, finissaient
+à mi-chemin entre l'orbite et la course droit sur lui. C'est corrigé — et ça
+change la difficulté de Baal, mesurée en comparant les deux déplacements (le
+même code, un interrupteur de banc), huit répétitions :
+
+| Baal, phase 2 | Ancien déplacement | Vraie orbite | Vraie orbite, frappes à 1,15 s |
+|---|---|---|---|
+| joueur à 260 px | 0,64 coup/s | 0,83 | 0,79 |
+| joueur à 380 px | 0,72 | 0,88 | **0,73** |
+| joueur à 520 px | 0,82 | 0,92 | **0,82** |
+
+Baal recule vraiment, donc le joueur qui le poursuit court plus droit, et les
+zones anticipées le touchent plus. La cadence compense : frappes de la phase 2
+à 1,15 s (0,95), de la phase 1 à 1,3 s (1,2). Seul le joueur qui reste **collé**
+à lui y perd — et c'est le comportement voulu : sa portée est l'arène, la
+jauge ne demande que 430 px.
+
+#### Ce qui ne se passait pas
+
+- **Golgota — la fissure.** Sa première phase ne faisait qu'un écrasement toutes
+  les 2,6 s. Une frappe sur trois ouvre une faille : cinq zones qui courent du
+  colosse vers le joueur, 0,1 s l'une après l'autre. En seconde phase, trois
+  failles à ±35° — visées là où le joueur EST : anticipées, elles faisaient
+  monter la phase de 0,30 à 0,41 coup/s.
+- **Lilith — la danse.** Une volée sur quatre devient une spirale à trois bras
+  qui tourne lentement. Ses sauts passent de 2,8 à 2,3 s : maintenant
+  annoncés, ils rendaient moins qu'avant.
+- **Baal — la ligne d'orage** remplace la nuée de la phase 2 : cinq zones
+  tirées au hasard, qui tombaient parfois sur le doublet et parfois nulle part.
+  La ligne en pose six, jointives, en travers de l'axe Baal-joueur : on la
+  franchit en avançant ou en reculant, jamais en glissant de côté. Au même
+  rythme, elle touchait 0,13 fois de plus par seconde qu'une nuée (A/B, dix
+  répétitions) ; elle revient toutes les 5 s au lieu de 2,6.
+- **Asmodée — l'homme tire deux fois.** Sa salve visait là où le joueur ÉTAIT :
+  à 260 px, il avait fait 190 px de plus quand elle arrivait. La seconde vise là
+  où il VA — le principe du doublet de Baal. Elle n'a que trois traits sur un
+  arc étroit : à cinq, un joueur qui esquive prenait 0,32 coup/s en première
+  phase, plus que face à Baal.
+- **Lucifer tourne à 270 px, et non 330.** Au-delà de 320 px sa jauge se
+  remplit : tant que la poursuite le ramenait vers le joueur, ça ne se voyait
+  pas ; avec la vraie orbite, il forçait le joueur à lui courir après.
+
+#### Mesuré
+
+Le banc : joueur désarmé, maintenu en vie à chaque image, qui **orbite le
+boss** à 260 px (au contact) ou à 520 px (il fuit) ; boss égratigné toutes les
+0,4 s pour que la pression ne se lise que sur la distance ; phases forcées par
+les PV ; ni renforts ni enragement. Coups encaissés par seconde, sur 21 s par
+phase. Avant : trois répétitions ; après : cinq.
+
+| Boss | Phase | Au contact, avant | après | En fuite, avant | après |
+|---|---|---|---|---|---|
+| Golgota | 1 | 0,06 | 0,09 | 0,19 | 0,05 |
+| | 2 | 0,30 | 0,20 | 0,40 | 0,39 |
+| Lilith | 1 | 0,19 | 0,23 | 0,48 | 0,37 |
+| | 2 | 0,59 | 0,32 à 0,49 | 0,51 | 0,38 |
+| Baal | 1 | 0,44 | 0,46 | 0,59 | 0,62 |
+| | 2 | 0,52 | 0,79 | 0,83 | 0,82 |
+| Asmodée | 1 | **0,02** | **0,22** | 0,32 | 0,09 |
+| | 2 | 0,27 | 0,35 | 0,54 | 0,20 |
+| Lucifer | 1 | 0,13 | 0,16 | 0,03 | 0,07 |
+| | 2 | 0,25 | 0,19 | 0,14 | 0,13 |
+| | 3 | 0,52 | 0,38 | 0,35 | 0,32 |
+
+**Le bruit est de ±0,1** entre deux exécutions du même réglage (Baal phase 2 :
+0,68 puis 0,92 ; Lilith phase 2 : 0,32 puis 0,49). Une ligne isolée ne prouve
+rien, d'où les A/B sur huit à dix répétitions ci-dessus pour les deux décisions
+qui en dépendaient.
+
+Ce que les baisses veulent dire :
+
+- **Lilith phase 2, Lucifer phase 3** : une part de ce qu'ils infligeaient
+  n'était pas annoncé — les salves à bout portant de Lilith, le corps de
+  Lucifer qui traversait le joueur 0,4 s après sa zone. C'est cette part qui
+  disparaît.
+- **Asmodée en fuite** : six sanctions en 21 s, soit 0,28 coup/s de chaîne
+  **sans préavis**, faisaient l'essentiel de ce qu'il infligeait au fuyard. Le
+  fuyard est toujours ramené et chargé ; il ne prend plus de coup gratuit.
+- **Asmodée au contact, phase 1** : de 0,02 à 0,22 — il ne faisait rien, c'était
+  le défaut.
+
+**Le plafond des i-frames tient** (voir « Les PV allongent le combat ») : Baal
+pose moins de zones qu'avant (frappes plus espacées, ligne plus rare que la
+nuée). Les trois failles de Golgota posent quinze zones d'un coup, mais sur
+trois lignes : le joueur n'est jamais que sur l'une, et deux zones voisines
+partent à 0,1 s d'écart, sous les 0,4 s d'invulnérabilité.
+
+Ce banc tourne en rond et ne lit rien : il mesure la densité qui atteint
+quelqu'un qui ne joue pas. D'où le second.
+
+#### Le joueur qui esquive
+
+Le même banc, mais le joueur **lit le jeu** : une zone annoncée n'est vue
+qu'après 0,25 s (le temps de réaction) ; dedans, il en sort par le plus court,
+et il n'entre pas dans celle qui va détoner ; un projectile dont la trajectoire
+passe à moins de 48 px dans les 0,7 s est évité de côté ; il s'écarte des corps,
+et du trajet d'un boss en pleine ruée. Il ne pare pas et n'utilise pas son
+pouvoir. Au contact, il se tient à 85 % de la portée de la jauge de chaque boss
+— là où se tient un joueur qui le connaît — et non collé à lui.
+
+Pour comparer, **les scripts d'avant la passe** sont remis le temps du banc puis
+rendus, et vérifiés à l'identique. La reconstruction a été validée en rejouant
+d'abord l'ancien banc dessus : mêmes chiffres au bruit près, et la même
+signature — cinq sanctions de Lucifer en troisième phase au contact.
+
+La première version de la passe a été prise en défaut par ce banc, sur trois
+points, corrigés depuis : le corps de Lucifer qui traversait le joueur pendant
+la ruée (0,18 contact/s), Lucifer qui forçait le joueur à le poursuivre, la
+seconde salve d'Asmodée trop large. Après corrections, six répétitions :
+
+| Boss | Phase | Dans sa portée, avant | après | En fuite, avant | après |
+|---|---|---|---|---|---|
+| Golgota | 1 | 0,00 | 0,00 | 0,22 | 0,21 |
+| | 2 | 0,14 | 0,10 | 0,23 | 0,26 |
+| Lilith | 1 | 0,06 | 0,13 | 0,24 | 0,17 |
+| | 2 | 0,12 | 0,11 à 0,28 | 0,28 | 0,12 |
+| Baal | 1 | 0,19 | 0,21 | 0,29 | 0,25 |
+| | 2 | 0,28 | 0,25 | 0,41 | 0,34 |
+| Asmodée | 1 | 0,12 | 0,13 | 0,30 | **0,03** |
+| | 2 | 0,24 | 0,25 | 0,48 | **0,13** |
+| Lucifer | 1 | 0,00 | 0,06 | 0,10 | 0,02 |
+| | 2 | 0,18 | 0,08 | 0,09 | 0,07 |
+| | 3 | 0,33 | 0,43 | 0,25 | 0,34 |
+| **Total** | | **1,66** | **1,85** | **2,89** | **1,94** |
+
+**Au contact, le niveau tient** : +11 %, dans le bruit pour la plupart des
+lignes. Lucifer en troisième phase monte (0,33 → 0,43) : son plongeon le pose
+maintenant SUR le joueur au lieu de 200 px avant, et ses anneaux partent de
+plus près.
+
+**En fuite, un tiers de moins — et c'est un choix ouvert.** Presque tout vient
+d'Asmodée et de Lilith : face à un joueur qui esquive, leur sanction anti-kite
+ne coûtait QUE ses coups sans préavis (la chaîne, l'anneau à bout portant). Les
+rendre justes les a rendues gratuites pour qui les lit. Deux essais pour
+rendre un coût équitable à la fuite — une cage de zones au point de chute de la
+chaîne, un anneau de quatorze traits pour l'Appel — n'ont rien changé de
+mesurable : la traction fait glisser le joueur hors de la cage avant qu'elle
+se referme. Ils ont été retirés. Le fuyard reste ramené et chargé ; il ne prend
+plus de coup gratuit.
+
+**Le bruit de ce banc est fort** : Lilith en seconde phase a donné 0,11, 0,21
+et 0,28 sur trois exécutions du même réglage. Et un banc qui esquive
+parfaitement après 0,25 s reste un banc : la lisibilité des gestes, de la
+jauge et des sauts de Lilith se juge en jeu.
 
 ## Le Déchaînement — la récompense d'avoir tué Lucifer
 
@@ -2742,8 +3213,8 @@ treize restent hors d'atteinte** :
 | Vol de vie | +4 % | +8 % | **aucun** |
 | Chance | +1,0 | +3,0 | **aucun** |
 | Dégâts critiques | +1,20 | +1,50 | **aucun** |
-| Chance de critique | +120 % | +75 % *(60 % avant la 0.9.4)* | ×1,6 |
-| Dégâts | +352 % | +230 % *(200 % avant la 0.9.4)* | ×1,53 |
+| Chance de critique | +120 % | +75 % *(60 % avant la 0.10.1)* | ×1,6 |
+| Dégâts | +352 % | +210 % *(200 % avant la 0.10.1)* | ×1,68 |
 | Gain d'âmes | +113 % | +75 % | ×1,51 |
 | Vitesse | +86 % | +60 % | ×1,43 |
 | Portée | +100 % | +80 % | ×1,25 |
@@ -3302,6 +3773,31 @@ tombé est reconnu par le nom de sa scène (`lilith`) ; une scène
 boss. « Revoir » ne propose les scènes d'après boss qu'une fois vues : le menu
 ne divulgue pas la suite.
 
+**Les trois autres boss parlent aussi (0.10.1).** Neuf scènes de plus, même
+règle que Lilith (la première fois que CE damné bat ce boss, avant la
+boutique), et un fil d'un boss à l'autre :
+
+- **Golgota** (vague 5) montre l'**enjeu**. Le Mont du Crâne est fait des os de
+  ceux qui ont joué avant : ce sont eux qui parlent (« Les ossements »), pas
+  lui. Ils ont perdu en cessant de se relever — la seule façon de perdre ici.
+  Caïn apprend qu'on leur avait promis une fin à eux aussi, Job entend les mots
+  d'Éliphaz (Job 4:7) dans leur bouche, Loth reconnaît Sodome.
+- **Baal** (vague 15) prolonge « le Ciel se tait » de Lilith par une **fausse
+  voix** : le dieu qui n'a pas répondu sur le Carmel (1 Rois 18) a encore
+  l'orage. Il reprend à Job les mots de la tempête (« Où étais-tu quand je
+  fondais la terre ? », Job 38) — « Tu es la tempête. Pas la voix. »
+- **Asmodée** (vague 20), juste avant Lucifer, **tente** chacun avec un
+  raccourci vers ce qu'il cherche, et chacun refuse : une mort pour Caïn, au
+  prix d'une autre ; ses PREMIERS enfants pour Job, à qui le livre n'en rend
+  que « d'autres » (Job 42) ; Édith pour Loth, s'il se retourne — la statue
+  apparaît derrière lui, et il avance sans la regarder.
+
+Trois locuteurs et trois planches de plus dans `StoryDB` ; `BOSSES_RACONTES`
+suit l'ordre de la run, pour « Revoir ». Les neuf scènes ont été jouées de
+bout en bout au banc et vérifiées en image, sans rien écrire dans le profil :
+chaque scène était marquée vue EN MÉMOIRE avant d'être jouée, ce qui
+court-circuite l'écriture de `mark_story_seen`.
+
 **Erreur corrigée au banc** : pendant le fondu de sortie, la cinématique ne
 bloquait plus les entrées alors que la boutique avait déjà le focus sur
 « Vague suivante ». Qui tapotait A pour faire défiler les répliques la fermait
@@ -3705,6 +4201,43 @@ script qu'il ne faut pas perdre.
 Les cartes les affichent en 32 px — un facteur **entier** sur la source de 16 px,
 filtré au plus proche. À l'échelle 2,5 un pixel sur deux serait deux fois plus
 large que son voisin.
+
+**La table a été perdue, puis retrouvée (0.10.1).** Le commit de la nouvelle
+carte (0.9.2) l'a effacée avec le décor de l'ancien pack, qu'elle suivait
+dans le fichier — le script plantait donc sur `ITEM_ICONS` après un clone, et
+personne ne l'a vu puisque les icônes étaient déjà sur le disque. Elle a été
+reconstruite **à l'octet près** : chacune des 48 icônes présentes a été
+comparée aux 1244 du pack, et chacune n'en a qu'une seule identique, conforme
+à l'ancienne table. Le script refonctionne de bout en bout.
+
+#### Le butin et le HUD, tirés du même pack (0.10.1)
+
+L'âme, la clé et le soin étaient trois SVG plats — des disques et un dessin de
+clé tracés à la main, ce qui se voyait à côté des sprites pixel art. Ils
+viennent maintenant du même pack d'icônes (`PICKUP_ICONS` dans
+[`tools/extract_assets.py`](tools/extract_assets.py)) :
+
+| Butin | Icône | Affichage |
+|---|---|---|
+| Âme | `item598`, orbe pâle lumineux | ×2, teinté cyan (la couleur des âmes dans l'interface) |
+| Clé | `item691`, clé dorée | ×2 |
+| Soin | `item903`, fiole rouge | ×2 |
+| Clé des Abysses | `item693`, clé d'argent | ×3, teintée violette, halo ×5 |
+
+**Aucune ne sert déjà à un objet** : un butin ne doit pas ressembler à ce
+qu'on achète. Le cœur rouge (`item688`) était le premier choix pour le soin,
+mais c'est l'icône du Cœur de forge. La clé d'argent prend la teinte violette
+de la Clé des Abysses bien mieux qu'une clé dorée.
+
+Le HUD compte avec **les mêmes icônes** : les âmes y étaient une pièce de
+monnaie, et les clés… un cadenas. Le cadenas (`lock.png` du kit) a trouvé sa
+vraie place sur le bouton de verrou de la boutique, où il remplace un dessin
+en traits.
+
+**Les cartes de la boutique portent le cadre du kit** (`panel.png`, celui des
+grands panneaux), teinté de la couleur de leur rareté, au lieu d'un rectangle
+à bordure plate dessiné par le code. La pièce rare prend sa couleur pleine, la
+carte verrouillée le vert menthe du cadenas, et le focus éclaircit la teinte.
 
 ### Le sol de l'arène, et ses deux étages
 
@@ -4350,6 +4883,35 @@ remplace un défaut par un autre, la dernière image sautant au lieu de s'étein
 Un impact vit donc **1,73 s** en tout. Golgota enchaîne deux écrasements toutes
 les 1,7 s en phase 2 : les traces se chevauchent, et c'est le comportement voulu
 — un sol que le colosse a déjà brisé ne redevient pas intact entre deux coups.
+
+**La foudre de Baal a sa propre planche depuis la 0.10.1**
+(`assets/sprites/bosses/Eclaire.png`, déposée par l'auteur du projet). Ses
+zones de FOUDRE — salves, essaim, frappe ciblée — jouent un éclair qui tombe du
+ciel et éclate au sol ; ses braises gardent la flamme. Avant, les deux jouaient
+la même flamme, sur un boss qui s'appelle le Seigneur de l'Orage.
+
+- La planche est du pixel art agrandi **×8** (1536 × 1536, blocs de 8 × 8
+  vérifiés) : **trois variantes** d'éclair, une par rangée, de **cinq images**
+  chacune (la sixième colonne est vide), sur des cases de 256 × 512.
+- **Une rangée au hasard** à chaque frappe (`rangee_au_hasard`, ajouté à
+  `SpriteEffect`) : trois éclairs qui tombent ensemble ne se ressemblent pas.
+- Le point d'impact est en bas de la case : `offset` de **(0, −214)** le pose
+  au centre de la zone. Son éclaboussure au sol fait **240 px** de large sur la
+  planche, c'est elle qui se cale sur le diamètre de la zone.
+- **15 images par seconde**, soit 0,33 s, et pas de tenue : la dernière image
+  est déjà des étincelles qui se dispersent.
+- Le choix se fait dans `BossBaal.telegraph_at` : la couleur de la zone dit si
+  c'est de la foudre. Aucun appel n'a changé.
+
+Vérifié en image, jeu figé à l'impact puis image par image : trois zones de
+foudre, trois variantes, la braise toujours en flamme.
+
+**Sauf chez Baal, depuis la 0.10.1** : sa tenue passe à **0,35 s**, dont 0,30 de
+fondu (`impact_flamme_bref.tscn`). Mesuré : **0,65 s** de vie au lieu de 1,75.
+Baal pose des zones en série (salves, essaim, braises) ; ses traces restaient
+au sol pendant les annonces suivantes et gênaient leur lecture — le joueur l'a
+dit en jeu. Les autres boss gardent leur trace longue, et l'impact de feu des
+objets aussi (il reste sur `impact_flamme.tscn`).
 
 #### Golgota frappe deux fois moins vite que les autres
 
@@ -5235,7 +5797,8 @@ tous les projectiles l'ont dans leur masque ; les boss ne l'ont plus.
   faisait déborder la Forge (793 px de minimum, contre 482 aujourd'hui).
 - Les sauvegardes vivent dans `user://infernum_profile_N.cfg` (voir Profils).
 - Les personnages, ennemis et boss sont des planches PNG animées ; les
-  projectiles et le butin sont encore des SVG plats. Remplacer un sprite
+  projectiles sont encore des SVG plats (le butin ne l'est plus depuis la
+  0.10.1). Remplacer un sprite
   n'implique aucun changement de code, mais bien trois réglages mesurés sur la
   planche (`scale`, `offset`, filtrage Nearest) — la marche à suivre est dans
   [`assets/README.md`](assets/README.md).

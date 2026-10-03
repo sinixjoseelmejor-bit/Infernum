@@ -60,6 +60,7 @@ const SELL_RATIO := 0.5
 @onready var continue_button: Button = %ContinueButton
 @onready var body_scroll: ScrollContainer = %BodyScroll
 @onready var body: VBoxContainer = body_scroll.get_child(0)
+@onready var stats_grille: GridContainer = %ShopStats
 
 ## Plancher et plafond de la zone de l'offre. Le plafond garde la boutique dans
 ## l'écran (1080 unités logiques au minimum) ; entre les deux, elle prend
@@ -71,16 +72,24 @@ var _cards: Array[ItemCard] = []
 var _pact_buttons: Array[Button] = []
 var _rerolls: int = 0
 var _open: bool = false
+## Dernière valeur affichée de chaque stat : ce qui vient de changer s'allume.
+var _stats_vues: Dictionary = {}
 
 
 func _ready() -> void:
 	# La boutique doit rester interactive alors que le jeu est en pause.
 	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	visible = false
+	StatsTotaux.zebrer(stats_grille)
 	reroll_button.pressed.connect(_on_reroll_pressed)
 	continue_button.pressed.connect(close)
 	GameEvents.wave_cleared.connect(_on_wave_cleared)
 	RunState.souls_changed.connect(_on_souls_changed)
+	# DIFFÉRÉ : la santé et l'arme du joueur se remettent à jour sur le même
+	# signal, et la colonne lit leurs valeurs — elle doit passer après eux.
+	RunState.stats_recomputed.connect(func(_s: PlayerStats) -> void:
+		if _open:
+			_maj_stats.call_deferred())
 
 
 ## L'histoire passe AVANT la boutique — scène d'après boss, sceau de Lucifer,
@@ -114,8 +123,11 @@ func open() -> void:
 	_roll_pacts()
 	_build_sell()
 	_refresh()
+	_stats_vues.clear()
+	_maj_stats()
 	GameEvents.shop_opened.emit()
 	continue_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -189,20 +201,58 @@ func _fit_body() -> void:
 		body.get_combined_minimum_size().y, BODY_MIN_HEIGHT, BODY_MAX_HEIGHT)
 
 
-func _roll_offer() -> void:
+## LE VERROU (0.10.1) : une carte verrouillée garde sa place à la relance
+## (`relance`), et revient en tête de la boutique suivante — au prix de la
+## nouvelle vague, qui a changé. Un objet qu'on ne peut plus prendre (piles au
+## maximum) perd son verrou.
+func _roll_offer(relance: bool = false) -> void:
+	var size := OFFER_SIZE + int(Forge.get_special_total(&"shop_slots"))
+	var places: Array = []
+	if relance:
+		for card in _cards:
+			places.append(card.item if card.locked and not card.purchased else null)
+	else:
+		var gardes: Array[StringName] = []
+		for id in RunState.objets_verrouilles:
+			var objet := ItemDB.get_item(id)
+			if objet != null and RunState.can_take(objet) and places.size() < size:
+				places.append(objet)
+				gardes.append(id)
+		RunState.objets_verrouilles = gardes
+	while places.size() < size:
+		places.append(null)
+
+	var deja: Array[ItemData] = []
+	for place in places:
+		if place != null:
+			deja.append(place)
+	var neufs := ItemDB.roll_offer(places.count(null), maxi(1, RunState.wave),
+		RunState.owned_counts, RunState.stats.get_luck(), deja)
+	var offer: Array[ItemData] = []
+	for place in places:
+		if place != null:
+			offer.append(place)
+		elif not neufs.is_empty():
+			offer.append(neufs.pop_front())
+
+	var keep := UIUtils.capture_focus(self)
 	UIUtils.clear_children(offer_row)
 	_cards.clear()
-
-	var size := OFFER_SIZE + int(Forge.get_special_total(&"shop_slots"))
-	var offer := ItemDB.roll_offer(
-		size, maxi(1, RunState.wave), RunState.owned_counts, RunState.stats.get_luck()
-	)
-	for item in offer:
+	for i in offer.size():
+		var item := offer[i]
 		var card := ItemCard.new()
+		# Nom stable par PLACE : le focus reste sur la même case après une
+		# relance, qu'on ait pressé son prix ou son cadenas.
+		card.name = "carte_%d" % i
 		card.buy_requested.connect(_on_buy_requested)
+		card.lock_toggled.connect(_on_lock_toggled)
 		offer_row.add_child(card)
 		card.setup(item, get_item_cost(item))
+		card.set_locked(item.id in RunState.objets_verrouilles)
 		_cards.append(card)
+	if relance:
+		UIUtils.chain_focus(self)
+		UIUtils.restore_focus(self, keep, reroll_button)
 	_feature_rarest(offer)
 	_fit_body.call_deferred()
 
@@ -314,7 +364,9 @@ func _refresh() -> void:
 	souls_label.text = (tr("%d âme") if RunState.souls == 1 else tr("%d âmes")) % RunState.souls
 	var prix := get_reroll_cost()
 	reroll_button.text = (tr("Relancer (%d âme)") if prix == 1 else tr("Relancer (%d âmes)")) % prix
-	reroll_button.disabled = RunState.souls < get_reroll_cost() or _cards.is_empty()
+	# Tout verrouillé : une relance ne changerait rien, elle coûterait pour rien.
+	var a_relancer := _cards.any(func(c: ItemCard) -> bool: return not c.locked)
+	reroll_button.disabled = RunState.souls < get_reroll_cost() or not a_relancer
 	for card in _cards:
 		card.set_affordable(RunState.souls >= card.cost)
 
@@ -329,7 +381,20 @@ func _on_buy_requested(item: ItemData) -> void:
 	if not RunState.spend_souls(card.cost):
 		return
 	RunState.add_item(item)
+	RunState.objets_verrouilles.erase(item.id)
 	card.mark_purchased()
+	# La colonne de revente suit l'achat : sans ça, l'objet acheté n'y
+	# apparaissait qu'à la boutique suivante, et les compteurs ×N restaient faux.
+	_build_sell.call_deferred()
+	_refresh()
+
+
+func _on_lock_toggled(item: ItemData, locked: bool) -> void:
+	if locked:
+		if not item.id in RunState.objets_verrouilles:
+			RunState.objets_verrouilles.append(item.id)
+	else:
+		RunState.objets_verrouilles.erase(item.id)
 	_refresh()
 
 
@@ -338,7 +403,7 @@ func _on_reroll_pressed() -> void:
 	if not RunState.spend_souls(cost):
 		return
 	_rerolls += 1
-	_roll_offer()
+	_roll_offer(true)
 	_refresh()
 
 
@@ -417,3 +482,49 @@ func _find_card(item: ItemData) -> ItemCard:
 		if card.item == item:
 			return card
 	return null
+
+
+## LES STATS EN DIRECT (0.10.1) : les totaux de la fiche de run (TAB), dans une
+## colonne à droite de l'offre, mis à jour à chaque achat et à chaque revente.
+## Même calcul que la fiche (`StatsTotaux`) : les deux écrans ne peuvent pas se
+## contredire. Ce qu'un achat vient de changer s'allume un instant — c'est la
+## réponse à « qu'est-ce que ça m'a apporté ? ».
+func _maj_stats() -> void:
+	UIUtils.clear_children(stats_grille)
+	var stats := RunState.stats
+	for ligne in StatsTotaux.LIGNES:
+		var cle := String(ligne[1])
+		var total := StatsTotaux.total(cle, stats, get_tree())
+		var valeur := float(total[1])
+		# Les dégâts plats n'ont une ligne que s'ils existent (voir la fiche).
+		if cle == "damage_flat" and absf(valeur) < 0.0001:
+			continue
+		var au_plafond := StatsTotaux.au_plafond(valeur, float(ligne[2]))
+
+		var titre := Label.new()
+		titre.text = tr(String(ligne[0]))
+		titre.add_theme_font_size_override(&"font_size", 18)
+		titre.add_theme_color_override(&"font_color", Color(0.78, 0.75, 0.72))
+		titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		stats_grille.add_child(titre)
+
+		var chiffre := Label.new()
+		chiffre.text = String(total[0])
+		chiffre.add_theme_font_size_override(&"font_size", 18)
+		chiffre.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		chiffre.custom_minimum_size = Vector2(112, 0)
+		chiffre.add_theme_color_override(&"font_color", StatsScreen.MAXED if au_plafond
+			else (StatsScreen.BONUS if absf(valeur) > 0.0001 else StatsScreen.NEUTRAL))
+		stats_grille.add_child(chiffre)
+		if _stats_vues.has(cle) and _stats_vues[cle] != chiffre.text:
+			var eclat := chiffre.create_tween()
+			chiffre.modulate = Color(1.6, 1.6, 1.3)
+			eclat.tween_property(chiffre, ^"modulate", Color.WHITE, 0.9)
+		_stats_vues[cle] = chiffre.text
+
+		var plafond := Label.new()
+		plafond.text = tr("PLAFOND") if au_plafond else ""
+		plafond.add_theme_font_size_override(&"font_size", 12)
+		plafond.add_theme_color_override(&"font_color", StatsScreen.MAXED)
+		plafond.custom_minimum_size = Vector2(46, 0)
+		stats_grille.add_child(plafond)

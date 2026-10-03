@@ -49,6 +49,9 @@ const LOCUTEURS := {
 	&"lilith": ["Lilith", Color(0.86, 0.4, 0.72)],
 	&"edith": ["Édith", Color(0.94, 0.92, 0.86)],
 	&"helel": ["Hélel", Color(1.0, 0.9, 0.55)],
+	&"ossements": ["Les ossements", Color(0.86, 0.8, 0.66)],
+	&"baal": ["Baal", Color(0.55, 0.8, 1.0)],
+	&"asmodee": ["Asmodée", Color(0.74, 0.42, 0.9)],
 }
 
 ## Planches : repos et marche.
@@ -59,11 +62,14 @@ const PLANCHES := {
 	&"loth": "res://assets/sprites/characters/loth/loth",
 	&"femme_sel": "res://assets/sprites/story/femme_sel/femme_sel",
 	&"lilith": "res://assets/sprites/bosses/lilith/lilith",
+	&"golgota": "res://assets/sprites/bosses/golgota/golgota",
+	&"baal": "res://assets/sprites/bosses/baal/baal",
+	&"asmodee": "res://assets/sprites/bosses/asmodee/asmodee",
 }
 
 const LE_PARI := &"le_pari"
 ## Boss après lesquels une scène se joue, dans l'ordre de la run.
-const BOSSES_RACONTES: Array[StringName] = [&"lilith"]
+const BOSSES_RACONTES: Array[StringName] = [&"golgota", &"lilith", &"baal", &"asmodee"]
 const LUCIFER_RELEVE := &"lucifer_releve"
 const HELEL_ENTREE := &"helel_entree"
 const HELEL_FIN := &"helel_fin"
@@ -267,6 +273,95 @@ const CINEMATIQUES := {
 		},
 	],
 
+	# --- Après Golgota (vague 5) -------------------------------------------
+	# L'ENJEU. Le Mont du Crâne est fait des os de ceux qui ont joué avant :
+	# Golgota ne parle pas, ce sont eux qui parlent. Perdre une manche ne
+	# libère personne — ne plus se relever, si.
+
+	&"golgota_cain": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Le Mont du Crâne s'est effondré."},
+				{"texte": "Il ne se relèvera pas. Mais ce qui le tenait debout parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"golgota", "planche": &"golgota", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.6, 0.55)},
+				{"id": &"cain", "planche": &"cain", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"ossements", "texte": "Toi aussi, il t'a promis une fin."},
+				{"qui": &"cain", "texte": "Qui êtes-vous ?"},
+				{"qui": &"ossements", "texte": "Ceux d'avant. Ceux qui ont joué avant toi."},
+				{"qui": &"cain", "texte": "Combien ?"},
+				{"qui": &"ossements", "texte": "Assez pour faire une montagne.", "secousse": 0.3},
+				{"qui": &"cain", "texte": "Alors vous avez perdu."},
+				{"qui": &"ossements", "texte": "Nous avons cessé de nous relever. Ici, c'est la seule façon de perdre."},
+			],
+		},
+	],
+
+	&"golgota_job": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Le Mont du Crâne s'est effondré."},
+				{"texte": "Il ne se relèvera pas. Mais ce qui le tenait debout parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"golgota", "planche": &"golgota", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.6, 0.55)},
+				{"id": &"job", "planche": &"job", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"ossements", "texte": "« Cherche dans ton souvenir : quel innocent a jamais péri ? »"},
+				{"qui": &"job", "texte": "Éliphaz disait cela. Tu as ses mots, pas sa voix."},
+				{"qui": &"ossements", "texte": "Nous avons tous eu des amis pour nous expliquer pourquoi nous souffrions."},
+				{"qui": &"ossements", "texte": "Nous les avons crus. Nous avons plié.", "secousse": 0.3},
+				{"qui": &"job", "texte": "Moi, je ne les ai pas crus."},
+				{"qui": &"ossements", "texte": "Alors continue de ne pas croire. C'est tout ce qui te tient debout."},
+			],
+		},
+	],
+
+	&"golgota_loth": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Le Mont du Crâne s'est effondré."},
+				{"texte": "Il ne se relèvera pas. Mais ce qui le tenait debout parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"golgota", "planche": &"golgota", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.6, 0.55)},
+				{"id": &"loth", "planche": &"loth", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"ossements", "texte": "Dix justes. Il en aurait fallu dix pour sauver la ville."},
+				{"qui": &"loth", "texte": "… Vous étiez de Sodome."},
+				{"qui": &"ossements", "texte": "Tu ne nous as pas reconnus. Tu ne regardais pas en arrière."},
+				{"qui": &"loth", "texte": "Ma femme est-elle parmi vous ?"},
+				{"qui": &"ossements", "texte": "Non. Elle n'a jamais cessé de se relever. Elle est plus bas.", "secousse": 0.3},
+			],
+		},
+	],
+
 	# --- Après Lilith (vague 10) -------------------------------------------
 	# LE MILIEU DU PARI. Lilith, la première femme — chassée du premier jardin
 	# pour avoir dit non —, vaincue, révèle ce que Lucifer tait : personne
@@ -402,6 +497,192 @@ const CINEMATIQUES := {
 				{"qui": &"lilith", "texte": "Et sache ceci, fuyard : ce pari, personne là-haut ne l'a accepté. Il joue seul.", "secousse": 0.3},
 				{"qui": &"lilith", "texte": "Il ne te la rendra pas. Il n'a personne à qui prouver quoi que ce soit."},
 				{"qui": &"loth", "texte": "Alors je ne lui demanderai pas. J'irai la prendre."},
+			],
+		},
+	],
+
+	# --- Après Baal (vague 15) ---------------------------------------------
+	# LA FAUSSE VOIX. Le dieu du Carmel, qui n'a pas répondu à ses prophètes, a
+	# encore l'orage. Après « le Ciel se tait » de Lilith, une tempête qui parle :
+	# ce n'est pas la bonne.
+
+	&"baal_cain": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "L'orage s'est tu."},
+				{"texte": "Il ne reste qu'une voix qui gronde, de plus en plus bas."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"baal", "planche": &"baal", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.55, 0.6, 0.75)},
+				{"id": &"cain", "planche": &"cain", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"baal", "texte": "Agenouille-toi, et ma foudre te donnera ce que tu cherches."},
+				{"qui": &"cain", "texte": "Ta foudre m'a traversé dix fois. Je suis encore debout."},
+				{"qui": &"baal", "texte": "Sur le Carmel, mes prophètes m'ont appelé du matin jusqu'à midi. Je n'ai pas répondu."},
+				{"qui": &"cain", "texte": "Pourquoi ?"},
+				{"qui": &"baal", "texte": "Je n'étais pas là. Quand on ne répond pas, c'est qu'on n'est pas là."},
+				{"qui": &"baal", "texte": "… Ou qu'on écoute.", "secousse": 0.3},
+				{"qui": &"cain", "texte": "…"},
+			],
+		},
+	],
+
+	&"baal_job": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "L'orage s'est tu."},
+				{"texte": "Il ne reste qu'une voix qui gronde, de plus en plus bas."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"baal", "planche": &"baal", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.55, 0.6, 0.75)},
+				{"id": &"job", "planche": &"job", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"baal", "texte": "« Où étais-tu quand je fondais la terre ? »", "son": &"boss", "secousse": 0.5},
+				{"qui": &"job", "texte": "Ces mots ne sont pas les tiens."},
+				{"qui": &"baal", "texte": "Les mots appartiennent à qui tonne le plus fort."},
+				{"qui": &"job", "texte": "Celui qui me les a dits n'avait pas besoin de la foudre pour que je l'entende."},
+				{"qui": &"job", "texte": "Tu es la tempête. Pas la voix."},
+			],
+		},
+	],
+
+	&"baal_loth": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "L'orage s'est tu."},
+				{"texte": "Il ne reste qu'une voix qui gronde, de plus en plus bas."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"baal", "planche": &"baal", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.55, 0.6, 0.75)},
+				{"id": &"loth", "planche": &"loth", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"baal", "texte": "Le feu et le soufre sur ta ville. Tu t'en souviens ?"},
+				{"qui": &"loth", "texte": "J'ai déjà vu le ciel tomber. Il ne m'a pas attendu."},
+				{"qui": &"baal", "texte": "Ta femme, elle, a regardé tomber le feu sans avoir peur. Elle cherchait deux visages."},
+				{"qui": &"loth", "texte": "Où est-elle ?"},
+				{"qui": &"baal", "texte": "Plus bas. Chez celui qui garde ce qu'on regrette.", "secousse": 0.3},
+			],
+		},
+	],
+
+	# --- Après Asmodée (vague 20) ------------------------------------------
+	# LA TENTATION, juste avant Lucifer. Chacun se voit offrir un raccourci vers
+	# ce qu'il cherche — Caïn une mort, Job ses PREMIERS enfants (le livre lui en
+	# rend « d'autres »), Loth sa femme s'il se retourne —, et chacun refuse.
+
+	&"asmodee_cain": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Les trois têtes se sont tues."},
+				{"texte": "Une seule parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"asmodee", "planche": &"asmodee", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.5, 0.6)},
+				{"id": &"cain", "planche": &"cain", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"asmodee", "texte": "Je peux te donner ce que ta Marque t'interdit."},
+				{"qui": &"asmodee", "texte": "Une seule condition : une autre mort à la place de la tienne."},
+				{"qui": &"cain", "texte": "Celle de qui ?"},
+				{"qui": &"asmodee", "texte": "Qu'importe. Tu sais faire."},
+				{"qui": &"cain", "texte": "C'est comme ça que tout a commencé. Non.", "secousse": 0.3},
+			],
+		},
+	],
+
+	&"asmodee_job": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Les trois têtes se sont tues."},
+				{"texte": "Une seule parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"asmodee", "planche": &"asmodee", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.5, 0.6)},
+				{"id": &"job", "planche": &"job", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"asmodee", "texte": "Le Ciel t'a rendu le double de tes troupeaux. Et d'autres enfants."},
+				{"qui": &"job", "texte": "D'autres."},
+				{"qui": &"asmodee", "texte": "Moi, je peux te rendre les premiers."},
+				{"qui": &"job", "texte": "Ce ne serait pas eux. Ce serait toi, avec leurs visages."},
+				{"qui": &"job", "texte": "Je préfère une question sans réponse à une réponse fausse."},
+			],
+		},
+	],
+
+	&"asmodee_loth": [
+		{
+			"fond": &"noir",
+			"lignes": [
+				{"texte": "Les trois têtes se sont tues."},
+				{"texte": "Une seule parle encore."},
+			],
+		},
+		{
+			"fond": &"arene",
+			"zoom": [1.1, 1.0],
+			"acteurs": [
+				{"id": &"femme", "planche": &"femme_sel", "pos": Vector2(-720, 110), "echelle": 6.0,
+					"miroir": true, "sel": true, "cache": true},
+				{"id": &"asmodee", "planche": &"asmodee", "pos": Vector2(330, 120), "echelle": 7.0,
+					"miroir": true, "teinte": Color(0.65, 0.5, 0.6)},
+				{"id": &"loth", "planche": &"loth", "pos": Vector2(-300, 130), "echelle": 7.0,
+					"depuis": Vector2(-1100, 130)},
+			],
+			"lignes": [
+				{"qui": &"asmodee", "texte": "Elle est derrière toi.", "montre": &"femme"},
+				{"qui": &"asmodee", "texte": "Retourne-toi, et elle est à toi."},
+				{"qui": &"loth", "texte": "Elle s'est retournée une fois, pour nos filles."},
+				{"qui": &"loth", "texte": "Moi, je ne me retournerai pas pour moi."},
+			],
+		},
+		{
+			"fond": &"abime",
+			"zoom": [1.0, 1.1],
+			"acteurs": [
+				{"id": &"loth", "planche": &"loth", "pos": Vector2(500, 130), "echelle": 7.0,
+					"depuis": Vector2(-700, 130)},
+			],
+			"lignes": [
+				{"texte": "Loth avance. Il ne se retourne pas."},
 			],
 		},
 	],

@@ -69,6 +69,10 @@ var _seals: Dictionary = {}
 ## une collection qu'on remplit en jouant, pas un réglage.
 var _decouverts: Dictionary = {}
 
+## LE BESTIAIRE (0.10.1) : éliminations par espèce, { &"imp": 812 }. Même règle
+## que l'album : par profil, la première s'écrit tout de suite.
+var _tues: Dictionary = {}
+
 
 func _ready() -> void:
 	var index := ConfigFile.new()
@@ -157,6 +161,9 @@ func load_profile(slot: int, notify: bool = true) -> void:
 		var album: Dictionary = config.get_value("meta", "decouverts", {})
 		for id in album:
 			_decouverts[StringName(id)] = int(album[id])
+		var bestiaire: Dictionary = config.get_value("meta", "bestiaire", {})
+		for id in bestiaire:
+			_tues[StringName(id)] = int(bestiaire[id])
 		var dechaine_lu: Dictionary = config.get_value("meta", "dechaine", {})
 		for perso in dechaine_lu:
 			_dechaine[String(perso)] = bool(dechaine_lu[perso])
@@ -203,6 +210,7 @@ func _reset_memory() -> void:
 	_story_seen.clear()
 	_seals.clear()
 	_decouverts.clear()
+	_tues.clear()
 
 
 # --- Déblocages et monnaie ---------------------------------------------------
@@ -394,6 +402,24 @@ func nombre_decouverts() -> int:
 	return _decouverts.size()
 
 
+# --- Le bestiaire ------------------------------------------------------------
+
+## Une créature vient de mourir. La PREMIÈRE de son espèce s'écrit tout de
+## suite, comme une découverte d'objet ; les suivantes attendent la fin de la
+## run — une vague en tue des centaines.
+func compter_tue(id: StringName) -> void:
+	if id == &"":
+		return
+	var nouveau := not _tues.has(id)
+	_tues[id] = int(_tues.get(id, 0)) + 1
+	if nouveau:
+		save_game()
+
+
+func nombre_tues(id: StringName) -> int:
+	return int(_tues.get(id, 0))
+
+
 func has_seen_story(id: StringName) -> bool:
 	return _story_seen.has(id)
 
@@ -439,6 +465,10 @@ func save_game() -> void:
 	for id in _decouverts:
 		album[String(id)] = int(_decouverts[id])
 	config.set_value("meta", "decouverts", album)
+	var bestiaire := {}
+	for id in _tues:
+		bestiaire[String(id)] = int(_tues[id])
+	config.set_value("meta", "bestiaire", bestiaire)
 	# Les clés du dictionnaire écrit sont des String : un ConfigFile relit les
 	# StringName comme des String, autant l'écrire tel qu'il sera relu.
 	var forge_ecrit := {}

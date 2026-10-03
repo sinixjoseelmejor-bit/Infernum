@@ -50,6 +50,12 @@ extends Sprite2D
 @export var hold_time: float = 0.0
 @export var hold_fade: float = 0.0
 
+## UNE RANGÉE AU HASARD (0.10.1) : la planche porte plusieurs variantes de la
+## même animation, une par rangée. `first_frame` et `last_frame` décrivent la
+## PREMIÈRE rangée ; une autre est tirée à l'apparition. Trois éclairs qui
+## tombent ensemble ne se ressemblent plus.
+@export var rangee_au_hasard: bool = false
+
 var _time: float = 0.0
 var _held: float = 0.0
 
@@ -57,6 +63,10 @@ var _held: float = 0.0
 func _ready() -> void:
 	if last_frame < 0:
 		last_frame = hframes * vframes - 1
+	if rangee_au_hasard and vframes > 1:
+		var decalage := (randi() % vframes) * hframes
+		first_frame += decalage
+		last_frame += decalage
 	frame = _image_de_depart()
 	if random_flip and randi() % 2 == 0:
 		flip_h = true

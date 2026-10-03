@@ -56,6 +56,14 @@ révélées fausses ici, et les erreurs sont documentées dans le README.
   main, pas en lisant un total de run.
 - Une seule run ne prouve rien : le tirage d'objets domine tout le reste
   (1,22 puis 0,42 à la vague 15 pour la même configuration). **Moyenner.**
+- **Un banc qui garde le joueur en vie doit le faire à CHAQUE image** : un
+  recalcul de stats (un objet ajouté) réécrit le maximum de PV. Et si le
+  joueur meurt quand même, l'arbre passe en pause sur l'écran de fin : un banc
+  en `PROCESS_MODE_ALWAYS` continue de compter un temps où rien ne se passe.
+  Vérifier `get_tree().paused`. (0.10.1 : six runs de mesure faussées ainsi,
+  terminées au classement du joueur.)
+- **Accélérer un banc** : `--headless --fixed-fps 60` fait tourner le jeu aussi
+  vite que possible sur un temps de jeu exact — 70 s de vague en 4 s.
 - **Le joueur tire tout seul.** Un banc qui compte des ennemis — arrivés,
   coincés, survivants — le désarme d'abord (`%Weapons`, `CharacterEffects`,
   `ItemEffects`) : sans ça, chaque ennemi abattu en route fausse le compte. Le
@@ -136,6 +144,8 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
   `assets/audio/Music/` et la planche `vfx-Sheet.png` sont dans un autre cas :
   elles ont été annoncées libres au téléchargement ou à l'achat, **sans fichier
   de licence joint** — c'est la page d'origine qui fait foi.
+- **L'éclair de Baal** (`assets/sprites/bosses/Eclaire.png`, 0.10.1) : source
+  et licence à consigner dans CREDITS avant une diffusion publique.
 - **Un fichier audio déposé et inutilisé** : un générique de logo de 13,8 s
   (irait au menu). La roche brisée sert à Golgota depuis la 0.9.1.
 - **La planche des touches clavier** (`assets/packs/Touches/`, 0.9.1) n'a ni
@@ -158,7 +168,9 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - **L'histoire est complète de bout en bout** (0.9.0) : le Pari, les
   prologues, Lilith, Lucifer (entrée, fin de chacun, sceaux), le portail et
   Hélel avec ses changements de personnage, la vraie fin. Golgota, Baal et
-  Asmodée n'ont pas encore de scène. Hélel a un **verrou de 14 s par phase**
+  Asmodée ont leurs scènes depuis la 0.10.1, avec le **bestiaire** et le
+  **Registre de l'Accusateur** (douze pages) dans la collection — sans annonce
+  en jeu quand une page ou une créature s'ajoute. Hélel a un **verrou de 14 s par phase**
   et le **Voile de l'Aurore** (mesurés, voir README) ; ce qui n'est pas
   mesuré, c'est le DANGER qu'il présente — le banc tenait le joueur
   invincible. Avec une build moyenne (18 objets) il tient 4 à 6 min.
@@ -168,7 +180,7 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - La **branche de Forge de Loth** est la moins bien mesurée des trois : le banc
   décrit un cercle et n'esquive jamais, donc il joue mal un personnage dont
   l'intérêt est d'éviter.
-- **L'anglais** (0.9.1) : complet (603 textes depuis la 0.9.2) mais **pas relu
+- **L'anglais** (0.9.1) : complet (778 textes en 0.10.1) mais **pas relu
   par un anglophone natif** — les textes d'ambiance (objets, histoire) d'abord.
 - **Les douze objets à effets de la 0.9.2** (voir README) : chaque mécanique
   est sondée et la valeur offensive mesurée en horde, pas le reste. À juger en
@@ -193,11 +205,34 @@ règles en découlent, à respecter dans tout ce qui touche à ce mode :
 - Les **deux anciens carreaux de sol** (`assets/sprites/arena/floor/`) ne
   servent plus qu'en repli, quand le pack de l'enfer n'est pas extrait. On peut
   les supprimer si ce repli ne sert à personne.
-- **Le bonus de ramassage** (0.9.4, voir README) : +50 % d'âmes pour une âme
+- **Le bonus de ramassage** (0.10.1, voir README) : +50 % d'âmes pour une âme
   accrochée pendant la vague. Le revenu monte de 25 % (mesuré au pire cas) à
   près de 50 %, **sans rééquilibrage** de la boutique. Les plafonds de dégâts
-  (+230 %) et de critique (75 %) relevés au même moment ne sont pas remesurés
+  (+210 %) et de critique (75 %) relevés au même moment ne sont pas remesurés
   en run.
+- **La course en cercle** (0.10.1, voir README) : les poursuivants anticipent
+  et prennent à revers ; mesuré contre un banc qui tourne en rond ou zigzague,
+  pas contre un joueur qui esquive vraiment. À juger en jeu. Vagues 1 à 14 :
+  un ennemi sur quatre seulement.
+- **Plongeon de Lucifer et charge d'Asmodée** : annonces passées de 0,4-0,45 s
+  à 0,9 s en 0.10.1 (elles étaient impossibles à esquiver). Calculé sur la
+  vitesse du joueur, pas mesuré contre un joueur réel.
+- **La refonte des menus** (0.10.1, voir README « La refonte des menus ») :
+  vérifiée en image en 21:9 et 16:9, en français. Pas vérifiée : l'anglais
+  (des libellés plus longs dans les en-têtes) et le parcours complet à la
+  manette. Les pièces repeintes sont générées par `extract_assets.py` : un
+  clone sans elles n'a plus de cadres.
+- **La passe des boss** (0.10.1, voir README « La passe des boss ») : gestes
+  du pack, entrée, bascule de phase, jauge de pression affichée, vraie mort ;
+  cinq coups sans préavis corrigés (Lilith, Asmodée, Golgota) ; les ruées
+  tombent sur leur zone ; Baal et Lilith orbitent vraiment. Niveau mesuré
+  par deux bancs, l'un qui tourne en rond, l'autre qui ESQUIVE (comparé aux
+  scripts d'avant) : au contact le niveau tient (+11 %), mais **fuir Asmodée et
+  Lilith ne coûte presque plus rien** à qui esquive — leur sanction anti-kite
+  ne coûtait que ses coups sans préavis. Question de conception ouverte. À
+  juger en jeu : Lucifer en phase 3 (0,33 → 0,43 au banc qui esquive), la
+  lisibilité des gestes. Les planches de
+  gestes sont générées par `extract_assets.py`.
 - Boutons de réglage si l'équilibrage sonne faux en jeu : `leftover_ratio` par
   personnage, `PUISSANCE_DECHAINEE` et `DEGATS_DECHAINES`, les 82 clés d'une
   Forge complète, `Pickup.bonus_ramassage`.

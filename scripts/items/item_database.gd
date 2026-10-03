@@ -65,7 +65,7 @@ const ITEMS: Array[Dictionary] = [
 		"mods": {"crit_chance": 0.09},
 	},
 	{
-		# Le rayon de ramassage est revenu en 0.9.4 : une âme accrochée pendant la
+		# Le rayon de ramassage est revenu en 0.10.1 : une âme accrochée pendant la
 		# vague rapporte 50 % de plus que celle que l'aspiration ramène (voir
 		# `Pickup.bonus_ramassage`). Retiré en 0.8, quand ramasser tôt ne
 		# rapportait rien, il a retrouvé sa valeur d'avant.
@@ -441,8 +441,13 @@ func get_rarity_weights(wave: int, luck: float = 0.0) -> Array[float]:
 
 
 ## Tirage d'une offre de boutique, sans doublon dans la même offre.
-func roll_offer(count: int, wave: int, owned_counts: Dictionary, luck: float = 0.0) -> Array[ItemData]:
+## `exclus` : objets déjà à l'étal (les verrouillés), à ne pas tirer une
+## seconde fois.
+func roll_offer(count: int, wave: int, owned_counts: Dictionary, luck: float = 0.0,
+		exclus: Array[ItemData] = []) -> Array[ItemData]:
 	var pool := get_available(owned_counts)
+	for item in exclus:
+		pool.erase(item)
 	var weights := get_rarity_weights(wave, luck)
 	var offer: Array[ItemData] = []
 	for _i in count:

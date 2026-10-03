@@ -5,8 +5,11 @@ extends CanvasLayer
 ## effacer celui en cours, remet toute la méta-progression à zéro sans toucher
 ## aux autres profils.
 
-@onready var list: VBoxContainer = %ProfileList
+@onready var list: HBoxContainer = %ProfileList
 @onready var close_button: Button = %ProfilesCloseButton
+
+const CARTE := Vector2(470, 440)
+const JERSEY := preload("res://assets/fonts/Jersey10-Regular.ttf")
 
 ## Emplacement en attente de confirmation d'effacement (-1 = aucun).
 var _pending_delete: int = -1
@@ -24,6 +27,7 @@ func open() -> void:
 	visible = true
 	refresh()
 	close_button.grab_focus()
+	Ecran.apparaitre(self)
 
 
 func close() -> void:
@@ -47,65 +51,75 @@ func refresh() -> void:
 	UIUtils.chain_focus(self)
 
 
+## UNE CARTE PAR EMPLACEMENT (0.10.1), côte à côte comme des emplacements de
+## sauvegarde : le nom en grand, la progression ligne à ligne, les deux actions
+## en bas. L'emplacement actif est allumé en braise.
 func _build_row(summary: Dictionary) -> Control:
 	var slot: int = summary["slot"]
 	var is_active: bool = slot == SaveGame.active_slot
 	var exists: bool = summary["exists"]
 
 	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.06, 0.07, 0.95)
-	style.border_color = Color(1, 0.62, 0.16) if is_active else Color(0.34, 0.2, 0.18)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(6)
-	style.set_content_margin_all(12)
-	panel.add_theme_stylebox_override(&"panel", style)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 14)
-	panel.add_child(row)
+	panel.add_theme_stylebox_override(&"panel", Ecran.case(is_active, 22.0))
+	panel.custom_minimum_size = CARTE
 
 	var infos := VBoxContainer.new()
-	infos.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	infos.add_theme_constant_override(&"separation", 2)
-	row.add_child(infos)
+	infos.add_theme_constant_override(&"separation", 10)
+	panel.add_child(infos)
 
 	# Le nom est éditable directement : pas d'écran de renommage séparé.
 	var name_edit := LineEdit.new()
 	name_edit.text = summary["name"]
 	name_edit.placeholder_text = SaveGame.get_default_name(slot)
-	name_edit.add_theme_font_size_override(&"font_size", 20)
+	name_edit.add_theme_font_override(&"font", JERSEY)
+	name_edit.add_theme_font_size_override(&"font_size", 44)
+	name_edit.add_theme_color_override(&"font_color",
+		Color(1, 0.7, 0.36) if is_active else Color(0.9, 0.84, 0.78))
 	name_edit.editable = is_active
 	name_edit.flat = true
+	name_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_edit.text_submitted.connect(func(t: String) -> void: SaveGame.rename_profile(t))
 	name_edit.focus_exited.connect(func() -> void:
 		if is_active and name_edit.text != summary["name"]:
 			SaveGame.rename_profile(name_edit.text))
 	infos.add_child(name_edit)
+	infos.add_child(HSeparator.new())
 
 	var detail := Label.new()
 	if exists:
-		detail.text = tr("%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs") % [
+		# Le gabarit d'une ligne, coupé en lignes : sa traduction ne change pas.
+		detail.text = (tr("%d clés  ·  Forge %d/%d  ·  meilleure vague %d  ·  %d runs") % [
 			summary["keys"], summary["forge_nodes"], Forge.count_all_nodes(),
-			summary["best_wave"], summary["total_runs"]]
+			summary["best_wave"], summary["total_runs"]]).replace("  ·  ", "\n")
 	else:
-		detail.text = "Emplacement vide — nouvelle partie"
-	detail.add_theme_font_size_override(&"font_size", 14)
-	detail.add_theme_color_override(&"font_color", Color(0.7, 0.67, 0.66))
+		detail.text = tr("Emplacement vide — nouvelle partie")
+	detail.add_theme_font_size_override(&"font_size", 24)
+	detail.add_theme_color_override(&"font_color", Color(0.88, 0.82, 0.78) if exists
+		else Color(0.62, 0.56, 0.54))
+	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	infos.add_child(detail)
 
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override(&"separation", 12)
+	infos.add_child(actions)
+
 	var select := Button.new()
-	select.custom_minimum_size = Vector2(160, 40)
+	select.custom_minimum_size = Vector2(0, 54)
+	select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	select.text = tr("Actif") if is_active else (tr("Charger") if exists else tr("Commencer ici"))
 	select.disabled = is_active
 	select.pressed.connect(func() -> void: SaveGame.load_profile(slot))
-	row.add_child(select)
+	actions.add_child(select)
 
 	var erase := Button.new()
 	# Style DANGER : l'action la plus destructrice de l'interface ne doit jamais
 	# être la plus visible. En doré plein, elle attirait l'œil sur le profil actif.
 	erase.theme_type_variation = &"DangerButton"
-	erase.custom_minimum_size = Vector2(160, 40)
+	erase.custom_minimum_size = Vector2(0, 54)
+	erase.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	erase.disabled = not exists
 	if _pending_delete == slot:
 		erase.text = "Confirmer ?"
@@ -120,5 +134,5 @@ func _build_row(summary: Dictionary) -> Control:
 		erase.pressed.connect(func() -> void:
 			_pending_delete = slot
 			refresh())
-	row.add_child(erase)
+	actions.add_child(erase)
 	return panel

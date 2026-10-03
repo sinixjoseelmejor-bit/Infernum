@@ -29,8 +29,10 @@ extends CanvasLayer
 ## sombres, l'interface y reste lisible. Aucun texte n'y est posé sans contour.
 
 const COEUR := preload("res://assets/sprites/ui/heart.png")
-const AME := preload("res://assets/sprites/ui/coin.png")
-const CLE := preload("res://assets/sprites/ui/lock.png")
+## Les MÊMES icônes que le butin au sol (0.10.1) : on compte ce qu'on ramasse.
+## Elles étaient une pièce et un cadenas — un cadenas pour des clés.
+const AME := preload("res://assets/sprites/pickups/soul.png")
+const CLE := preload("res://assets/sprites/pickups/key.png")
 const ETOILE := preload("res://assets/sprites/ui/star.png")
 const RAIL := preload("res://assets/sprites/ui/bar_track.png")
 const REMPLI := preload("res://assets/sprites/ui/bar_fill.png")
@@ -95,6 +97,8 @@ var _nom_boss: Label
 var _barre_boss: ProgressBar
 var _pourcent_boss: Label
 var _phase_boss: Label
+var _pression_boss: ProgressBar
+var _pression_texte: Label
 var _boss: Node2D
 var _phase_texte := ""
 
@@ -106,6 +110,7 @@ var _temps: Label
 var _objets: HFlowContainer
 var _aide_fiche: Label
 var _annonce_titre: Label
+var _anim_annonce: Tween
 var _annonce_detail: Label
 
 var _joueur: Player
@@ -346,28 +351,51 @@ func _construire_centre() -> void:
 	_maledictions.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pile.add_child(_maledictions)
 
+	# RESSERRÉ (0.10.1) : il occupait toute la largeur de la pile (920 px) sur
+	# près de 130 px de haut, avec la jauge de pression en plus. Plus étroit et
+	# plus bas de casse, il laisse voir l'arène au-dessus du joueur.
 	_panneau_boss = VBoxContainer.new()
-	_panneau_boss.add_theme_constant_override(&"separation", 2)
+	_panneau_boss.custom_minimum_size = Vector2(640.0, 0.0)
+	_panneau_boss.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_panneau_boss.add_theme_constant_override(&"separation", 1)
 	_panneau_boss.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	pile.add_child(_panneau_boss)
 	var espace := Control.new()
-	espace.custom_minimum_size = Vector2(0.0, 8.0)
+	espace.custom_minimum_size = Vector2(0.0, 4.0)
 	_panneau_boss.add_child(espace)
-	_nom_boss = _etiquette("", 30, Color(1.0, 0.35, 0.25), true, 7)
+	_nom_boss = _etiquette("", 24, Color(1.0, 0.35, 0.25), true, 6)
 	_nom_boss.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_panneau_boss.add_child(_nom_boss)
 	_barre_boss = _barre(_style_barre(RAIL, Color(1.0, 0.94, 0.9)),
 		_style_barre(REMPLI, Color(1.35, 0.92, 0.78)))
-	_barre_boss.custom_minimum_size = Vector2(0.0, 26.0)
+	_barre_boss.custom_minimum_size = Vector2(0.0, 20.0)
 	_panneau_boss.add_child(_barre_boss)
-	_pourcent_boss = _etiquette("", 18, Color.WHITE, true, 5)
+	_pourcent_boss = _etiquette("", 15, Color.WHITE, true, 4)
 	_pourcent_boss.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_pourcent_boss.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_pourcent_boss.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_barre_boss.add_child(_pourcent_boss)
-	_phase_boss = _etiquette("", 17, GRIS, true, 5)
+	_phase_boss = _etiquette("", 15, GRIS, true, 4)
 	_phase_boss.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_panneau_boss.add_child(_phase_boss)
+
+	# LA PRESSION (0.10.1). Elle n'était affichée nulle part : on encaissait la
+	# sanction anti-kite sans avoir rien vu monter. Une barre fine sous la
+	# phase, qui dit ce qui la vide — le boss, lui, rougeoie en même temps.
+	var ligne := HBoxContainer.new()
+	ligne.add_theme_constant_override(&"separation", 10)
+	ligne.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_panneau_boss.add_child(ligne)
+	_pression_texte = _etiquette(tr("PRESSION"), 13, GRIS, true, 4)
+	ligne.add_child(_pression_texte)
+	_pression_boss = _barre(_style_barre(RAIL, Color(1.0, 0.94, 0.9)),
+		_style_barre(REMPLI, Color(1.6, 0.7, 0.35)))
+	_pression_boss.custom_minimum_size = Vector2(0.0, 8.0)
+	_pression_boss.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_pression_boss.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_pression_boss.max_value = 1.0
+	_pression_boss.value = 0.0
+	ligne.add_child(_pression_boss)
 
 
 ## HAUT DROITE : ce que la run a rapporté.
@@ -399,7 +427,11 @@ func _ligne_butin(pile: VBoxContainer, icone: Texture2D, taille_icone: float,
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	ligne.add_child(l)
 	if icone != null:
-		ligne.add_child(_icone(icone, taille_icone))
+		var image := _icone(icone, taille_icone)
+		# L'âme porte au sol la teinte cyan des âmes de l'interface.
+		if icone == AME:
+			image.modulate = Color(0.75, 1.0, 1.0)
+		ligne.add_child(image)
 	return l
 
 
@@ -435,26 +467,34 @@ func _construire_objets() -> void:
 	aide.add_child(_aide_fiche)
 
 
+## AU-DESSUS DU JOUEUR, PAS SUR LUI (0.10.1). Le bandeau était posé à 42 % de
+## la hauteur, en 70 px : son sous-titre tombait exactement sur le joueur, au
+## centre de l'écran, et avec l'arrivée des boss il le faisait au moment où
+## le combat commence. Il descend juste sous la pile du haut, à 26 %, plus
+## petit.
+const HAUTEUR_ANNONCE := 0.26
+
+
 func _construire_annonce() -> void:
-	_annonce_titre = _etiquette("", 70, Color.WHITE, true, 12)
+	_annonce_titre = _etiquette("", 52, Color.WHITE, true, 10)
 	_annonce_titre.set_anchors_preset(Control.PRESET_CENTER)
-	_annonce_titre.anchor_top = 0.42
-	_annonce_titre.anchor_bottom = 0.42
+	_annonce_titre.anchor_top = HAUTEUR_ANNONCE
+	_annonce_titre.anchor_bottom = HAUTEUR_ANNONCE
 	_annonce_titre.offset_left = -520.0
 	_annonce_titre.offset_right = 520.0
-	_annonce_titre.offset_top = -24.0
-	_annonce_titre.offset_bottom = 58.0
+	_annonce_titre.offset_top = -20.0
+	_annonce_titre.offset_bottom = 44.0
 	_annonce_titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_annonce_titre.modulate.a = 0.0
 	_racine.add_child(_annonce_titre)
-	_annonce_detail = _etiquette("", 19, Color(0.88, 0.85, 0.9), false, 4)
+	_annonce_detail = _etiquette("", 18, Color(0.88, 0.85, 0.9), false, 4)
 	_annonce_detail.set_anchors_preset(Control.PRESET_CENTER)
-	_annonce_detail.anchor_top = 0.42
-	_annonce_detail.anchor_bottom = 0.42
+	_annonce_detail.anchor_top = HAUTEUR_ANNONCE
+	_annonce_detail.anchor_bottom = HAUTEUR_ANNONCE
 	_annonce_detail.offset_left = -420.0
 	_annonce_detail.offset_right = 420.0
-	_annonce_detail.offset_top = 60.0
-	_annonce_detail.offset_bottom = 124.0
+	_annonce_detail.offset_top = 46.0
+	_annonce_detail.offset_bottom = 100.0
 	_annonce_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_annonce_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_annonce_detail.modulate.a = 0.0
@@ -484,6 +524,7 @@ func _process(delta: float) -> void:
 	_animer_vie(delta)
 	_maj_pouvoir()
 	_temps.text = tr("TEMPS  %s") % _format_time(RunState.run_time)
+	_maj_pression()
 	if wave_manager == null:
 		return
 	var boss_en_jeu := wave_manager.is_boss_wave()
@@ -784,6 +825,17 @@ func _maj_phase_boss() -> void:
 	_phase_boss.text = texte
 
 
+func _maj_pression() -> void:
+	if not is_instance_valid(_boss) or not _boss.has_method(&"get_pressure_ratio"):
+		return
+	var ratio: float = _boss.call(&"get_pressure_ratio")
+	_pression_boss.value = ratio
+	# Au-delà des trois quarts, la ligne entière clignote : la sanction arrive.
+	var alerte := ratio > 0.75 and fmod(_temps_anim, 0.4) < 0.2
+	_pression_texte.text = tr("PRESSION — RAPPROCHEZ-VOUS") if ratio > 0.5 else tr("PRESSION")
+	_pression_texte.add_theme_color_override(&"font_color", DANGER_COULEUR if alerte else GRIS)
+
+
 func _on_boss_died(_b: Node2D) -> void:
 	_boss = null
 	_panneau_boss.visible = false
@@ -792,15 +844,18 @@ func _on_boss_died(_b: Node2D) -> void:
 ## Bandeau des grandes nouvelles. Il s'efface tout seul : rien à refermer, et
 ## surtout rien qui mette la partie en pause — la Clé des Abysses tombe en plein
 ## combat, et arrêter le jeu pour l'annoncer serait pire que ne rien dire.
-func _on_announce(titre: String, detail: String, couleur: Color) -> void:
+func _on_announce(titre: String, detail: String, couleur: Color, duree: float) -> void:
 	_annonce_titre.text = titre
 	_annonce_titre.add_theme_color_override(&"font_color", couleur)
 	_annonce_detail.text = detail
+	# Une nouvelle annonce remplace la précédente : sans ça, l'effacement de
+	# l'ancienne éteignait la nouvelle en cours de route.
+	if _anim_annonce != null:
+		_anim_annonce.kill()
+	_anim_annonce = create_tween().set_parallel()
 	for etiquette: Label in [_annonce_titre, _annonce_detail]:
-		var anim := create_tween()
-		anim.tween_property(etiquette, ^"modulate:a", 1.0, 0.35)
-		anim.tween_interval(4.0)
-		anim.tween_property(etiquette, ^"modulate:a", 0.0, 1.2)
+		_anim_annonce.tween_property(etiquette, ^"modulate:a", 1.0, 0.35)
+		_anim_annonce.tween_property(etiquette, ^"modulate:a", 0.0, minf(1.2, duree * 0.5)) 			.set_delay(0.35 + duree)
 
 
 func _on_souls_changed(amount: int) -> void:

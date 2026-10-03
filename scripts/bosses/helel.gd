@@ -153,6 +153,11 @@ func apply_damage(amount: float, source: Node = null, impulse: Vector2 = Vector2
 	super(amount, source, impulse)
 
 
+## Le récit le présente lui-même, entre deux corps : pas de bandeau à son nom.
+func _annonce_entree() -> bool:
+	return false
+
+
 func _absorb_flash() -> void:
 	var tween := create_tween()
 	sprite.modulate = Color(2.4, 2.4, 2.8)
@@ -224,6 +229,7 @@ func _judgment() -> void:
 	_shield_left = 0
 	if is_instance_valid(_shield_ring):
 		_shield_ring.visible = false
+	geste(&"attaque3", 1.2)
 	telegraph_ring(global_position, 12, 170.0, 72.0, 1.2, cross_damage * 1.4, SHIELD_COLOR)
 	telegraph_ring(global_position, 20, 340.0, 72.0, 1.6, cross_damage * 1.4, SHIELD_COLOR)
 	fire_ring(24, ring_speed * 1.2, ring_damage, _rng.randf() * TAU)
@@ -274,5 +280,6 @@ func _run_phase(delta: float) -> void:
 		# Trois bras de spirale qui tournent : il faut lire l'interstice ET
 		# bouger avec lui, ce que les phases précédentes n'exigeaient pas.
 		_spiral += deg_to_rad(dawn_spiral_step)
+		geste(&"attaque2", 0.5)
 		fire_ring(3, cross_speed * 1.1, cross_damage, _spiral)
 		fire_ring(ring_count, ring_speed, ring_damage, -_spiral)

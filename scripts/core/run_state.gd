@@ -39,6 +39,9 @@ var keys: int = 0
 ## sur des orbes de 1 à 8 âmes, arrondir 50 % à chaque orbe donnerait bien plus
 ## ou bien moins que 50 %.
 var _reste_ramassage: float = 0.0
+## Objets VERROUILLÉS dans la boutique (0.10.1) : ils survivent aux relances et
+## reviennent à la boutique suivante. Propres à la run.
+var objets_verrouilles: Array[StringName] = []
 
 ## DÉCHAÎNEMENT : plafonds et taxes levés, piles d'objets multipliées.
 ##
@@ -104,6 +107,7 @@ func reset_run() -> void:
 	character_bonus.clear()
 	item_bonus.clear()
 	buffs.clear()
+	objets_verrouilles.clear()
 	buffs_changed.emit()
 	personnage_depart = Characters.selected_id
 	dernier_rang = 0
@@ -165,7 +169,7 @@ func add_souls(amount: int) -> void:
 	souls_changed.emit(souls)
 
 
-## LE BONUS DE RAMASSAGE (0.9.4) : une âme que le joueur est allé chercher
+## LE BONUS DE RAMASSAGE (0.10.1) : une âme que le joueur est allé chercher
 ## rapporte `part` de plus que celle que l'aspiration de fin de vague ramène.
 ## C'est ce qui donne une valeur au rayon de ramassage. Rend le nombre d'âmes
 ## ENTIÈRES à ajouter ; la fraction attend l'orbe suivant.
@@ -431,8 +435,10 @@ func get_reaper_bonus() -> float:
 	return minf(stacks * REAPER_PCT_PER_STACK, REAPER_MAX_PCT)
 
 
-func _on_enemy_died(_enemy: Node2D, _position: Vector2) -> void:
+func _on_enemy_died(enemy: Node2D, _position: Vector2) -> void:
 	kills += 1
+	if is_running:
+		SaveGame.compter_tue(Bestiaire.id_de(enemy))
 	# Le bonus est plafonné : inutile de recalculer une fois le plafond atteint.
 	if has_special(&"reaper_stacks") and kills % REAPER_KILLS_PER_STACK == 0:
 		if get_reaper_bonus() < REAPER_MAX_PCT + REAPER_PCT_PER_STACK:

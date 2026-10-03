@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/combat/telegraph.tscn" id="5_telegraph"]
 [ext_resource type="Texture2D" path="res://assets/sprites/bosses/baal/baal_walk.png" id="90_walk"]
 [ext_resource type="Script" path="res://scripts/components/sprite_animator.gd" id="91_anim"]
-[ext_resource type="PackedScene" path="res://scenes/vfx/impact_flamme.tscn" id="92_impact"]
+[ext_resource type="PackedScene" path="res://scenes/vfx/impact_flamme_bref.tscn" id="92_impact"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_body"]
 radius = 46.0

@@ -28,8 +28,13 @@ Thumbs.db
 # Ce qui en est extrait
 *_idle.png*
 *_walk.png*
+# Les gestes des boss (attaques, coup encaisse, mort), 0.9.4
+/assets/sprites/bosses/*/*_attaque?.png*
+/assets/sprites/bosses/*/*_touche.png*
+/assets/sprites/bosses/*/*_mort.png*
 /assets/sprites/ui/
 /assets/sprites/items/
+/assets/sprites/pickups/*.png*
 /assets/sprites/decor/
 /assets/sprites/enfer/
 /icon.png

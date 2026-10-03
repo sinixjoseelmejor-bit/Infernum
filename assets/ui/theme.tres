@@ -1,213 +1,176 @@
 [gd_resource type="Theme" format=3 uid="uid://dro06graoy8ps"]
 
-[ext_resource type="Texture2D" uid="uid://clhyex1jqyyow" path="res://assets/sprites/ui/panel.png" id="1_panel"]
-[ext_resource type="Texture2D" uid="uid://vfk2yaidwryq" path="res://assets/sprites/ui/button.png" id="2_btn"]
-[ext_resource type="Texture2D" uid="uid://cd48c11krsacf" path="res://assets/sprites/ui/button_hover.png" id="3_hover"]
-[ext_resource type="Texture2D" uid="uid://c825tmj2g0eyl" path="res://assets/sprites/ui/button_pressed.png" id="4_press"]
 [ext_resource type="FontFile" uid="uid://d4dvtk83s8ts" path="res://assets/fonts/Jersey10-Regular.ttf" id="5_jersey"]
-
-[sub_resource type="StyleBoxTexture" id="SBT_disabled"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-texture = ExtResource("2_btn")
-texture_margin_left = 3.0
-texture_margin_top = 4.0
-texture_margin_right = 3.0
-texture_margin_bottom = 8.0
-modulate_color = Color(0.34, 0.3, 0.3, 1)
-
-[sub_resource type="StyleBoxTexture" id="SBT_hover"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-texture = ExtResource("3_hover")
-texture_margin_left = 3.0
-texture_margin_top = 4.0
-texture_margin_right = 3.0
-texture_margin_bottom = 8.0
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/cadre.png" id="e_cadre"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/case.png" id="e_case"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/case_active.png" id="e_case_on"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/case_danger.png" id="e_dg"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/case_danger_active.png" id="e_dg_on"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/bouton.png" id="e_btn"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/bouton_survol.png" id="e_btn_h"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/bouton_appui.png" id="e_btn_p"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/interrupteur_oui.png" id="e_oui"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/interrupteur_non.png" id="e_non"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/coche_oui.png" id="e_coche_oui"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/enfer/coche_non.png" id="e_coche_non"]
 
 [sub_resource type="StyleBoxTexture" id="SBT_btn"]
-content_margin_left = 14.0
+content_margin_left = 20.0
 content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-texture = ExtResource("2_btn")
-texture_margin_left = 3.0
-texture_margin_top = 4.0
-texture_margin_right = 3.0
-texture_margin_bottom = 8.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_btn")
+texture_margin_left = 6.0
+texture_margin_top = 8.0
+texture_margin_right = 6.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="SBT_hover"]
+content_margin_left = 20.0
+content_margin_top = 6.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_btn_h")
+texture_margin_left = 6.0
+texture_margin_top = 8.0
+texture_margin_right = 6.0
+texture_margin_bottom = 16.0
 
 [sub_resource type="StyleBoxTexture" id="SBT_press"]
-content_margin_left = 14.0
-content_margin_top = 7.0
-content_margin_right = 14.0
-content_margin_bottom = 7.0
-texture = ExtResource("4_press")
-texture_margin_left = 3.0
-texture_margin_top = 4.0
-texture_margin_right = 3.0
-texture_margin_bottom = 8.0
+content_margin_left = 20.0
+content_margin_top = 8.0
+content_margin_right = 20.0
+content_margin_bottom = 8.0
+texture = ExtResource("e_btn_p")
+texture_margin_left = 6.0
+texture_margin_top = 8.0
+texture_margin_right = 6.0
+texture_margin_bottom = 16.0
 
-[sub_resource type="StyleBoxFlat" id="SBF_card"]
-content_margin_left = 12.0
-content_margin_top = 10.0
-content_margin_right = 12.0
+[sub_resource type="StyleBoxTexture" id="SBT_disabled"]
+content_margin_left = 20.0
+content_margin_top = 6.0
+content_margin_right = 20.0
 content_margin_bottom = 10.0
-bg_color = Color(0.165, 0.141, 0.204, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.404, 0.294, 0.204, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+texture = ExtResource("e_btn")
+texture_margin_left = 6.0
+texture_margin_top = 8.0
+texture_margin_right = 6.0
+texture_margin_bottom = 16.0
+modulate_color = Color(0.5, 0.42, 0.4, 1)
 
-[sub_resource type="StyleBoxFlat" id="SBF_card_hover"]
-content_margin_left = 12.0
-content_margin_top = 10.0
-content_margin_right = 12.0
+[sub_resource type="StyleBoxTexture" id="SBT_case"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
 content_margin_bottom = 10.0
-bg_color = Color(0.208, 0.18, 0.259, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.91, 0.722, 0.282, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="SBF_card_on"]
-content_margin_left = 12.0
-content_margin_top = 10.0
-content_margin_right = 12.0
-content_margin_bottom = 10.0
-bg_color = Color(0.243, 0.204, 0.286, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.98, 0.878, 0.549, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
-
-[sub_resource type="StyleBoxFlat" id="SBF_slider_fill"]
-bg_color = Color(0.91, 0.722, 0.282, 1)
-
-[sub_resource type="StyleBoxFlat" id="SBF_slider_bg"]
-content_margin_left = 0.0
-content_margin_top = 4.0
-content_margin_right = 0.0
-content_margin_bottom = 4.0
-bg_color = Color(0.133, 0.11, 0.149, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.404, 0.294, 0.204, 1)
-
-[sub_resource type="StyleBoxTexture" id="SBT_panel"]
-content_margin_left = 22.0
-content_margin_top = 20.0
-content_margin_right = 22.0
-content_margin_bottom = 20.0
-texture = ExtResource("1_panel")
+texture = ExtResource("e_case")
 texture_margin_left = 8.0
 texture_margin_top = 8.0
 texture_margin_right = 8.0
 texture_margin_bottom = 8.0
 
-[sub_resource type="StyleBoxFlat" id="SBF_sec"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.133, 0.11, 0.149, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.404, 0.294, 0.204, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_case_on"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_case_on")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
 
-[sub_resource type="StyleBoxFlat" id="SBF_sec_hover"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
+[sub_resource type="StyleBoxTexture" id="SBT_case_press"]
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
 content_margin_bottom = 8.0
-bg_color = Color(0.18, 0.15, 0.2, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.91, 0.722, 0.282, 1)
+texture = ExtResource("e_case_on")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+modulate_color = Color(0.8, 0.72, 0.68, 1)
 
-[sub_resource type="StyleBoxFlat" id="SBF_sec_press"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.1, 0.085, 0.11, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.91, 0.722, 0.282, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_case_off"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_case")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+modulate_color = Color(0.7, 0.66, 0.66, 0.7)
 
-[sub_resource type="StyleBoxFlat" id="SBF_sec_off"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.1, 0.09, 0.11, 0.8)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.25, 0.2, 0.17, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_carte"]
+texture = ExtResource("e_case")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
 
-[sub_resource type="StyleBoxFlat" id="SBF_danger"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.2, 0.07, 0.07, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.45, 0.16, 0.12, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_carte_on"]
+texture = ExtResource("e_case_on")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
 
-[sub_resource type="StyleBoxFlat" id="SBF_danger_hover"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.32, 0.09, 0.08, 0.98)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 4
-border_color = Color(0.88, 0.3, 0.2, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_carte_choisie"]
+texture = ExtResource("e_case_on")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+modulate_color = Color(1.35, 1.2, 1.05, 1)
 
-[sub_resource type="StyleBoxFlat" id="SBF_danger_press"]
-content_margin_left = 14.0
-content_margin_top = 6.0
-content_margin_right = 14.0
-content_margin_bottom = 8.0
-bg_color = Color(0.16, 0.05, 0.05, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.88, 0.3, 0.2, 1)
+[sub_resource type="StyleBoxTexture" id="SBT_danger"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_dg")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="SBT_danger_on"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+texture = ExtResource("e_dg_on")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="SBT_panel"]
+content_margin_left = 20.0
+content_margin_top = 18.0
+content_margin_right = 20.0
+content_margin_bottom = 18.0
+texture = ExtResource("e_cadre")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="SBT_cadre_ecran"]
+content_margin_left = 20.0
+content_margin_top = 18.0
+content_margin_right = 20.0
+content_margin_bottom = 18.0
+texture = ExtResource("e_cadre")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+draw_center = false
 
 [sub_resource type="StyleBoxFlat" id="SBF_focus_ring"]
 draw_center = false
@@ -215,11 +178,7 @@ border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(1, 0.94, 0.72, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(1, 0.82, 0.55, 1)
 expand_margin_left = 4.0
 expand_margin_top = 4.0
 expand_margin_right = 4.0
@@ -231,18 +190,54 @@ border_width_left = 3
 border_width_top = 3
 border_width_right = 3
 border_width_bottom = 3
-border_color = Color(1, 0.94, 0.72, 1)
-corner_radius_top_left = 2
-corner_radius_top_right = 2
-corner_radius_bottom_right = 2
-corner_radius_bottom_left = 2
+border_color = Color(1, 0.82, 0.55, 1)
+
+[sub_resource type="StyleBoxEmpty" id="SBE_menu"]
+content_margin_left = 72.0
+content_margin_top = 2.0
+content_margin_right = 24.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxEmpty" id="SBE_menu_on"]
+content_margin_left = 88.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxEmpty" id="SBE_vide"]
+
+[sub_resource type="StyleBoxFlat" id="SBF_slider_fill"]
+bg_color = Color(0.9, 0.43, 0.16, 1)
+
+[sub_resource type="StyleBoxFlat" id="SBF_slider_bg"]
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.09, 0.045, 0.04, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.36, 0.16, 0.1, 1)
+
+[sub_resource type="StyleBoxLine" id="SBL_filet"]
+color = Color(0.6, 0.24, 0.1, 1)
+thickness = 2
+
+[sub_resource type="StyleBoxFlat" id="SBF_scroll"]
+bg_color = Color(0.09, 0.045, 0.04, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="SBF_scroll_grab"]
+bg_color = Color(0.6, 0.26, 0.12, 1)
+
+[sub_resource type="StyleBoxFlat" id="SBF_scroll_grab_on"]
+bg_color = Color(0.9, 0.43, 0.16, 1)
 
 [resource]
-Button/colors/font_color = Color(0.16, 0.12, 0.08, 1)
-Button/colors/font_disabled_color = Color(0.78, 0.74, 0.68, 1)
-Button/colors/font_focus_color = Color(0.1, 0.07, 0.04, 1)
-Button/colors/font_hover_color = Color(0.1, 0.07, 0.04, 1)
-Button/colors/font_pressed_color = Color(0.18, 0.13, 0.07, 1)
+Button/colors/font_color = Color(0.16, 0.07, 0.04, 1)
+Button/colors/font_disabled_color = Color(0.78, 0.7, 0.66, 1)
+Button/colors/font_focus_color = Color(0.1, 0.04, 0.02, 1)
+Button/colors/font_hover_color = Color(0.1, 0.04, 0.02, 1)
+Button/colors/font_pressed_color = Color(0.18, 0.08, 0.04, 1)
 Button/font_sizes/font_size = 30
 Button/fonts/font = ExtResource("5_jersey")
 Button/styles/disabled = SubResource("SBT_disabled")
@@ -250,48 +245,102 @@ Button/styles/focus = SubResource("SBF_focus_ring")
 Button/styles/hover = SubResource("SBT_hover")
 Button/styles/normal = SubResource("SBT_btn")
 Button/styles/pressed = SubResource("SBT_press")
-DangerButton/base_type = &"Button"
-DangerButton/colors/font_color = Color(0.93, 0.72, 0.66, 1)
-DangerButton/colors/font_disabled_color = Color(0.5, 0.4, 0.38, 1)
-DangerButton/colors/font_focus_color = Color(1, 0.86, 0.8, 1)
-DangerButton/colors/font_hover_color = Color(1, 0.86, 0.8, 1)
-DangerButton/colors/font_pressed_color = Color(1, 0.86, 0.8, 1)
-DangerButton/styles/disabled = SubResource("SBF_sec_off")
-DangerButton/styles/focus = SubResource("SBF_focus_ring")
-DangerButton/styles/hover = SubResource("SBF_danger_hover")
-DangerButton/styles/normal = SubResource("SBF_danger")
-DangerButton/styles/pressed = SubResource("SBF_danger_press")
+CadreEcran/base_type = &"PanelContainer"
+CadreEcran/styles/panel = SubResource("SBT_cadre_ecran")
 CardButton/base_type = &"Button"
-CardButton/colors/font_color = Color(0.85, 0.83, 0.86, 1)
-CardButton/colors/font_disabled_color = Color(0.5, 0.48, 0.5, 1)
-CardButton/colors/font_focus_color = Color(1, 0.97, 0.9, 1)
-CardButton/colors/font_hover_color = Color(1, 0.97, 0.9, 1)
-CardButton/colors/font_pressed_color = Color(1, 0.97, 0.9, 1)
-CardButton/styles/disabled = SubResource("SBF_card")
+CardButton/colors/font_color = Color(0.88, 0.84, 0.8, 1)
+CardButton/colors/font_disabled_color = Color(0.5, 0.46, 0.44, 1)
+CardButton/colors/font_focus_color = Color(1, 0.95, 0.86, 1)
+CardButton/colors/font_hover_color = Color(1, 0.95, 0.86, 1)
+CardButton/colors/font_pressed_color = Color(1, 0.95, 0.86, 1)
+CardButton/styles/disabled = SubResource("SBT_carte")
 CardButton/styles/focus = SubResource("SBF_focus_inset")
-CardButton/styles/hover = SubResource("SBF_card_hover")
-CardButton/styles/normal = SubResource("SBF_card")
-CardButton/styles/pressed = SubResource("SBF_card_on")
+CardButton/styles/hover = SubResource("SBT_carte_on")
+CardButton/styles/normal = SubResource("SBT_carte")
+CardButton/styles/pressed = SubResource("SBT_carte_choisie")
+CheckButton/colors/font_color = Color(0.92, 0.87, 0.8, 1)
+CheckButton/colors/font_focus_color = Color(1, 0.86, 0.6, 1)
+CheckButton/colors/font_hover_color = Color(1, 0.86, 0.6, 1)
+CheckButton/colors/font_pressed_color = Color(1, 0.86, 0.6, 1)
+CheckButton/colors/font_hover_pressed_color = Color(1, 0.86, 0.6, 1)
 CheckButton/font_sizes/font_size = 30
 CheckButton/fonts/font = ExtResource("5_jersey")
+CheckButton/icons/checked = ExtResource("e_oui")
+CheckButton/icons/unchecked = ExtResource("e_non")
+CheckButton/styles/focus = SubResource("SBF_focus_ring")
+CheckButton/styles/hover = SubResource("SBT_case_on")
+CheckButton/styles/hover_pressed = SubResource("SBT_case_on")
+CheckButton/styles/normal = SubResource("SBT_case")
+CheckButton/styles/pressed = SubResource("SBT_case")
+CheckBox/icons/checked = ExtResource("e_coche_oui")
+CheckBox/icons/unchecked = ExtResource("e_coche_non")
+DangerButton/base_type = &"Button"
+DangerButton/colors/font_color = Color(0.95, 0.74, 0.68, 1)
+DangerButton/colors/font_disabled_color = Color(0.5, 0.4, 0.38, 1)
+DangerButton/colors/font_focus_color = Color(1, 0.88, 0.82, 1)
+DangerButton/colors/font_hover_color = Color(1, 0.88, 0.82, 1)
+DangerButton/colors/font_pressed_color = Color(1, 0.88, 0.82, 1)
+DangerButton/styles/disabled = SubResource("SBT_case_off")
+DangerButton/styles/focus = SubResource("SBF_focus_ring")
+DangerButton/styles/hover = SubResource("SBT_danger_on")
+DangerButton/styles/normal = SubResource("SBT_danger")
+DangerButton/styles/pressed = SubResource("SBT_danger_on")
+HSeparator/styles/separator = SubResource("SBL_filet")
 HSlider/styles/focus = SubResource("SBF_focus_ring")
 HSlider/styles/grabber_area = SubResource("SBF_slider_fill")
 HSlider/styles/grabber_area_highlight = SubResource("SBF_slider_fill")
 HSlider/styles/slider = SubResource("SBF_slider_bg")
-SecondaryButton/base_type = &"Button"
-SecondaryButton/colors/font_color = Color(0.9, 0.86, 0.8, 1)
-SecondaryButton/colors/font_disabled_color = Color(0.5, 0.47, 0.44, 1)
-SecondaryButton/colors/font_focus_color = Color(1, 0.9, 0.6, 1)
-SecondaryButton/colors/font_hover_color = Color(1, 0.9, 0.6, 1)
-SecondaryButton/colors/font_pressed_color = Color(1, 0.9, 0.6, 1)
-SecondaryButton/styles/disabled = SubResource("SBF_sec_off")
-SecondaryButton/styles/focus = SubResource("SBF_focus_ring")
-SecondaryButton/styles/hover = SubResource("SBF_sec_hover")
-SecondaryButton/styles/normal = SubResource("SBF_sec")
-SecondaryButton/styles/pressed = SubResource("SBF_sec_press")
+LineEdit/colors/font_color = Color(0.94, 0.9, 0.84, 1)
 LineEdit/styles/focus = SubResource("SBF_focus_ring")
+LineEdit/styles/normal = SubResource("SBT_case")
+MenuItem/base_type = &"Button"
+MenuItem/colors/font_color = Color(0.8, 0.72, 0.66, 1)
+MenuItem/colors/font_disabled_color = Color(0.4, 0.34, 0.32, 1)
+MenuItem/colors/font_focus_color = Color(1, 0.72, 0.34, 1)
+MenuItem/colors/font_hover_color = Color(1, 0.72, 0.34, 1)
+MenuItem/colors/font_hover_pressed_color = Color(1, 0.86, 0.6, 1)
+MenuItem/colors/font_outline_color = Color(0.06, 0.02, 0.01, 1)
+MenuItem/colors/font_pressed_color = Color(1, 0.86, 0.6, 1)
+MenuItem/constants/outline_size = 10
+MenuItem/font_sizes/font_size = 52
+MenuItem/styles/disabled = SubResource("SBE_menu")
+MenuItem/styles/focus = SubResource("SBE_vide")
+MenuItem/styles/hover = SubResource("SBE_menu_on")
+MenuItem/styles/hover_pressed = SubResource("SBE_menu_on")
+MenuItem/styles/normal = SubResource("SBE_menu")
+MenuItem/styles/pressed = SubResource("SBE_menu_on")
 OptionButton/font_sizes/font_size = 30
 OptionButton/fonts/font = ExtResource("5_jersey")
 PanelContainer/styles/panel = SubResource("SBT_panel")
+PopupMenu/colors/font_color = Color(0.92, 0.87, 0.8, 1)
+PopupMenu/colors/font_hover_color = Color(1, 0.8, 0.5, 1)
+PopupMenu/font_sizes/font_size = 26
+PopupMenu/fonts/font = ExtResource("5_jersey")
+PopupMenu/styles/hover = SubResource("SBT_case_on")
+PopupMenu/styles/panel = SubResource("SBT_case")
+SecondaryButton/base_type = &"Button"
+SecondaryButton/colors/font_color = Color(0.92, 0.86, 0.8, 1)
+SecondaryButton/colors/font_disabled_color = Color(0.5, 0.45, 0.42, 1)
+SecondaryButton/colors/font_focus_color = Color(1, 0.84, 0.58, 1)
+SecondaryButton/colors/font_hover_color = Color(1, 0.84, 0.58, 1)
+SecondaryButton/colors/font_pressed_color = Color(1, 0.84, 0.58, 1)
+SecondaryButton/styles/disabled = SubResource("SBT_case_off")
+SecondaryButton/styles/focus = SubResource("SBF_focus_ring")
+SecondaryButton/styles/hover = SubResource("SBT_case_on")
+SecondaryButton/styles/normal = SubResource("SBT_case")
+SecondaryButton/styles/pressed = SubResource("SBT_case_press")
 TitleLabel/base_type = &"Label"
 TitleLabel/fonts/font = ExtResource("5_jersey")
+TitreEcran/base_type = &"Label"
+TitreEcran/colors/font_color = Color(1, 0.55, 0.22, 1)
+TitreEcran/colors/font_shadow_color = Color(0.16, 0.03, 0.01, 1)
+TitreEcran/constants/shadow_offset_x = 0
+TitreEcran/constants/shadow_offset_y = 5
+TitreEcran/font_sizes/font_size = 68
+TitreEcran/fonts/font = ExtResource("5_jersey")
+TooltipLabel/colors/font_color = Color(0.94, 0.9, 0.84, 1)
+TooltipPanel/styles/panel = SubResource("SBT_case")
+VScrollBar/styles/grabber = SubResource("SBF_scroll_grab")
+VScrollBar/styles/grabber_highlight = SubResource("SBF_scroll_grab_on")
+VScrollBar/styles/grabber_pressed = SubResource("SBF_scroll_grab_on")
+VScrollBar/styles/scroll = SubResource("SBF_scroll")

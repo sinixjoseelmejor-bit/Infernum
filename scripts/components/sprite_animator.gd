@@ -31,6 +31,12 @@ var _walk_timer: float = 0.0
 var _time: float = 0.0
 var _current: Texture2D
 
+## GESTE EN COURS (0.10.1) : une planche jouée une seule fois par-dessus le
+## repos et la marche — l'attaque d'un boss, le coup qui le fait vaciller.
+var _geste: Texture2D
+var _geste_duree: float = 0.0
+var _geste_temps: float = 0.0
+
 
 func _ready() -> void:
 	if sprite == null:
@@ -46,10 +52,32 @@ func set_sheets(idle: Texture2D, walk: Texture2D) -> void:
 	idle_texture = idle
 	walk_texture = walk
 	_current = null
+	_geste = null
 	_walk_timer = 0.0
 	if sprite == null:
 		sprite = _find_sibling_sprite()
 	_set_texture(idle_texture)
+
+
+## Joue `planche` UNE fois, étirée sur `duree`, puis rend la main au repos ou à
+## la marche. La durée est imposée et non la cadence : un boss cale son geste
+## sur le préavis de sa zone, pour que le coup parte quand le sol explose.
+## Un nouveau geste remplace celui en cours.
+func jouer(planche: Texture2D, duree: float) -> void:
+	if planche == null or duree <= 0.0:
+		return
+	if sprite == null:
+		sprite = _find_sibling_sprite()
+	if sprite == null:
+		return
+	_geste = planche
+	_geste_duree = duree
+	_geste_temps = 0.0
+	_set_texture(planche)
+
+
+func en_geste() -> bool:
+	return _geste != null
 
 
 func _find_sibling_sprite() -> Sprite2D:
@@ -72,6 +100,13 @@ func _process(delta: float) -> void:
 		_walk_timer = walk_hold
 	else:
 		_walk_timer = maxf(0.0, _walk_timer - delta)
+
+	if _geste != null:
+		_geste_temps += delta
+		if _geste_temps < _geste_duree:
+			sprite.frame = mini(sprite.hframes - 1, int(_geste_temps / _geste_duree * sprite.hframes))
+			return
+		_geste = null
 
 	var wanted := walk_texture if _walk_timer > 0.0 and walk_texture != null else idle_texture
 	_set_texture(wanted)

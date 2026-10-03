@@ -17,9 +17,9 @@ extends RefCounted
 ##    + multishot = invulnérabilité.
 ##
 ## DPS théorique maximum, tous plafonds atteints (~30 objets parfaits) :
-## 3.3 (dégâts) × 2.5 (cadence) × 2.08 (multishot) × 2.875 (crit) ≈ ×49.
+## 3.1 (dégâts) × 2.5 (cadence) × 2.08 (multishot) × 2.875 (crit) ≈ ×46.
 ## (×39 jusqu'à la 0.9.3, avant que les plafonds de dégâts et de chance de
-## critique ne passent à +230 % et 75 %.)
+## critique ne passent à +210 % et 75 %.)
 ## Les PV des ennemis montent linéairement : la run reste jouable, pas triviale.
 ##
 ## LE DÉCHAÎNEMENT lève les quatre règles d'un coup, et uniquement pour les
@@ -37,7 +37,7 @@ extends RefCounted
 ## budget de soin : les lever vaut ×4,1 à lui seul. C'est pourquoi le
 ## déchaînement les emporte aussi — sans quoi la promesse ne serait pas tenue.
 
-const CAP_DAMAGE_PCT := 2.3        ## +230 % (+200 % jusqu'à la 0.9.3)
+const CAP_DAMAGE_PCT := 2.1        ## +210 % (+200 % jusqu'à la 0.9.3)
 const CAP_FIRE_RATE_PCT := 1.5     ## +150 %
 const CAP_PROJECTILE_BONUS := 4
 ## Ennemis traversés EN PLUS du premier. Comme le multishot, la perforation est

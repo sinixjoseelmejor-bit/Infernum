@@ -20,6 +20,7 @@ const EMBER_LIFETIME := 7.0
 @onready var options_button: Button = %OptionsButton
 @onready var quit_button: Button = %QuitButton
 @onready var meta_label: Label = %MetaLabel
+@onready var version_label: Label = %VersionLabel
 
 @onready var character_select: CanvasLayer = %CharacterSelect
 @onready var profiles_screen: CanvasLayer = %Profiles
@@ -54,6 +55,7 @@ func _ready() -> void:
 	for screen in _ecrans():
 		screen.visibility_changed.connect(_update_hub)
 	_refresh_meta()
+	version_label.text = "v%s" % ProjectSettings.get_setting(&"application/config/version", "")
 	play_button.grab_focus()
 
 
@@ -66,6 +68,7 @@ func _update_hub() -> void:
 	for screen in _ecrans():
 		covered = covered or screen.visible
 	$Margin.visible = not covered
+	version_label.visible = not covered
 	if not covered:
 		play_button.grab_focus()
 

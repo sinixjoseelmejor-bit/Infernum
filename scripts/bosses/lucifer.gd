@@ -18,13 +18,30 @@ extends Boss
 @export var cross_speed: float = 300.0
 @export var cross_damage: float = 15.0
 @export var dive_interval: float = 2.5
+## Vitesse de croisière du plongeon. Sa durée n'est plus fixe : il part juste
+## assez tôt pour toucher le centre de sa zone quand elle détone (voir
+## `Boss.ruee_annoncee`). Elle était de 0,4 s, soit 312 px : plus loin, il
+## s'écrasait avant la zone, plus près, il la dépassait.
 @export var dive_speed: float = 780.0
-@export var dive_duration: float = 0.4
-@export var dive_windup: float = 0.4
+## Délai entre la zone rouge et l'impact. 0,4 s jusqu'à la 0.9.3 : IMPOSSIBLE à
+## esquiver. Sortir d'une zone de 120 px depuis son centre demande 0,56 s de
+## marche à 215 px/s, avant même le temps de réaction. À 0,9 s, il reste un
+## tiers de seconde pour réagir.
+@export var dive_windup: float = 0.9
+## Anticipation de la zone : elle vise là où le joueur sera dans ce délai, en
+## suivant sa trajectoire. Gardée à 0,4 s quand l'annonce s'est allongée — à
+## 0,9 s, elle aurait visé deux fois plus loin devant lui, et l'annonce plus
+## longue n'aurait rien donné à qui continue tout droit.
+@export var dive_prediction: float = 0.4
 @export var ring_count: int = 14
 @export var ring_speed: float = 250.0
 @export var ring_damage: float = 13.0
 @export var abyss_interval: float = 1.6
+## Part des dégâts appliquée à ses PROJECTILES (croix et anneaux), pas à ses
+## zones annoncées : −25 % depuis la 0.10.1, à la demande — les anneaux
+## contrarotatifs de la troisième phase se lisent mal, et chaque interstice raté
+## coûtait trop cher.
+@export var projectile_damage_scale: float = 0.75
 
 const CLE_DES_ABYSSES := preload("res://scenes/pickups/abyss_key.tscn")
 
@@ -36,16 +53,21 @@ var _ring_timer: float = 0.0
 var _diving: bool = false
 
 
+func _ready() -> void:
+	couleur_titre = RADIANT
+	super()
+
+
 func _on_phase_entered(phase: int) -> void:
 	match phase:
 		0:
-			sprite.modulate = Color.WHITE
+			teinter_phase(Color.WHITE)
 		1:
 			# Les ailes prennent feu.
-			sprite.modulate = Color(1.4, 0.75, 0.55)
+			teinter_phase(Color(1.4, 0.75, 0.55))
 			move_speed *= 1.25
 		2:
-			sprite.modulate = Color(1.5, 0.45, 0.45)
+			teinter_phase(Color(1.5, 0.45, 0.45))
 			move_speed *= 1.2
 			engage_distance *= 0.8
 
@@ -55,12 +77,17 @@ func _run_phase(delta: float) -> void:
 		return
 	match current_phase:
 		0:
-			strafe_around(330.0, move_speed, delta, true)
+			# 270 px, et non 330 : au-delà de 320 (`engage_distance`) sa jauge se
+			# remplit. Tant que la poursuite de base le ramenait vers le joueur,
+			# ça ne se voyait pas ; avec la vraie orbite (0.10.1), il forçait le
+			# joueur à lui courir après pour ne pas être puni.
+			strafe_around(270.0, move_speed, delta, true)
 			if _attack_timer <= 0.0:
 				_attack_timer = cross_interval
 				# Croix de lumière, qui pivote d'un tir à l'autre.
 				_cross_angle += deg_to_rad(22.0)
-				fire_ring(4, cross_speed, cross_damage, _cross_angle)
+				geste(&"attaque1", 0.45)
+				fire_ring(4, cross_speed, cross_damage * projectile_damage_scale, _cross_angle)
 		1:
 			if _attack_timer <= 0.0 and not is_dashing():
 				_attack_timer = dive_interval
@@ -68,7 +95,8 @@ func _run_phase(delta: float) -> void:
 			_ring_timer = maxf(0.0, _ring_timer - delta)
 			if _ring_timer <= 0.0:
 				_ring_timer = 2.8
-				fire_ring(ring_count, ring_speed, ring_damage, randf() * TAU)
+				geste(&"attaque2", 0.5)
+				fire_ring(ring_count, ring_speed, ring_damage * projectile_damage_scale, randf() * TAU)
 		2:
 			if _attack_timer <= 0.0 and not is_dashing():
 				_attack_timer = abyss_interval
@@ -78,22 +106,20 @@ func _run_phase(delta: float) -> void:
 				_ring_timer = 1.9
 				# Deux anneaux contrarotatifs : il faut lire les interstices.
 				_cross_angle += deg_to_rad(13.0)
-				fire_ring(ring_count, ring_speed, ring_damage, _cross_angle)
-				fire_ring(ring_count, ring_speed * 0.7, ring_damage, -_cross_angle)
+				geste(&"attaque2", 0.5)
+				fire_ring(ring_count, ring_speed, ring_damage * projectile_damage_scale, _cross_angle)
+				fire_ring(ring_count, ring_speed * 0.7, ring_damage * projectile_damage_scale, -_cross_angle)
 
 
 func _dive() -> void:
-	var destination := predicted_target_position(dive_windup)
+	var destination := predicted_target_position(dive_prediction)
 	telegraph_at(destination, 120.0, dive_windup, cross_damage, FALLEN)
+	geste(&"attaque1", dive_windup)
 	_diving = true
-	var tree := get_tree()
-	if tree == null:
-		return
-	await tree.create_timer(dive_windup).timeout
-	if not is_instance_valid(self) or health.is_dead:
+	await ruee_annoncee(destination, dive_windup, dive_speed)
+	if not is_instance_valid(self):
 		return
 	_diving = false
-	dash_toward(destination, dive_speed, dive_duration)
 
 
 func _update_movement(delta: float) -> void:
@@ -134,5 +160,6 @@ func _release_pressure() -> void:
 		return
 	var distance := global_position.distance_to(target.global_position)
 	var zones := clampi(roundi(distance / 55.0), 8, 20)
+	geste(&"attaque3", 1.1)
 	telegraph_ring(global_position, zones, distance, 82.0, 1.1, cross_damage, RADIANT)
 	GameEvents.request_shake(9.0)
